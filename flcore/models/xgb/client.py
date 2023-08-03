@@ -189,7 +189,7 @@ class FL_Client(fl.client.Client):
             )
 
 def get_client(config, data, client_id):
-    X_train, y_train, X_test, y_test = data
+    (X_train, y_train), (X_test, y_test) = data
     task_type = config['xgb'][ 'task_type' ]
     client_num = config['num_clients' ]
     client_tree_num = config['xgb'][ 'tree_num' ] // client_num

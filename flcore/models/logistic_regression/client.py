@@ -34,9 +34,9 @@ class MnistClient(fl.client.NumPyClient):
             max_iter=1,  # local epoch
             warm_start=True,  # prevent refreshing weights when fitting
         )
-        self.X_train, self.y_train, self.X_test, self.y_test = data
+        (self.X_train, self.y_train), (self.X_test, self.y_test) = data
         # Setting initial parameters, akin to model.compile for keras models
-        utils.set_initial_params(self.model)
+        utils.set_initial_params(self.model, data)
     def get_parameters(self, config):  # type: ignore
         return utils.get_model_parameters(self.model)
 

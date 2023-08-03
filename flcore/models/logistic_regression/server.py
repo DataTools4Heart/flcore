@@ -12,11 +12,11 @@ def fit_round(server_round: int) -> Dict:
     return {"server_round": server_round}
 
 
-def get_evaluate_fn(model: LogisticRegression):
+def get_evaluate_fn(model: LogisticRegression, data):
     """Return an evaluation function for server-side evaluation."""
 
     # Load test data here to avoid the overhead of doing it in `evaluate` itself
-    _, (X_test, y_test) = datasets.load_mnist()
+    _, (X_test, y_test) = data
     # (X_train, y_train), (X_test, y_test) = datasets.load_cvd('dataset', 'All')
 
 
@@ -33,10 +33,10 @@ def get_evaluate_fn(model: LogisticRegression):
 def get_server_and_strategy(config, data):
     
     model = LogisticRegression()
-    utils.set_initial_params(model)
+    utils.set_initial_params(model, data)
     strategy = fl.server.strategy.FedAvg(
-        min_available_clients=2,
-        evaluate_fn=get_evaluate_fn(model),
+        min_available_clients=config['num_clients'],
+        evaluate_fn=get_evaluate_fn(model, data),
         on_fit_config_fn=fit_round,
     )
     

@@ -33,7 +33,7 @@ def set_model_params(
     return model
 
 
-def set_initial_params(model: LogisticRegression):
+def set_initial_params(model: LogisticRegression, data):
     """Sets initial parameters as zeros Required since model params are
     uninitialized until model.fit is called.
 
@@ -41,9 +41,12 @@ def set_initial_params(model: LogisticRegression):
     to sklearn.linear_model.LogisticRegression documentation for more
     information.
     """
-    n_classes = 10  # MNIST has 10 classes
-    n_features = 784  # Number of features in dataset
-    model.classes_ = np.array([i for i in range(10)])
+    # n_classes = 10  # MNIST has 10 classes
+    # n_features = 784  # Number of features in dataset
+    (x_train, y_train), (x_test, y_test) = data
+    n_classes = len(np.unique(y_train))
+    n_features = x_train.shape[1]
+    model.classes_ = np.array([i for i in range(n_classes)])
 
     model.coef_ = np.zeros((n_classes, n_features))
     if model.fit_intercept:
