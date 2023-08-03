@@ -27,7 +27,7 @@ DATA_PATH = 'dataset'
 
 if __name__ == '__main__':
     # Read the config file
-    with open( 'configs.yaml', 'r' ) as f:
+    with open( 'config.yaml', 'r' ) as f:
         config = yaml.safe_load( f )
     
     # Create experiment directory
@@ -56,14 +56,14 @@ if __name__ == '__main__':
     (X_train, y_train), (X_test, y_test) = datasets.load_dataset(config)
 
 
-    data = (X_train, y_train, X_test, y_test)
+    data = (X_train, y_train), (X_test, y_test)
 
     server, strategy = get_model_server_and_strategy(config, data)
 
     # Start Flower server for three rounds of federated learning
     history = fl.server.start_server(
         server_address = "[::]:8080",
-        config = fl.server.ServerConfig( num_rounds = 20 ),
+        config = fl.server.ServerConfig( num_rounds = config['num_rounds'] ),
         server = server, 
         strategy = strategy,
         # certificates = (

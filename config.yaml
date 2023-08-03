@@ -1,7 +1,7 @@
 num_clients: 2
 num_rounds: 10
-model: logistic_regression
-dataset: mnist
+model: logistic_regression # xgb, logistic_regression
+dataset: cvd # mnist, cvd, libsvm
 data_path: dataset/
 
 experiment:

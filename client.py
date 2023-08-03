@@ -11,7 +11,7 @@ central_ip = "LOCALHOST"
 central_port = "8080"
 # Start Flower client but after the server or error
 
-with open( 'configs.yaml', 'r' ) as f:
+with open( 'config.yaml', 'r' ) as f:
         config = yaml.safe_load( f )
 model = config[ 'model' ]
 
@@ -30,8 +30,9 @@ if __name__ == "__main__":
 # (X_train, y_train), (X_test, y_test) = datasets.load_cvd(DATA_PATH, num_client)
 (X_train, y_train), (X_test, y_test) = datasets.load_dataset(config, num_client)
 
+data = (X_train, y_train), (X_test, y_test)
 
-client = get_model_client(config, (X_train, y_train, X_test, y_test), num_client)
+client = get_model_client(config, data, num_client)
 
 if isinstance(client, fl.client.NumPyClient):
         fl.client.start_numpy_client(
