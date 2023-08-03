@@ -1,0 +1,52 @@
+# FLCore
+Library of federated machine learning models integrated within the DataTools4Heart project.
+
+## Currently implemented models
+ - Logistic regression
+ - XGBoost
+
+## Quickstart
+Run 
+```
+python run.py
+```
+to automatically start server and a number of client processes defined in `config.yaml`
+
+### Step by step
+Also, you can do it manually by running:
+```
+python server.py
+```
+And then, preferably in a separate shell window for clean output, start clients with their corresponding ids:
+```
+python client.py 1
+```
+```
+python client.py 2
+```
+
+## Configuration file
+The federated training parameters are defined in ```config.yaml```
+The most important parameters are:
+ - num_clients (number of clients needed in a federated training)
+ - num_rounds (number of training rounds)
+ - model (machine learning model with it's federated implementation)
+
+ ## Contributing
+ To add a new model to the framework two methods need to be implemented:
+ #### For server side:
+
+ ```
+ def get_server_and_strategy(config, data=None) -> Tuple[Optional[flwr.server.Server], flwr.server.strategy.Strategy]:
+ ```
+ which returns Flower Server object (optional) and Flower Strategy object.
+
+#### For client side:
+
+ ```
+ def get_client(config, data) -> flwr.client.Client:
+
+ ```
+ This method should return the initialized client with data loaded specifically for this data center.
+
+
