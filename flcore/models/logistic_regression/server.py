@@ -1,6 +1,5 @@
 import flwr as fl
 import flcore.models.logistic_regression.utils as utils
-import flcore.datasets as datasets
 
 from sklearn.metrics import log_loss
 from sklearn.linear_model import LogisticRegression
