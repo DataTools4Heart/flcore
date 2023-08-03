@@ -1,9 +1,11 @@
 # FLCore
-Library of federated machine learning models integrated within the DataTools4Heart project.
+Library of Federated Learning models integrated within the DataTools4Heart project.
 
 ## Currently implemented models
- - Logistic regression
- - XGBoost
+| Model | Aggregation method | Link |
+|---|---|---|
+|Logistic regression| FedAvg |[flower.dev/docs/framework/quickstart-scikitlearn.html](https://flower.dev/docs/framework/quickstart-scikitlearn.html)|
+|XGBoost| FedXgbNnAvg |[Gradient-less Federated Gradient Boosting Trees with Learnable Learning Rates](https://arxiv.org/abs/2304.07537)|
 
 ## Quickstart
 Run 
