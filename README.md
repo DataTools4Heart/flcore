@@ -38,14 +38,14 @@ The most important parameters are:
  To add a new model to the framework two methods need to be implemented:
  #### For server side:
 
- ```
- def get_server_and_strategy(config, data=None) -> Tuple[Optional[flwr.server.Server], flwr.server.strategy.Strategy]:
+ ```python
+ def get_server_and_strategy(config, data = None) -> Tuple[Optional[flwr.server.Server], flwr.server.strategy.Strategy]:
  ```
  which returns Flower Server object (optional) and Flower Strategy object.
 
 #### For client side:
 
- ```
+ ```python
  def get_client(config, data) -> flwr.client.Client:
 
  ```
