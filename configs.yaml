@@ -1,0 +1,16 @@
+num_clients: 2
+num_rounds: 10
+model: logistic_regression
+dataset: mnist
+data_path: dataset/
+
+experiment:
+  name: "test_run_1"
+  results_path: "results"
+  debug: True
+
+xgb:
+  task_type: BINARY
+  batch_size: 32
+  num_iterations: 100
+  tree_num: 500
