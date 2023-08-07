@@ -353,7 +353,7 @@ def serverside_eval(
         print(f"Evaluation on the server: test_loss={loss:.4f}, test_mse={result:.4f}")
         return loss, {"mse": result}
 
-def get_server_and_strategy(config):
+def get_server_and_strategy(config, data) -> Tuple[Optional[fl.server.Server], Strategy]:
     task_type = config['xgb'][ 'task_type' ]
     # The number of clients participated in the federated learning
     client_num = config['num_clients' ]
@@ -370,27 +370,29 @@ def get_server_and_strategy(config):
     val_ratio = 0.1
 
 
-    DATASET = "CVD"
-    # DATASET = "MNIST"
-    # DATASET = "LIBSVM"
+    # DATASET = "CVD"
+    # # DATASET = "MNIST"
+    # # DATASET = "LIBSVM"
 
-    # Define the type of training task. Binary classification: BINARY; Regression: REG
-    task_types = ["BINARY", "REG"]
-    task_type = task_types[0]
+    # # Define the type of training task. Binary classification: BINARY; Regression: REG
+    # task_types = ["BINARY", "REG"]
+    # task_type = task_types[0]
 
-    PARTITION_DATA = False
+    # PARTITION_DATA = False
 
-    if DATASET == 'LIBSVM':
-            (X_train, y_train), (X_test, y_test) = datasets.load_libsvm(task_type)
+    # if DATASET == 'LIBSVM':
+    #         (X_train, y_train), (X_test, y_test) = datasets.load_libsvm(task_type)
 
-    elif DATASET == 'CVD':
-        (X_train, y_train), (X_test, y_test) = datasets.load_cvd('dataset', 1)
+    # elif DATASET == 'CVD':
+    #     (X_train, y_train), (X_test, y_test) = datasets.load_cvd('dataset', 1)
 
-    elif DATASET == 'MNIST':
-        (X_train, y_train), (X_test, y_test) = datasets.load_mnist()
+    # elif DATASET == 'MNIST':
+    #     (X_train, y_train), (X_test, y_test) = datasets.load_mnist()
 
-    else:
-        raise ValueError('Dataset not supported')
+    # else:
+    #     raise ValueError('Dataset not supported')
+    
+    (X_train, y_train), (X_test, y_test) = data
 
     X_train.flags.writeable = True
     y_train.flags.writeable = True
@@ -419,7 +421,6 @@ def get_server_and_strategy(config):
 
 
     # ## Build global XGBoost tree for comparison
-
     global_tree = construct_tree(X_train, y_train, client_tree_num, task_type)
     preds_train = global_tree.predict(X_train)
     preds_test = global_tree.predict(X_test)
