@@ -188,12 +188,12 @@ class FL_Client(fl.client.Client):
                 metrics={"mse": result},
             )
 
-def get_client(config, data, client_id):
+def get_client(config, data, client_id) -> fl.client.Client:
     (X_train, y_train), (X_test, y_test) = data
     task_type = config['xgb'][ 'task_type' ]
     client_num = config['num_clients' ]
     client_tree_num = config['xgb'][ 'tree_num' ] // client_num
-    batch_size = 32
+    batch_size = "whole"
     cid = str(client_id)
     trainset = TreeDataset(np.array(X_train, copy=True), np.array(y_train, copy=True))
     testset = TreeDataset(np.array(X_test, copy=True), np.array(y_test, copy=True))
