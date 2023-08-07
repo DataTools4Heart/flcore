@@ -7,6 +7,7 @@ import pandas as pd
 from sklearn.model_selection import StratifiedShuffleSplit, KFold, train_test_split
 from sklearn.utils import shuffle
 from sklearn.datasets import load_svmlight_file
+from flcore.models.xgb.utils import do_fl_partitioning, TreeDataset, get_dataloader
 import bz2
 import os
 import shutil
@@ -50,6 +51,10 @@ def load_mnist(center_id=None, num_splits=5):
 
     # y_train = np.array(np.array(y_train, dtype=bool), dtype=float)
     # y_test = np.array(np.array(y_test, dtype=bool), dtype=float)
+    x_train = x_train[:1000]
+    y_train = y_train[:1000]
+    x_test = x_test[:1000]
+    y_test = y_test[:1000]
 
     return (x_train, y_train), (x_test, y_test)
 
@@ -67,33 +72,74 @@ def load_cvd(data_path, center_id=None) -> Dataset:
     #         file_name = data_path+'data_center3.csv'
     # 
     if id == None:
-        id = 'All'
+        # id = 'All'
+        data_centers = [1, 2]
+    else:
+        data_centers = [id]
 
-    file_name = os.path.join(data_path,f'data_center{id}.csv')
+    X_train_list, y_train_list = [], []
+    X_test_list, y_test_list = [], []
+    test_index_list = []
+    train_index_list = []
 
-    code_id = 'f_eid'
-    code_outcome = 'Eval'
+    for id in data_centers:
+        file_name = os.path.join(data_path,f'data_center{id}.csv')
 
-    
-    data = pd.read_csv(file_name)
-    X_data = data.drop([code_id, code_outcome], axis=1)
-    y_data = data[code_outcome]
-    f_eid = data[code_id]
+        code_id = 'f_eid'
+        code_outcome = 'Eval'
 
-    #Split the data
-    sss = StratifiedShuffleSplit(n_splits=1,test_size=0.2, random_state=42)
-    train_index, test_index = next(sss.split(X_data, y_data))
-    X_test = X_data.iloc[test_index, :]
-    X_train = X_data.iloc[train_index, :]
-    y_test, y_train = y_data.iloc[test_index], y_data.iloc[train_index]
-    #We save the names
-    f_eid.iloc[test_index]
-    f_eid.iloc[train_index]
+        data = pd.read_csv(file_name)
+        X_data = data.drop([code_id, code_outcome], axis=1)
+        y_data = data[code_outcome]
+        f_eid = data[code_id]
 
-    
+        #Split the data
+        sss = StratifiedShuffleSplit(n_splits=1,test_size=0.2, random_state=42)
+        train_index, test_index = next(sss.split(X_data, y_data))
+        X_test = X_data.iloc[test_index, :]
+        X_train = X_data.iloc[train_index, :]
+        y_test, y_train = y_data.iloc[test_index], y_data.iloc[train_index]
+        #We save the names
+        f_eid.iloc[test_index]
+        f_eid.iloc[train_index]
+
+        X_train_list.append(X_train)
+        y_train_list.append(y_train)
+        X_test_list.append(X_test)
+        y_test_list.append(y_test)
+        train_index_list.append(train_index)
+        test_index_list.append(test_index)
+
+
+    X_train = pd.concat(X_train_list)
+    y_train = pd.concat(y_train_list)
+    X_test = pd.concat(X_test_list)
+    y_test = pd.concat(y_test_list)
+    train_index = np.concatenate(train_index_list)
+    test_index = np.concatenate(test_index_list)
+
+    # Verify set difference, data centers overlap
+    # print(len(train_index.tolist()))
+    # print(len(test_index.tolist()))
+    # train_set = set(train_index.tolist())
+    # test_set = set(test_index.tolist())
+    # diff = train_set.intersection(test_set)
+    # print(len(train_set))
+    # print(len(test_set))
+    # print( len(diff) )
+    # print(f"SUBSET {id}")
+    # train_unique = np.unique(y_train, return_counts=True)
+    # test_unique = np.unique(y_test, return_counts=True)
+    # train_max_acc = train_unique[1][0]/len(y_train)
+    # test_max_acc = test_unique[1][0]/len(y_test)
+    # print(np.unique(y_train, return_counts=True))
+    # print(np.unique(y_test, return_counts=True))
+    # print(train_max_acc)
+    # print(test_max_acc)
+
     return (X_train, y_train), (X_test, y_test)
 
-def load_libsvm(center_id=None, task_type="BINARY"):
+def load_libsvm(config, center_id=None, task_type="BINARY"):
     # ## Manually download and load the tabular dataset from LIBSVM data
     # Datasets can be downloaded from LIBSVM Data: https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/
     CLASSIFICATION_PATH = os.path.join("dataset", "binary_classification")
@@ -178,6 +224,54 @@ def load_libsvm(center_id=None, task_type="BINARY"):
     X_test = data_test[0].toarray()
     y_test = data_test[1]
 
+    if task_type == "BINARY":
+        y_train[y_train == -1] = 0
+        y_test[y_test == -1] = 0
+
+    num_clients = config['num_clients']
+
+    if center_id != None:
+        trainset = TreeDataset(np.array(X_train, copy=True), np.array(y_train, copy=True))
+        testset = TreeDataset(np.array(X_test, copy=True), np.array(y_test, copy=True))
+        trainloaders, valloaders, testloader = do_fl_partitioning(
+        trainset,
+        testset,
+        batch_size="whole",
+        pool_size=num_clients,
+        val_ratio=0.0,
+        )
+        X_train, y_train = [], []
+        print(f"ID: {center_id}")
+        for sample in trainloaders[center_id-1]:
+            X_train.extend(sample[0].numpy())
+            y_train.extend(sample[1].numpy())
+            # y_train.extend(sample[1].numpy()/2.0 + 0.5)
+        
+        # X_test, y_test = [], []
+        # for sample in valloaders[center_id-1]:
+        #     X_test.extend(sample[0].numpy())
+        #     y_test.extend(sample[1].numpy()/2.0 + 0.5)
+
+        
+        # print(len(X_train))
+        # print(len(y_train))
+        # print(X_train[0])
+        # print(y_train)
+        X_train = np.array(X_train)
+        y_train = np.array(y_train)
+        # print(X_train.shape)
+        # print(y_train.shape)
+
+    train_unique = np.unique(y_train, return_counts=True)
+    test_unique = np.unique(y_test, return_counts=True)
+    # print(np.unique(y_train, return_counts=True))
+    # print(np.unique(y_test, return_counts=True))
+    train_max_acc = train_unique[1][0]/len(y_train)
+    test_max_acc = test_unique[1][0]/len(y_test)
+    # print(train_max_acc)
+    # print(test_max_acc)
+
+
     return (X_train, y_train), (X_test, y_test)
 
 def load_dataset(config, id=None):
@@ -186,6 +280,6 @@ def load_dataset(config, id=None):
     elif config['dataset'] == 'cvd':
         return load_cvd(config['data_path'], id)
     elif config['dataset'] == 'libsvm':
-        return load_libsvm()
+        return load_libsvm(config, id)
     else:
         raise ValueError('Invalid dataset name')
