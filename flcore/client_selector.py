@@ -1,4 +1,3 @@
-# import flcore.models.logistic_regression as logistic_regression
 import flcore.models.logistic_regression as logistic_regression
 import flcore.models.xgb as xgb
 
@@ -8,7 +7,7 @@ def get_model_client(config, data, client_id):
     model = config[ 'model' ]
 
     if model == 'logistic_regression':
-        client = logistic_regression.client.MnistClient(data)
+        client = logistic_regression.client.get_client(data)
 
     elif model == 'rf':
         pass

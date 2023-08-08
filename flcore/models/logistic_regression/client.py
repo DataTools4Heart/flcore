@@ -55,5 +55,8 @@ class MnistClient(fl.client.NumPyClient):
         accuracy = self.model.score(self.X_test, self.y_test)
         return loss, len(self.X_test), {"accuracy": accuracy}
 
+
+def get_client(data) -> fl.client.Client:
+    return MnistClient(data)
     # # Start Flower client
     # fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=MnistClient())

@@ -354,7 +354,7 @@ def serverside_eval(
         return loss, {"mse": result}
 
 def get_server_and_strategy(config, data) -> Tuple[Optional[fl.server.Server], Strategy]:
-    task_type = config['xgb'][ 'task_type' ]
+    # task_type = config['xgb'][ 'task_type' ]
     # The number of clients participated in the federated learning
     client_num = config['num_clients' ]
     # The number of XGBoost trees in the tree ensemble that will be built for each client
@@ -406,6 +406,15 @@ def get_server_and_strategy(config, data) -> Tuple[Optional[fl.server.Server], S
     print("Size of the trainset:", X_train.shape[0])
     print("Size of the testset:", X_test.shape[0])
     assert X_train.shape[1] == X_test.shape[1]
+
+    # Try to automatically determine the type of task
+    n_classes = np.unique(y_train).shape[0]
+    if n_classes == 2:
+        task_type = "BINARY"
+    elif n_classes > 2 and n_classes < 100:
+        task_type = "MULTICLASS"
+    else:
+        task_type = "REG"
 
     if task_type == "BINARY":
         y_train[y_train == -1] = 0
