@@ -70,38 +70,7 @@ def construct_tree(
     dataset: Dataset, label: NDArray, n_estimators: int, tree_type: str
 ) -> Union[XGBClassifier, XGBRegressor]:
     """Construct a xgboost tree form tabular dataset."""
-    if tree_type == "BINARY":
-        tree = xgb.XGBClassifier(
-            # objective="binary:logistic",
-            learning_rate=0.1,
-            max_depth=8,
-            n_estimators=n_estimators,
-            subsample=0.8,
-            colsample_bylevel=1,
-            colsample_bynode=1,
-            colsample_bytree=1,
-            alpha=5,
-            gamma=5,
-            num_parallel_tree=1,
-            min_child_weight=1,
-        )
-
-    elif tree_type == "REG":
-        tree = xgb.XGBRegressor(
-            objective="reg:squarederror",
-            learning_rate=0.1,
-            max_depth=8,
-            n_estimators=n_estimators,
-            subsample=0.8,
-            colsample_bylevel=1,
-            colsample_bynode=1,
-            colsample_bytree=1,
-            alpha=5,
-            gamma=5,
-            num_parallel_tree=1,
-            min_child_weight=1,
-        )
-
+    tree = get_tree(n_estimators, tree_type)
     tree.fit(dataset, label)
     return tree
 
@@ -109,9 +78,9 @@ def get_tree(
     n_estimators: int, tree_type: str
 ) -> Union[XGBClassifier, XGBRegressor]:
     """Instantiate XGBoost model."""
-    if tree_type == "BINARY":
-        tree = xgb.XGBClassifier(
-            # objective="binary:logistic",
+    if tree_type == "REG":
+        tree = xgb.XGBRegressor(
+            objective="reg:squarederror",
             learning_rate=0.1,
             max_depth=8,
             n_estimators=n_estimators,
@@ -124,10 +93,16 @@ def get_tree(
             num_parallel_tree=1,
             min_child_weight=1,
         )
-
-    elif tree_type == "REG":
-        tree = xgb.XGBRegressor(
-            objective="reg:squarederror",
+    else:
+        if tree_type == "BINARY":
+            objective = "binary:logistic"
+        elif tree_type == "MULTICLASS":
+            objective = "multi:softprob"
+        else:
+            raise ValueError("Unknown tree type.")
+        
+        tree = xgb.XGBClassifier(
+            objective=objective,
             learning_rate=0.1,
             max_depth=8,
             n_estimators=n_estimators,
@@ -209,9 +184,16 @@ def tree_encoding(  # pylint: disable=R0914
 
     for i, _ in enumerate(temp_trees):
         for j in range(client_tree_num):
-            x_train_enc[:, i * client_tree_num + j] = single_tree_prediction(
+
+            predictions = single_tree_prediction(
                 temp_trees[i], j, x_train
             )
+            if len(predictions.shape) != 1:
+                predictions = np.argmax(predictions, 1)
+            x_train_enc[:, i * client_tree_num + j] = predictions
+            # x_train_enc[:, i * client_tree_num + j] = single_tree_prediction(
+            #     temp_trees[i], j, x_train
+            # )
 
     x_train_enc32: Any = np.float32(x_train_enc)
     y_train32: Any = np.float32(y_train)
