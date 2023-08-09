@@ -4,7 +4,6 @@ __pycache__/
 *$py.class
 
 .DS_Store
-dataset/
 results/
 # C extensions
 *.so
