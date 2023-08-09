@@ -1,12 +1,11 @@
 import warnings
+
 import flwr as fl
 import numpy as np
-
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import log_loss
 
 import flcore.models.logistic_regression.utils as utils
-
 
 if __name__ == "__main__":
     # Load MNIST dataset from https://www.openml.org/d/554
@@ -26,6 +25,7 @@ if __name__ == "__main__":
     # Setting initial parameters, akin to model.compile for keras models
     utils.set_initial_params(model)
 
+
 # Define Flower client
 class MnistClient(fl.client.NumPyClient):
     def __init__(self, data):
@@ -37,6 +37,7 @@ class MnistClient(fl.client.NumPyClient):
         (self.X_train, self.y_train), (self.X_test, self.y_test) = data
         # Setting initial parameters, akin to model.compile for keras models
         utils.set_initial_params(self.model, data)
+
     def get_parameters(self, config):  # type: ignore
         return utils.get_model_parameters(self.model)
 

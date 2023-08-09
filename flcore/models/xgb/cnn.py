@@ -1,6 +1,5 @@
-
 # ## Centralized Federated XGBoost
-# #### Create 1D convolutional neural network on trees prediction results. 
+# #### Create 1D convolutional neural network on trees prediction results.
 # #### 1D kernel size == client_tree_num
 # #### Make the learning rate of the tree ensembles learnable.
 
@@ -11,13 +10,16 @@ import flwr as fl
 import numpy as np
 import torch
 import torch.nn as nn
+from sklearn.metrics import accuracy_score, mean_squared_error
 from torch.utils.data import DataLoader
 from torchmetrics import Accuracy, MeanSquaredError
 from tqdm import tqdm
 
 
 class CNN(nn.Module):
-    def __init__(self, client_num=5, client_tree_num=100, n_channel: int = 64, task_type='BINARY') -> None:
+    def __init__(
+        self, client_num=5, client_tree_num=100, n_channel: int = 64, task_type="BINARY"
+    ) -> None:
         super(CNN, self).__init__()
         n_out = 1
         self.task_type = task_type
@@ -149,6 +151,8 @@ def test(
     """Evaluates the network on test data."""
     if task_type == "BINARY":
         criterion = nn.BCELoss()
+    if task_type == "MULTICLASS":
+        criterion = nn.CrossEntropyLoss()
     elif task_type == "REG":
         criterion = nn.MSELoss()
 
@@ -163,10 +167,13 @@ def test(
             # Collected testing loss and accuracy statistics
             total_loss += criterion(outputs, labels).item()
             n_samples += labels.size(0)
+            num_classes = np.unique(labels.cpu().numpy()).size
 
-            if task_type == "BINARY":
-                acc = Accuracy(task="binary")(
-                    outputs.cpu(), labels.type(torch.int).cpu()
+            if task_type == "BINARY" or task_type == "MULTICLASS":
+                if task_type == "MULTICLASS":
+                    raise NotImplementedError()
+                acc = Accuracy(task=task_type.lower())(
+                    outputs.cpu(), labels.type(torch.int).cpu(), num_classes=num_classes
                 )
                 total_result += acc * labels.size(0)
             elif task_type == "REG":
@@ -174,7 +181,7 @@ def test(
                 total_result += mse * labels.size(0)
 
     total_result = total_result.item()
-    
+
     if log_progress:
         print("\n")
 
@@ -185,4 +192,3 @@ def print_model_layers(model: nn.Module) -> None:
     print(model)
     for param_tensor in model.state_dict():
         print(param_tensor, "\t", model.state_dict()[param_tensor].size())
-

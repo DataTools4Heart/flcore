@@ -1,20 +1,38 @@
- ## Create Flower custom client
+## Create Flower custom client
 
 from typing import List, Tuple, Union
 
 import flwr as fl
 import numpy as np
 import torch
-from flwr.common import (Code, EvaluateIns, EvaluateRes, FitIns, FitRes,
-                         GetParametersIns, GetParametersRes, GetPropertiesIns,
-                         GetPropertiesRes, Status, ndarrays_to_parameters,
-                         parameters_to_ndarrays)
+from flwr.common import (
+    Code,
+    EvaluateIns,
+    EvaluateRes,
+    FitIns,
+    FitRes,
+    GetParametersIns,
+    GetParametersRes,
+    GetPropertiesIns,
+    GetPropertiesRes,
+    Status,
+    ndarrays_to_parameters,
+    parameters_to_ndarrays,
+)
 from flwr.common.typing import Parameters
 from torch.utils.data import DataLoader
 from xgboost import XGBClassifier, XGBRegressor
 
-from  flcore.models.xgb.cnn import CNN, test, train
-from  flcore.models.xgb.utils import construct_tree_from_loader, tree_encoding_loader, NumpyEncoder, serialize_objects_to_parameters, parameters_to_objects, TreeDataset, get_dataloader
+from flcore.models.xgb.cnn import CNN, test, train
+from flcore.models.xgb.utils import (
+    NumpyEncoder,
+    TreeDataset,
+    construct_tree_from_loader,
+    get_dataloader,
+    parameters_to_objects,
+    serialize_objects_to_parameters,
+    tree_encoding_loader,
+)
 
 
 class FL_Client(fl.client.Client):
@@ -42,7 +60,7 @@ class FL_Client(fl.client.Client):
         self.client_num = client_num
         self.properties = {"tensor_type": "numpy.ndarray"}
         self.log_progress = log_progress
-        self.tmp_dir = ''
+        self.tmp_dir = ""
 
         # instantiate model
         self.net = CNN(client_num=client_num, client_tree_num=client_tree_num)
@@ -53,20 +71,20 @@ class FL_Client(fl.client.Client):
     def get_properties(self, ins: GetPropertiesIns) -> GetPropertiesRes:
         return GetPropertiesRes(properties=self.properties)
 
-    
-        
     def get_parameters(
         self, ins: GetParametersIns
     ) -> Tuple[
         GetParametersRes, Union[Tuple[XGBClassifier, int], Tuple[XGBRegressor, int]]
     ]:
         net_params = self.net.get_weights()
-        parameters = serialize_objects_to_parameters([net_params, (self.tree, self.cid)], self.tmp_dir)
+        parameters = serialize_objects_to_parameters(
+            [net_params, (self.tree, self.cid)], self.tmp_dir
+        )
 
         return GetParametersRes(
-                status=Status(Code.OK, ""),
-                parameters=parameters,
-            )
+            status=Status(Code.OK, ""),
+            parameters=parameters,
+        )
 
     def set_parameters(
         self,
@@ -83,7 +101,6 @@ class FL_Client(fl.client.Client):
         Tuple[XGBRegressor, int],
         List[Union[Tuple[XGBClassifier, int], Tuple[XGBRegressor, int]]],
     ]:
-
         self.net.set_weights(parameters_to_ndarrays(parameters[0]))
         return parameters[1]
 
@@ -91,10 +108,14 @@ class FL_Client(fl.client.Client):
         # Process incoming request to train
         num_iterations = fit_params.config["num_iterations"]
         batch_size = fit_params.config["batch_size"]
-        tree_config_dict = {'client_tree_num': self.client_tree_num,
-                            'task_type': self.task_type}
-        
-        objects = parameters_to_objects(fit_params.parameters, tree_config_dict, self.tmp_dir)
+        tree_config_dict = {
+            "client_tree_num": self.client_tree_num,
+            "task_type": self.task_type,
+        }
+
+        objects = parameters_to_objects(
+            fit_params.parameters, tree_config_dict, self.tmp_dir
+        )
 
         aggregated_trees = self.set_parameters(objects)
 
@@ -188,24 +209,25 @@ class FL_Client(fl.client.Client):
                 metrics={"mse": result},
             )
 
+
 def get_client(config, data, client_id) -> fl.client.Client:
     (X_train, y_train), (X_test, y_test) = data
-    task_type = config['xgb'][ 'task_type' ]
-    client_num = config['num_clients' ]
-    client_tree_num = config['xgb'][ 'tree_num' ] // client_num
+    task_type = config["xgb"]["task_type"]
+    client_num = config["num_clients"]
+    client_tree_num = config["xgb"]["tree_num"] // client_num
     batch_size = "whole"
     cid = str(client_id)
     trainset = TreeDataset(np.array(X_train, copy=True), np.array(y_train, copy=True))
     testset = TreeDataset(np.array(X_test, copy=True), np.array(y_test, copy=True))
     trainloader = get_dataloader(trainset, "train", batch_size)
-    
+
     client = FL_Client(
-                    task_type,
-                    trainloader,
-                    None,
-                    client_tree_num,
-                    client_num,
-                    cid,
-                    log_progress=False,
-                )
+        task_type,
+        trainloader,
+        None,
+        client_tree_num,
+        client_num,
+        cid,
+        log_progress=False,
+    )
     return client

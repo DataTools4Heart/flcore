@@ -1,11 +1,17 @@
-from typing import Any, Dict, List, Optional, Tuple, Union
 import json
 import os
 import uuid
+from typing import Any, Dict, List, Optional, Tuple, Union
+
 import numpy as np
 import torch
 import xgboost as xgb
-from flwr.common import NDArray, parameters_to_ndarrays, ndarrays_to_parameters, bytes_to_ndarray
+from flwr.common import (
+    NDArray,
+    bytes_to_ndarray,
+    ndarrays_to_parameters,
+    parameters_to_ndarrays,
+)
 from flwr.common.typing import Parameters
 from matplotlib import pyplot as plt  # pylint: disable=E0401
 from torch.utils.data import DataLoader, Dataset, random_split
@@ -20,6 +26,7 @@ def get_dataloader(
     return DataLoader(
         dataset, batch_size=batch_size, pin_memory=True, shuffle=(partition == "train")
     )
+
 
 class NumpyEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -74,9 +81,8 @@ def construct_tree(
     tree.fit(dataset, label)
     return tree
 
-def get_tree(
-    n_estimators: int, tree_type: str
-) -> Union[XGBClassifier, XGBRegressor]:
+
+def get_tree(n_estimators: int, tree_type: str) -> Union[XGBClassifier, XGBRegressor]:
     """Instantiate XGBoost model."""
     if tree_type == "REG":
         tree = xgb.XGBRegressor(
@@ -100,7 +106,7 @@ def get_tree(
             objective = "multi:softprob"
         else:
             raise ValueError("Unknown tree type.")
-        
+
         tree = xgb.XGBClassifier(
             objective=objective,
             learning_rate=0.1,
@@ -184,10 +190,7 @@ def tree_encoding(  # pylint: disable=R0914
 
     for i, _ in enumerate(temp_trees):
         for j in range(client_tree_num):
-
-            predictions = single_tree_prediction(
-                temp_trees[i], j, x_train
-            )
+            predictions = single_tree_prediction(temp_trees[i], j, x_train)
             if len(predictions.shape) != 1:
                 predictions = np.argmax(predictions, 1)
             x_train_enc[:, i * client_tree_num + j] = predictions
@@ -240,7 +243,7 @@ def tree_encoding_loader(
     return get_dataloader(tree_dataset, "tree", batch_size)
 
 
-def serialize_objects_to_parameters(objects_list: List, tmp_dir='') -> Parameters:
+def serialize_objects_to_parameters(objects_list: List, tmp_dir="") -> Parameters:
     net_weights = objects_list[0]
     if type(net_weights) is Parameters:
         net_weights = parameters_to_ndarrays(net_weights)
@@ -259,11 +262,11 @@ def serialize_objects_to_parameters(objects_list: List, tmp_dir='') -> Parameter
         cid = objects_list[1][1]
 
     parameters = ndarrays_to_parameters([net_json, tree_json, cid])
-    
+
     return parameters
 
-def parameters_to_objects(parameters: Parameters, tree_config_dict, tmp_dir='') -> List:
 
+def parameters_to_objects(parameters: Parameters, tree_config_dict, tmp_dir="") -> List:
     # Begin data deserialization
     weights_binary = parameters.tensors[0]
     tree_binary = parameters.tensors[1]
@@ -277,44 +280,47 @@ def parameters_to_objects(parameters: Parameters, tree_config_dict, tmp_dir='') 
     weights_array = [np.asarray(layer_weights) for layer_weights in weights_json]
     weights_parameters = ndarrays_to_parameters(weights_array)
 
-    client_tree_num = tree_config_dict['client_tree_num']
-    task_type = tree_config_dict['task_type']
+    client_tree_num = tree_config_dict["client_tree_num"]
+    task_type = tree_config_dict["task_type"]
 
     if len(tree_json.shape) != 0:
         trees = []
         cids = []
         for tree_from_ensemble, cid in zip(tree_json, cid_data):
             cids.append(cid)
-            trees.append(json_to_tree(tree_from_ensemble, client_tree_num, task_type, tmp_dir))
+            trees.append(
+                json_to_tree(tree_from_ensemble, client_tree_num, task_type, tmp_dir)
+            )
         tree_parameters = [(tree, cid) for tree, cid in zip(trees, cids)]
     else:
         cid = int(cid_data.item())
         tree = json_to_tree(tree_json, client_tree_num, task_type, tmp_dir)
         tree_parameters = (tree, cid)
 
-    return [
-        weights_parameters,
-        tree_parameters
-    ]
+    return [weights_parameters, tree_parameters]
 
-def tree_to_json(tree, tmp_directory=''):
-    tmp_path = os.path.join(tmp_directory, str(uuid.uuid4())+'.json')
-    tree.get_booster().save_model( tmp_path )
-    with open( tmp_path, 'r' ) as fr:
-        tree_params_obj = json.load( fr )
-        tree_json = json.dumps( tree_params_obj )
+
+def tree_to_json(tree, tmp_directory=""):
+    tmp_path = os.path.join(tmp_directory, str(uuid.uuid4()) + ".json")
+    tree.get_booster().save_model(tmp_path)
+    with open(tmp_path, "r") as fr:
+        tree_params_obj = json.load(fr)
+        tree_json = json.dumps(tree_params_obj)
     os.remove(tmp_path)
 
     return tree_json
 
 
-def json_to_tree(tree_json, client_tree_num, task_type, tmp_directory=''):
-    tree_json = json.loads( str( tree_json ) )
-    tmp_path = os.path.join(tmp_directory, str(uuid.uuid4())+'.json')
-    with open( tmp_path, 'w' ) as fw:
-        json.dump( tree_json, fw )
-    tree = get_tree(client_tree_num, task_type,)
-    tree.load_model( tmp_path )
+def json_to_tree(tree_json, client_tree_num, task_type, tmp_directory=""):
+    tree_json = json.loads(str(tree_json))
+    tmp_path = os.path.join(tmp_directory, str(uuid.uuid4()) + ".json")
+    with open(tmp_path, "w") as fw:
+        json.dump(tree_json, fw)
+    tree = get_tree(
+        client_tree_num,
+        task_type,
+    )
+    tree.load_model(tmp_path)
     os.remove(tmp_path)
 
     return tree

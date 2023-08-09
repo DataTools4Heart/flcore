@@ -1,9 +1,10 @@
-import flwr as fl
-import flcore.models.logistic_regression.utils as utils
-
-from sklearn.metrics import log_loss
-from sklearn.linear_model import LogisticRegression
 from typing import Dict
+
+import flwr as fl
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import log_loss
+
+import flcore.models.logistic_regression.utils as utils
 
 
 def fit_round(server_round: int) -> Dict:
@@ -18,7 +19,6 @@ def get_evaluate_fn(model: LogisticRegression, data):
     _, (X_test, y_test) = data
     # (X_train, y_train), (X_test, y_test) = datasets.load_cvd('dataset', 'All')
 
-
     # The `evaluate` function will be called after every round
     def evaluate(server_round, parameters: fl.common.NDArrays, config):
         # Update model with the latest parameters
@@ -29,17 +29,18 @@ def get_evaluate_fn(model: LogisticRegression, data):
 
     return evaluate
 
+
 def get_server_and_strategy(config, data):
-    
     model = LogisticRegression()
     utils.set_initial_params(model, data)
     strategy = fl.server.strategy.FedAvg(
-        min_available_clients=config['num_clients'],
+        min_available_clients=config["num_clients"],
         evaluate_fn=get_evaluate_fn(model, data),
         on_fit_config_fn=fit_round,
     )
-    
+
     return None, strategy
+
 
 # Start Flower server for five rounds of federated learning
 if __name__ == "__main__":

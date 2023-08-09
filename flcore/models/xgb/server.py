@@ -1,32 +1,45 @@
 # ## Create Flower custom server
 
+import functools
 import timeit
 from logging import DEBUG, INFO
 from typing import Dict, List, Optional, Tuple, Union
-import functools
 
-import numpy as np
 import flwr as fl
-from flwr.common import (EvaluateRes, FitRes, GetParametersIns, GetParametersRes, Status, Code, Parameters,
-                         Scalar, parameters_to_ndarrays)
+import numpy as np
+from flwr.common import (
+    Code,
+    EvaluateRes,
+    FitRes,
+    GetParametersIns,
+    GetParametersRes,
+    Parameters,
+    Scalar,
+    Status,
+    parameters_to_ndarrays,
+)
 from flwr.common.logger import log
 from flwr.common.typing import GetParametersIns, Parameters
 from flwr.server.client_manager import ClientManager, SimpleClientManager
-
 from flwr.server.client_proxy import ClientProxy
 from flwr.server.history import History
 from flwr.server.server import evaluate_clients, fit_clients
-from flwr.server.strategy import Strategy, FedXgbNnAvg
+from flwr.server.strategy import FedXgbNnAvg, Strategy
 from sklearn.metrics import accuracy_score, mean_squared_error
-
-
 from torch.utils.data import DataLoader
 from xgboost import XGBClassifier, XGBRegressor
 
-from  flcore.models.xgb.cnn import CNN, test
-from  flcore.models.xgb.client import FL_Client
 import flcore.datasets as datasets
-from  flcore.models.xgb.utils import tree_encoding_loader, serialize_objects_to_parameters, parameters_to_objects, TreeDataset, construct_tree, do_fl_partitioning
+from flcore.models.xgb.client import FL_Client
+from flcore.models.xgb.cnn import CNN, test
+from flcore.models.xgb.utils import (
+    TreeDataset,
+    construct_tree,
+    do_fl_partitioning,
+    parameters_to_objects,
+    serialize_objects_to_parameters,
+    tree_encoding_loader,
+)
 
 FitResultsAndFailures = Tuple[
     List[Tuple[ClientProxy, FitRes]],
@@ -50,9 +63,10 @@ class FL_Server(fl.server.Server):
         )
         self.strategy: Strategy = strategy
         self.max_workers: Optional[int] = None
-        self.tree_config_dict = {'client_tree_num': self.strategy.evaluate_fn.keywords['client_tree_num'],
-                            'task_type': self.strategy.evaluate_fn.keywords['task_type']}
-
+        self.tree_config_dict = {
+            "client_tree_num": self.strategy.evaluate_fn.keywords["client_tree_num"],
+            "task_type": self.strategy.evaluate_fn.keywords["task_type"],
+        }
 
     # pylint: disable=too-many-locals
     def fit(self, num_rounds: int, timeout: Optional[float]) -> History:
@@ -262,21 +276,21 @@ class FL_Server(fl.server.Server):
     #     cid = parameters[1][1]
 
     #     return ndarrays_to_parameters([net_weights, tree_json, cid])
-        
 
     def serialized_to_parameters(self, get_parameters_res_tree):
-        
-        objects = parameters_to_objects(get_parameters_res_tree.parameters, self.tree_config_dict)
+        objects = parameters_to_objects(
+            get_parameters_res_tree.parameters, self.tree_config_dict
+        )
 
         weights_parameters = objects[0]
         tree_parameters = objects[1]
-        
+
         return [
             GetParametersRes(
                 status=Status(Code.OK, ""),
                 parameters=weights_parameters,
             ),
-            tree_parameters
+            tree_parameters,
         ]
 
     def _get_initial_parameters(
@@ -308,6 +322,7 @@ class FL_Server(fl.server.Server):
 
 
 # ## Create server-side evaluation and experiment
+
 
 def serverside_eval(
     server_round: int,
@@ -353,22 +368,24 @@ def serverside_eval(
         print(f"Evaluation on the server: test_loss={loss:.4f}, test_mse={result:.4f}")
         return loss, {"mse": result}
 
-def get_server_and_strategy(config, data) -> Tuple[Optional[fl.server.Server], Strategy]:
+
+def get_server_and_strategy(
+    config, data
+) -> Tuple[Optional[fl.server.Server], Strategy]:
     # task_type = config['xgb'][ 'task_type' ]
     # The number of clients participated in the federated learning
-    client_num = config['num_clients' ]
+    client_num = config["num_clients"]
     # The number of XGBoost trees in the tree ensemble that will be built for each client
-    client_tree_num = config['xgb'][ 'tree_num' ] // client_num
+    client_tree_num = config["xgb"]["tree_num"] // client_num
 
-    num_rounds = config['num_rounds' ]
+    num_rounds = config["num_rounds"]
     client_pool_size = client_num
-    num_iterations = config['xgb'][ 'num_iterations' ]
+    num_iterations = config["xgb"]["num_iterations"]
     fraction_fit = 1.0
     min_fit_clients = client_num
 
-    batch_size = config['xgb'][ 'batch_size' ]
+    batch_size = config["xgb"]["batch_size"]
     val_ratio = 0.1
-
 
     # DATASET = "CVD"
     # # DATASET = "MNIST"
@@ -391,7 +408,7 @@ def get_server_and_strategy(config, data) -> Tuple[Optional[fl.server.Server], S
 
     # else:
     #     raise ValueError('Dataset not supported')
-    
+
     (X_train, y_train), (X_test, y_test) = data
 
     X_train.flags.writeable = True
@@ -426,8 +443,6 @@ def get_server_and_strategy(config, data) -> Tuple[Optional[fl.server.Server], S
     # ## Conduct tabular dataset partition for Federated Learning
 
     # ## Define global variables for Federated XGBoost Learning
-
-
 
     # ## Build global XGBoost tree for comparison
     global_tree = construct_tree(X_train, y_train, client_tree_num, task_type)
@@ -547,9 +562,9 @@ def get_server_and_strategy(config, data) -> Tuple[Optional[fl.server.Server], S
     server = FL_Server(client_manager=SimpleClientManager(), strategy=strategy)
 
     # history = fl.server.start_server(
-    #     server_address = "[::]:8080", 
+    #     server_address = "[::]:8080",
     #     server=server,
-    #     config = fl.server.ServerConfig(num_rounds=20), 
+    #     config = fl.server.ServerConfig(num_rounds=20),
     #     strategy = strategy
     # )
     # Start the simulation
@@ -565,4 +580,3 @@ def get_server_and_strategy(config, data) -> Tuple[Optional[fl.server.Server], S
     # return history
 
     return server, strategy
-
