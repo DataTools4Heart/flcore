@@ -1,29 +1,14 @@
-from typing import Dict, Optional, Tuple, List, Any, Callable
-import argparse
-
-import os
 import flwr as fl
-from flwr.common import Metrics
-
-#from networks.arch_handler import Network
-
 import warnings
 import yaml
 from pathlib import Path
 
 import flwr as fl
-from sklearn.metrics import log_loss
-from sklearn.linear_model import LogisticRegression
-from typing import Dict
-import joblib
 
 from flcore.server_selector import get_model_server_and_strategy
 import flcore.datasets as datasets
 
 warnings.filterwarnings( 'ignore' )
-
-DATA_PATH = 'dataset'
-
 
 if __name__ == '__main__':
     # Read the config file

@@ -5,10 +5,10 @@ import flcore.datasets as datasets
 from flcore.client_selector import get_model_client
 
 
-DATA_PATH = 'dataset'
 #flower_ssl_cacert = os.getenv("FLOWER_SSL_CACERT")
 central_ip = "LOCALHOST"
 central_port = "8080"
+
 # Start Flower client but after the server or error
 
 with open( 'config.yaml', 'r' ) as f:
@@ -23,11 +23,8 @@ if __name__ == "__main__":
         
     num_client = int(sys.argv[1])
 
-    # num_client = 2
+    print("Client id:" + str(num_client))
 
-    print("Number of client:" + str(num_client))
-
-# (X_train, y_train), (X_test, y_test) = datasets.load_cvd(DATA_PATH, num_client)
 (X_train, y_train), (X_test, y_test) = datasets.load_dataset(config, num_client)
 
 data = (X_train, y_train), (X_test, y_test)
