@@ -8,11 +8,15 @@ Library of Federated Learning models integrated within the DataTools4Heart proje
 |XGBoost| FedXgbNnAvg |[Gradient-less Federated Gradient Boosting Trees with Learnable Learning Rates](https://arxiv.org/abs/2304.07537)|
 
 ## Quickstart
-Run 
+Install necessary dependencies:
+```
+pip install -r requirements.txt
+```
+To start a federated training run:
 ```
 python run.py
 ```
-to automatically start server and a number of client processes defined in `config.yaml`
+it will automatically start a server and client processes defined in `config.yaml`
 
 ### Step by step
 Also, you can do it manually by running:
@@ -30,9 +34,9 @@ python client.py 2
 ## Configuration file
 The federated training parameters are defined in ```config.yaml```
 The most important parameters are:
- - num_clients (number of clients needed in a federated training)
- - num_rounds (number of training rounds)
- - model (machine learning model with it's federated implementation)
+ - `num_clients` (number of clients needed in a federated training)
+ - `num_rounds` (number of training rounds)
+ - `model` (machine learning model with it's federated implementation)
 
  ## Contributing
  To add a new model to the framework two methods need to be implemented:
