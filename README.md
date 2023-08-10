@@ -55,4 +55,10 @@ The most important parameters are:
  ```
  This method should return the initialized client with data loaded specifically for this data center.
 
-
+#### Contribution steps
+After implementing the necessary methods follow the remaining steps:
+1. Create a new branch in `flcore` repository
+2. Copy your model package to `flcore/models` directory
+3. Add cases for the new model in `server_selector.py` and `client_selector.py` modules in `flcore/` directory
+4. Add the model to the avaialable models table in `README.md` file
+5. Open a Pull Request and wait for review
