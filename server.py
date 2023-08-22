@@ -25,23 +25,7 @@ if __name__ == "__main__":
     history_dir = experiment_dir / "history"
     history_dir.mkdir(parents=True, exist_ok=True)
 
-    # # Create an instance of the model and get the parameters
-    # model = LogisticRegression()
-    # utils.set_initial_params( model )
-
-    # # Pass parameters to the Strategy for server-side parameter initialization
-    # strategy = fl.server.strategy.FedAvg(
-    #     min_available_clients = 2,
-    #     evaluate_fn           = get_evaluate_fn( model ),
-    #     on_fit_config_fn      = fit_round,
-    # )
-    # (X_train, y_train), (X_test, y_test) = datasets.load_cvd(DATA_PATH, 'All')
-    # (X_train, y_train), (X_test, y_test) = datasets.load_mnist()
-    (X_train, y_train), (X_test, y_test) = datasets.load_dataset(config)
-
-    data = (X_train, y_train), (X_test, y_test)
-
-    server, strategy = get_model_server_and_strategy(config, data)
+    server, strategy = get_model_server_and_strategy(config)
 
     # Start Flower server for three rounds of federated learning
     history = fl.server.start_server(

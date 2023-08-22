@@ -22,6 +22,7 @@ if __name__ == "__main__":
         sys.exit
 
     num_client = int(sys.argv[1])
+    #num_client = 1
 
     print("Client id:" + str(num_client))
 

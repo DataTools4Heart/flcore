@@ -1,6 +1,6 @@
-num_clients: 2
-num_rounds: 10
-model: logistic_regression # xgb, logistic_regression
+num_clients: 3
+num_rounds: 3
+model: random_forest #logistic_regression # xgb, logistic_regression
 dataset: cvd # mnist, cvd, libsvm
 data_path: dataset/
 
