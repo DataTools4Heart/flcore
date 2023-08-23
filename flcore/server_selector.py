@@ -1,15 +1,16 @@
-# import flcore.models.logistic_regression.server as logistic_regression_server
-import flcore.models.logistic_regression.server as logistic_regression_server
+#import flcore.models.logistic_regression.server as logistic_regression_server
+#import flcore.models.logistic_regression.server as logistic_regression_server
 import flcore.models.xgb.server as xgb_server
 import flcore.models.random_forest.server as random_forest_server
+import flcore.models.linear_models.server as linear_models_server
 
 
 def get_model_server_and_strategy(config, data=None):
     model = config["model"]
 
-    if model == "logistic_regression":
-        server, strategy = logistic_regression_server.get_server_and_strategy(
-            config, data
+    if model == "linear_models":
+        server, strategy = linear_models_server.get_server_and_strategy(
+            config
         )
     elif model == "random_forest":
         server, strategy = random_forest_server.get_server_and_strategy(

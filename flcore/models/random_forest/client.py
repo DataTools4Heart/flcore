@@ -77,7 +77,7 @@ class MnistClient(fl.client.Client):
             print(f"F1_score in fit:  {F1_score}")
     
             ellapsed_time = (time.time() - start_time)
-            print(f"num_client has an ellapsed time {ellapsed_time}")
+            print(f"num_client {self.client_id} has an ellapsed time {ellapsed_time}")
             
         print(f"Training finished for round {ins.config['server_round']}")
 

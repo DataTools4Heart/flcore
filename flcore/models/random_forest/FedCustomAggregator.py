@@ -1,5 +1,5 @@
 #############################################################################
-#Code implemented by Esmeralda Ruiz Pujadas                                ##
+#RF Agregator Code implemented by Esmeralda Ruiz Pujadas                   ##
 #The Federated RF aggregator is implemented with/without drop out center.  ##
 #I used the  paper & code:                                                 ##
 #https://featurecloud.ai/ai-store?view=store&sub=&q=&r=0                   ##

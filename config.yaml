@@ -1,6 +1,6 @@
 num_clients: 3
 num_rounds: 3
-model: random_forest #logistic_regression # xgb, logistic_regression
+model: linear_models #linear_models, xgb, random_forest, logistic_regression (old version)
 dataset: cvd # mnist, cvd, libsvm
 data_path: dataset/
 
@@ -17,3 +17,7 @@ xgb:
   batch_size: 32
   num_iterations: 100
   tree_num: 500
+
+linear_models:
+  model_type: LR #elastic_net,LSVC, LR
+  n_features: 9

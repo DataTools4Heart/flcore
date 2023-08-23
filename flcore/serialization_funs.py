@@ -1,11 +1,11 @@
-###################################################################
-#Code implemented by Esmeralda Ruiz Pujadas                      ##
-#IMPORTANT REPLACE FOR SOMETHING SAFER                           ##
-#that returns BytesIO() forced by the library                    ##
-#OR ADD A TOP LAYER OF SECURITY: (e.g., encription)              ##
-#WARNING!!!!!!!!: README                                         ##
-#USE CLIENT NOT NUMPY CLIENT TO CUSTOMIZE SERIALIZATION          ##
-###################################################################
+########################################################################
+#Serialization code implemented by Esmeralda Ruiz Pujadas TEMPORALLY  ##
+#IMPORTANT REPLACE FOR SOMETHING SAFER                                ##
+#that returns BytesIO() forced by the library                         ##
+#OR ADD A TOP LAYER OF SECURITY: (e.g., encription)                   ##
+#WARNING!!!!!!!!: README                                              ##
+#USE CLIENT NOT NUMPY CLIENT TO CUSTOMIZE SERIALIZATION               ##
+########################################################################
 
 import numpy as np
 from typing import Tuple, Union, List
