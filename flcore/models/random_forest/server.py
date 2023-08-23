@@ -32,13 +32,13 @@ def fit_round( server_round: int ) -> Dict:
 
 
 def get_server_and_strategy(config):
-    bal_RF = False
+    bal_RF = config['random_forest']['balanced_rf']
     model = get_model(bal_RF) 
     utils.set_initial_params_server( model)
 
     # Pass parameters to the Strategy for server-side parameter initialization
     #strategy = fl.server.strategy.FedAvg(
-    strategy = FedCustom(    
+    strategy = FedCustom(   
         #Have running the same number of clients otherwise it does not run the federated
         min_available_clients = config['num_clients'],
         min_fit_clients = config['num_clients'],
@@ -46,41 +46,12 @@ def get_server_and_strategy(config):
         #enable evaluate_fn  if we have data to evaluate in the server
         #evaluate_fn           = utils_RF.get_evaluate_fn( model ), #no data in server
         evaluate_metrics_aggregation_fn = utils.evaluate_metrics_aggregation_fn,
-        on_fit_config_fn      = fit_round
+        on_fit_config_fn      = fit_round      
     )
-
+    #Select normal RF or Balanced RF from config
+    strategy.bal_RF= config['random_forest']['balanced_rf']
     return None, strategy
 
 
-if __name__ == '__main__':
-    bal_RF = False
-    model = get_model(bal_RF) 
-    utils.set_initial_params_server( model)
 
-    # Pass parameters to the Strategy for server-side parameter initialization
-    #strategy = fl.server.strategy.FedAvg(
-    strategy = FedCustom(    
-        #Have running the same number of clients otherwise it does not run the federated
-        min_available_clients = utils.num_clients,
-        #enable evaluate_fn  if we have data to evaluate in the server
-        #evaluate_fn           = utils_RF.get_evaluate_fn( model ), #no data in server
-        evaluate_metrics_aggregation_fn = utils.evaluate_metrics_aggregation_fn,
-        on_fit_config_fn      = fit_round
-    )
-
-
-
-    # Start Flower server for three rounds of federated learning
-    history = fl.server.start_server(
-        server_address = 'LOCALHOST:8080',
-        config         = fl.server.ServerConfig( num_rounds = utils.num_rounds_server ), 
-        strategy       = strategy,
-        #client_manager= CenterDropoutClientManager()
-        ##Socayna says to comment in local. It is for the docker
-        #certificates   = (
-        #    Path( '.cache/certificates/rootCA_cert.pem' ).read_bytes(),
-        #    Path( '.cache/certificates/server_cert.pem' ).read_bytes(),
-        #    Path( '.cache/certificates/server_key.pem'  ).read_bytes(),
-        #),
-    )
     
