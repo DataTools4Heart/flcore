@@ -9,6 +9,9 @@ experiment:
   results_path: "results"
   debug: True
 
+random_forest:
+  balanced_rf: True  
+
 xgb:
   task_type: BINARY
   batch_size: 32

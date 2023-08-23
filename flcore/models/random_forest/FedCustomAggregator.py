@@ -37,7 +37,7 @@ connected to the server. `min_available_clients` must be set to a value larger
 than or equal to the values of `min_fit_clients` and `min_evaluate_clients`.
 """
 
-def aggregateRF_random(rfs):
+def aggregateRF_random(rfs,bal_RF):
     rfa= get_model(bal_RF)
     number_Clients = len(rfs)
     numberTreesperclient = int(len(rfs[0][0][0]))
@@ -53,7 +53,7 @@ def aggregateRF_random(rfs):
     return [rfa],rfa.estimators_
 
 
-def aggregateRF_withprevious_random(rfs,previous_estimators):
+def aggregateRF_withprevious_random(rfs,previous_estimators,bal_RF):
     rfa= get_model(bal_RF)
     number_Clients = len(rfs)
     numberTreesperclient = int(len(rfs[0][0][0]))
@@ -74,8 +74,7 @@ def aggregateRF_withprevious_random(rfs,previous_estimators):
 
 #We merge all the trees in one RF
 #https://ai.stackexchange.com/questions/34250/random-forests-are-more-estimators-always-better
-def aggregateRF(rfs):
-    bal_RF = False
+def aggregateRF(rfs,bal_RF):
     rfa= get_model(bal_RF)
     #number_Clients = len(rfs)
     numberTreesperclient = int(len(rfs[0][0][0]))
@@ -92,8 +91,7 @@ def aggregateRF(rfs):
 
 #We merge all the trees in one RF
 #https://ai.stackexchange.com/questions/34250/random-forests-are-more-estimators-always-better
-def aggregateRF_withprevious(rfs,previous_estimators):
-    bal_RF = False
+def aggregateRF_withprevious(rfs,previous_estimators,bal_RF):
     rfa= get_model(bal_RF)
     #TypeError: 'list' object cannot be interpreted as an integer
     #I need to add double parenthesis for concatenation
@@ -115,6 +113,7 @@ class FedCustom(fl.server.strategy.FedAvg):
     clients_first_round_time = {}
     server_estimators = []
     time_server_round = time.time()
+    bal_RF = None
     # pylint: disable=too-many-arguments,too-many-instance-attributes,line-too-long
     
     def configure_fit(
@@ -181,9 +180,9 @@ class FedCustom(fl.server.strategy.FedAvg):
         ]
 
         if(server_round == 1):
-            aggregation_result,self.server_estimators = aggregateRF(weights_results)
+            aggregation_result,self.server_estimators = aggregateRF(weights_results,self.bal_RF)
         else:
-            aggregation_result,self.server_estimators = aggregateRF_withprevious(weights_results,self.server_estimators)
+            aggregation_result,self.server_estimators = aggregateRF_withprevious(weights_results,self.server_estimators,self.bal_RF)
 
         #ndarrays_to_parameters necessary to send the message
         parameters_aggregated = serialize_RF(aggregation_result)

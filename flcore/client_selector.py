@@ -11,7 +11,7 @@ def get_model_client(config, data, client_id):
         client = logistic_regression.client.get_client(data)
 
     elif model == "random_forest":
-        client = random_forest.client.get_client(data,client_id) 
+        client = random_forest.client.get_client(config,data,client_id) 
 
     elif model == "xgb":
         client = xgb.client.get_client(config, data, client_id)

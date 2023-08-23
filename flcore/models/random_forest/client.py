@@ -25,15 +25,15 @@ import time
 
 # Define Flower client
 class MnistClient(fl.client.Client):
-    def __init__(self, data,client_id):
+    def __init__(self, data,client_id,config):
         self.client_id = client_id
         n_folds_out=3
         seed=42
         # Load data
         (self.X_train, self.y_train), (self.X_test, self.y_test) = data
         self.splits_nested  = datasets.split_partitions(n_folds_out,0.2, seed, self.X_train, self.y_train)
-        bal_RF = False
-        self.model = utils.get_model(bal_RF) 
+        self.bal_RF = config['random_forest']['balanced_rf']
+        self.model = utils.get_model(self.bal_RF) 
         # Setting initial parameters, akin to model.compile for keras models
         utils.set_initial_params_client(self.model,self.X_train, self.y_train)
     def get_parameters(self, ins: GetParametersIns):  # , config type: ignore
@@ -124,7 +124,7 @@ class MnistClient(fl.client.Client):
         )
 
 
-def get_client(data,client_id) -> fl.client.Client:
-    return MnistClient(data,client_id)
+def get_client(config,data,client_id) -> fl.client.Client:
+    return MnistClient(data,client_id,config)
     # # Start Flower client
     # fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=MnistClient())
