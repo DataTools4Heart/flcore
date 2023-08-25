@@ -9,10 +9,37 @@ from flcore.server_selector import get_model_server_and_strategy
 
 warnings.filterwarnings("ignore")
 
+def check_config(config):
+    assert isinstance(config['num_clients'], int), 'num_clients should be an int'
+    assert isinstance(config['num_rounds'], int), 'num_rounds should be an int'
+    if(config['smooth_method'] != 'None'):
+        assert config['smoothWeights']['smoothing_strenght'] >= 0 and config['smoothWeights']['smoothing_strenght'] <= 1, 'smoothing_strenght should be betwen 0 and 1'
+    if(config['dropout_method'] != 'None'):
+        assert config['dropout']['percentage_drop'] >= 0 and config['dropout']['percentage_drop'] < 100, 'percentage_drop should be betwen 0 and 100'
+    
+    assert (config['smooth_method']== 'EqualVoting' or \
+        config['smooth_method']== 'SlowerQuartile' or \
+        config['smooth_method']== 'SsupperQuartile' or \
+        config['smooth_method']== 'None'), 'the smooth methods are not correct: EqualVoting, SlowerQuartile and SsupperQuartile' 
+    
+    assert (config['model']== 'linear_models' or \
+            config['model']== 'xgb' or \
+            config['model']== 'random_forest' or \
+            config['model']== 'logistic_regression'), 'the ML methods are not correct: linear_models. xgb, random_forest' 
+    
+    if(config['model']== 'linear_models'):
+         assert (config['linear_models']['model_type']== 'LR' or \
+            config['linear_models']['model_type']== 'elastic_net' or \
+            config['linear_models']['model_type']== 'LSVC'), 'the Linear models are not correct: LR, LSVC, elastic_net '
+        
+
 if __name__ == "__main__":
     # Read the config file
     with open("config.yaml", "r") as f:
         config = yaml.safe_load(f)
+
+    #Check the config file
+    check_config(config)
 
     # Create experiment directory
     experiment_dir = Path("results") / config["experiment"]["name"]

@@ -1,6 +1,5 @@
 from logging import WARNING
 from typing import Callable, Dict, List, Optional, Tuple, Union
-#from dropout import Less_participants_at_odd_rounds,Fast_at_odd_rounds, Fast_every_three, random_dropout
 
 from flwr.common import (
     EvaluateIns,
@@ -22,8 +21,9 @@ from flwr.server.strategy.aggregate import aggregate, weighted_loss_avg
 import numpy as np
 import flwr.server.strategy.fedavg as fedav
 import time
-#from smoothWeights  import smooth_aggregate 
-#from utils import smoothing,num_clients
+from flcore.dropout import select_clients
+from flcore.smoothWeights import smooth_aggregate
+
 
 WARNING_MIN_AVAILABLE_CLIENTS_TOO_LOW = """
 Setting `min_available_clients` lower than `min_fit_clients` or
@@ -38,7 +38,10 @@ class FedCustom(fl.server.strategy.FedAvg):
     clients_first_round_time = {}
     time_server_round = time.time()
     clients_num_examples = {}
-    fast_round = False
+    dropout_method = None
+    percentage_drop = 0
+    smoothing_method = None
+    smoothing_strenght = 0
     # pylint: disable=too-many-arguments,too-many-instance-attributes,line-too-long
    
     def configure_fit(
@@ -62,12 +65,14 @@ class FedCustom(fl.server.strategy.FedAvg):
         )
 
         #After the second round apply dropout if wanted
-        #if(server_round>1):
-            # Drop Out center
-            #(clients,self.fast_round) = Fast_at_odd_rounds(server_round,clients,self.clients_first_round_time, 25) #0)
-            #clients = Fast_every_three(server_round,clients,self.clients_first_round_time, 25)
-            #clients = random_dropout(server_round,clients,self.clients_first_round_time, 25)
-            #clients = Less_participants_at_odd_rounds(server_round,clients, self.clients_num_examples,25)
+        if(self.dropout_method != 'None'):
+            if(server_round>1):
+                # Drop Out center
+                clients = select_clients(self.dropout_method, self.percentage_drop,clients,self.clients_first_round_time,server_round,self.clients_num_examples)
+                #(clients,self.fast_round) = Fast_at_odd_rounds(server_round,clients,self.clients_first_round_time, 25) #0)
+                #clients = Fast_every_three(server_round,clients,self.clients_first_round_time, 25)
+                #clients = random_dropout(server_round,clients,self.clients_first_round_time, 25)
+                #clients = Less_participants_at_odd_rounds(server_round,clients, self.clients_num_examples,25)
 
         # Return client/config pairs
         return [(client, fit_ins) for client in clients]
@@ -93,18 +98,19 @@ class FedCustom(fl.server.strategy.FedAvg):
             for _, fit_res in results
         ]
 
-        #if(smoothing==0 | self.fast_round == True):
-        parameters_aggregated = ndarrays_to_parameters(aggregate(weights_results))
-        #else:
-        #    parameters_aggregated = ndarrays_to_parameters(smooth_aggregate(weights_results))
+        if(self.smoothing_method=='None' ): #(smoothing==0 | self.fast_round == True):
+            parameters_aggregated = ndarrays_to_parameters(aggregate(weights_results))
+        else:
+            parameters_aggregated = ndarrays_to_parameters(smooth_aggregate(weights_results,self.smoothing_method,self.smoothing_strenght))
 
         #DropOut Center: initially aggregate all execution times of all clients
         #ONLY THE FIRST ROUND is tracked the execution time to start further
         #rounds with dropout center if wanted
-        #if(server_round == 1):
-        #    for client, res in results:
-        #        self.clients_first_round_time[client.cid] = res.metrics['running_time']
-        #        self.clients_num_examples[client.cid] = res.num_examples
+        if(self.dropout_method != 'None'):
+            if(server_round == 1):
+                for client, res in results:
+                    self.clients_first_round_time[client.cid] = res.metrics['running_time']
+                    self.clients_num_examples[client.cid] = res.num_examples
                 
 
 

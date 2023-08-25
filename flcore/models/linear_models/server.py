@@ -66,6 +66,12 @@ def get_server_and_strategy(config):
         evaluate_metrics_aggregation_fn = utils.evaluate_metrics_aggregation_fn,
         on_fit_config_fn      = fit_round      
     )
+
+    strategy.dropout_method = config['dropout_method']
+    strategy.percentage_drop = config['dropout']['percentage_drop']
+    strategy.smoothing_method = config['smooth_method']
+    strategy.smoothing_strenght = config['smoothWeights']['smoothing_strenght']
+
     return None, strategy
 
 

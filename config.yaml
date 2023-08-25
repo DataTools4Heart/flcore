@@ -3,6 +3,8 @@ num_rounds: 3
 model: linear_models #linear_models, xgb, random_forest, logistic_regression (old version)
 dataset: cvd # mnist, cvd, libsvm
 data_path: dataset/
+dropout_method: Fast_at_odd_rounds #None, Fast_at_odd_rounds, Fast_every_three, random_dropout,Less_participants_at_odd_rounds
+smooth_method: EqualVoting #None,EqualVoting,SlowerQuartile, SsupperQuartile
 
 experiment:
   name: "test_run_1"
@@ -21,3 +23,9 @@ xgb:
 linear_models:
   model_type: LR #elastic_net,LSVC, LR
   n_features: 9
+
+dropout: 
+  percentage_drop: 25
+  
+smoothWeights: 
+  smoothing_strenght: 0.5 #Value between 0 and 1
