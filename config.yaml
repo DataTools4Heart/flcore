@@ -1,6 +1,6 @@
 num_clients: 3
 num_rounds: 3
-model: linear_models #linear_models, xgb, random_forest, logistic_regression (old version)
+model: random_forest #linear_models, xgb, random_forest, logistic_regression (old version)
 dataset: cvd # mnist, cvd, libsvm
 data_path: dataset/
 dropout_method: Fast_at_odd_rounds #None, Fast_at_odd_rounds, Fast_every_three, random_dropout,Less_participants_at_odd_rounds

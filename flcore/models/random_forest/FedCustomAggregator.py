@@ -29,6 +29,7 @@ from flcore.models.random_forest.utils import get_model
 import random
 import time
 import flwr.server.strategy.fedavg as fedav
+from flcore.dropout import select_clients
 
 WARNING_MIN_AVAILABLE_CLIENTS_TOO_LOW = """
 Setting `min_available_clients` lower than `min_fit_clients` or
@@ -111,9 +112,11 @@ class FedCustom(fl.server.strategy.FedAvg):
     """Configurable FedAvg strategy implementation."""
     #DropOut center variable to get the initial execution time of the first round
     clients_first_round_time = {}
+    clients_num_examples = {}
     server_estimators = []
     time_server_round = time.time()
     bal_RF = None
+    dropout_method = None
     # pylint: disable=too-many-arguments,too-many-instance-attributes,line-too-long
     
     def configure_fit(
@@ -137,10 +140,12 @@ class FedCustom(fl.server.strategy.FedAvg):
         )
 
         #After the second round apply dropout if wanted
-        #if(server_round>1):
-            # Drop Out center
-        #    (clients, Fast_round) = Fast_at_odd_rounds(server_round,clients,self.clients_first_round_time, 25)
-
+        if(self.dropout_method != 'None'):
+            if(server_round>1):
+                # Drop Out center
+                clients = select_clients(self.dropout_method, self.percentage_drop,clients,self.clients_first_round_time,server_round,self.clients_num_examples)
+                
+            
         # Return client/config pairs
         return [(client, fit_ins) for client in clients]
 
@@ -194,6 +199,7 @@ class FedCustom(fl.server.strategy.FedAvg):
         if(server_round == 1):
             for client, res in results:
                 self.clients_first_round_time[client.cid] = res.metrics['running_time']
+                self.clients_num_examples[client.cid] = res.num_examples
                 
       
         # Aggregate custom metrics if aggregation fn was provided
