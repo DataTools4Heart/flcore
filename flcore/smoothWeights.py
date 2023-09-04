@@ -19,7 +19,7 @@ from functools import reduce
 import numpy as np
 
 
-def smooth_aggregate(results,smoothing_method,smoothing_strenght) :
+def computeSmoothedWeights(results,smoothing_method,smoothing_strenght):
     """Compute weighted average."""
     # Calculate the total number of examples used during training
     num_examples_total = sum([num_examples for _, num_examples in results])
@@ -52,6 +52,11 @@ def smooth_aggregate(results,smoothing_method,smoothing_strenght) :
                 final_weights = SupperQuartile
     else:
         final_weights = homogeneous_weights
+
+    return final_weights
+
+def smooth_aggregate(results,smoothing_method,smoothing_strenght) :
+    final_weights = computeSmoothedWeights(results,smoothing_method,smoothing_strenght)
 
     # Create a list of weights, each multiplied by the related number of examples
     # weighted_weights = [

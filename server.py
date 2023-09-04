@@ -25,7 +25,8 @@ def check_config(config):
     assert (config['model']== 'linear_models' or \
             config['model']== 'xgb' or \
             config['model']== 'random_forest' or \
-            config['model']== 'logistic_regression'), 'the ML methods are not correct: linear_models. xgb, random_forest' 
+            config['model']== 'weighted_random_forest' or \
+            config['model']== 'logistic_regression'), 'the ML methods are not correct: linear_models. xgb, random_forest,weighted_random_forest' 
     
     if(config['model']== 'linear_models'):
          assert (config['linear_models']['model_type']== 'LR' or \

@@ -1,10 +1,10 @@
 num_clients: 3
 num_rounds: 3
-model: random_forest #linear_models, xgb, random_forest, logistic_regression (old version)
+model: weighted_random_forest #linear_models, xgb, random_forest, logistic_regression (old version)
 dataset: cvd # mnist, cvd, libsvm
 data_path: dataset/
 dropout_method: Fast_at_odd_rounds #None, Fast_at_odd_rounds, Fast_every_three, random_dropout,Less_participants_at_odd_rounds
-smooth_method: EqualVoting #None,EqualVoting,SlowerQuartile, SsupperQuartile
+smooth_method: None #None,EqualVoting,SlowerQuartile, SsupperQuartile
 
 experiment:
   name: "test_run_1"
@@ -13,6 +13,9 @@ experiment:
 
 random_forest:
   balanced_rf: True  
+
+weighted_random_forest:  
+  balanced_rf: True
 
 xgb:
   task_type: BINARY
