@@ -72,6 +72,18 @@ def get_server_and_strategy(config):
     strategy.smoothing_method = config['smooth_method']
     strategy.smoothing_strenght = config['smoothWeights']['smoothing_strenght']
 
+    filename = 'server_results.txt'
+    with open(
+    filename,
+    "a",
+    ) as f:
+        f.write(f"Name Model: {model_type} \n")
+        f.write(f"Num features: {n_features} \n")
+        f.write(f"Drop out Method: {strategy.dropout_method} \n")
+        f.write(f"Drop out Method: {strategy.percentage_drop} \n")
+        f.write(f"Smooth Method: {strategy.smoothing_method} \n")
+        f.write(f"Smooth Strenght: {strategy.smoothing_strenght } \n")
+
     return None, strategy
 
 

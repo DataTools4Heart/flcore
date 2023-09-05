@@ -1,9 +1,9 @@
 num_clients: 3
 num_rounds: 3
-model: weighted_random_forest #linear_models, xgb, random_forest, logistic_regression (old version)
+model:  linear_models #weighted_random_forest, linear_models, xgb, random_forest, logistic_regression (old version)
 dataset: cvd # mnist, cvd, libsvm
 data_path: dataset/
-dropout_method: Fast_at_odd_rounds #None, Fast_at_odd_rounds, Fast_every_three, random_dropout,Less_participants_at_odd_rounds
+dropout_method: None #None, Fast_at_odd_rounds, Fast_every_three, random_dropout,Less_participants_at_odd_rounds
 smooth_method: None #None,EqualVoting,SlowerQuartile, SsupperQuartile
 
 experiment:
@@ -26,7 +26,7 @@ xgb:
 
 linear_models:
   model_type: LR #elastic_net,LSVC, LR
-  n_features: 9
+  n_features: 9 
 
 dropout: 
   percentage_drop: 25

@@ -42,6 +42,7 @@ class FedCustom(fl.server.strategy.FedAvg):
     percentage_drop = 0
     smoothing_method = None
     smoothing_strenght = 0
+    accum_time = 0
     # pylint: disable=too-many-arguments,too-many-instance-attributes,line-too-long
    
     def configure_fit(
@@ -123,8 +124,16 @@ class FedCustom(fl.server.strategy.FedAvg):
             log(WARNING, "No fit_metrics_aggregation_fn provided")
 
         elapsed_time =  (time.time() - self.time_server_round)
+        self.accum_time = self.accum_time+ elapsed_time
         self.time_server_round = time.time()
         print(f"Elapsed time: {elapsed_time} for round {server_round}")
+
+        filename = 'server_results.txt'
+        with open(
+        filename,
+        "a",
+        ) as f:
+            f.write(f"Accumulated Time: {self.accum_time} for round {server_round}\n")
 
         return parameters_aggregated, metrics_aggregated
     
