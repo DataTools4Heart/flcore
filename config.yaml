@@ -16,6 +16,7 @@ random_forest:
 
 weighted_random_forest:  
   balanced_rf: True
+  levelOfDetail: 'DecisionTree' #DecisionTree, RandomForest
 
 xgb:
   task_type: BINARY

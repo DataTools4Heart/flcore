@@ -36,7 +36,54 @@ import time
 
 from mlxtend.classifier import EnsembleVoteClassifier
 
+#Ensamble in the level of RF trees
+def ensambleRFTrees(parameters):
+    list_classifiers = [None] * len(parameters)
+    weights_classifiers = [None] * len(parameters)
+    
+    for i in range(len(parameters)):
+        model = utils.get_model(True)
+        model.estimators_= parameters[i][0][0]
+        model.n_classes_ =2 
+        model.n_outputs_ = 1 
+        model.classes_ = np.array([j for j in range(model.n_classes_)])
+        list_classifiers[i] = model
+        #If RF is weighted, we will have
+        #Three parameters (RF,num_examples, weight of the center)
+        if(len(parameters[i])==3):
+            weights_classifiers[i] = parameters[i][2]
+        else:
+            weights_classifiers[i] = 1
 
+    return  list_classifiers,weights_classifiers
+
+#Ensamble in the level of decisions trees
+#that compose the RF trees so repeat the
+#weight of each center for each 
+#decision tree belonging to that center
+#if enabled otherwise 1
+def ensambleDecisionTrees(parameters):
+    list_classifiers = []
+    weights_classifiers = [] 
+
+    for i in range(len(parameters)):
+        list_classifiers = np.concatenate(((list_classifiers),(parameters[i][0][0])))
+        if(len(parameters[i])==3):
+            weights_smooth = parameters[i][2]
+        else:
+            weights_smooth = 1
+        weights_classifiers = np.concatenate(((weights_classifiers),([weights_smooth]*len(parameters[i][0][0]))))
+
+    #Represent the data as wanted for the majority voting
+    #maybe you can simplify it
+    list_classifiers_final = [None] * len(list_classifiers)
+    weights_classifiers_final = [None] * len(weights_classifiers)
+
+    for i in range(len(list_classifiers)):
+        list_classifiers_final[i] = list_classifiers[i]
+        weights_classifiers_final[i] = weights_classifiers[i] 
+
+    return  list_classifiers_final,weights_classifiers_final           
 
 # Define Flower client
 class MnistClient(fl.client.Client):
@@ -53,6 +100,7 @@ class MnistClient(fl.client.Client):
         utils.set_initial_params_client(self.model,self.X_train, self.y_train)
         self.ensamble_tree = []
         self.weight_ensamble_tree = []
+        self.levelOfDetail = config['weighted_random_forest']['levelOfDetail']
     def get_parameters(self, ins: GetParametersIns):  # , config type: ignore
         params = utils.get_model_parameters(self.model)
 
@@ -118,30 +166,25 @@ class MnistClient(fl.client.Client):
         parameters = ins.parameters
         #Deserialize to get the real parameters
         parameters = deserialize_RF(parameters)
-    
-        list_classifiers = [None] * len(parameters)
-        weights_classifiers = [None] * len(parameters)
-        
-        for i in range(len(parameters)):
-            model = utils.get_model(True)
-            model.estimators_= parameters[i][0][0]
-            model.n_classes_ =2 
-            model.n_outputs_ = 1 
-            model.classes_ = np.array([j for j in range(model.n_classes_)])
-            list_classifiers[i] = model
-            #If RF is weighted, we will have
-            #Three parameters (RF,num_examples, weight of the center)
-            if(len(parameters[i])==3):
-                weights_classifiers[i] = parameters[i][2]
-            else:
-                weights_classifiers[i] = 1
-        
+
+        if(self.levelOfDetail == 'DecisionTree'):
+            list_classifiers,weights_classifiers = ensambleDecisionTrees(parameters)
+            #self.ensamble_tree = np.concatenate(((self.ensamble_tree),(list_classifiers)))
+            #self.weight_ensamble_tree = np.concatenate(((self.weight_ensamble_tree),(weights_classifiers)))
+        else:
+            list_classifiers,weights_classifiers = ensambleRFTrees(parameters)
+            
         #Merge the trees of all clients in each round
         self.ensamble_tree = (self.ensamble_tree)+(list_classifiers)
         self.weight_ensamble_tree = (self.weight_ensamble_tree)+(weights_classifiers)
   
+                
+       
         #Apply majority voting to the RF trees with the weights
-        eclf = EnsembleVoteClassifier(clfs=self.ensamble_tree, weights=self.weight_ensamble_tree, fit_base_estimators=False,voting='hard')
+        #fit_base_estimator= false does not fit the classifiers 
+        #apply the majority voting from the models
+        #weights=self.weight_ensamble_tree
+        eclf = EnsembleVoteClassifier(clfs=self.ensamble_tree, fit_base_estimators=False,voting='hard',weights=self.weight_ensamble_tree)
         eclf.fit(self.X_train, self.y_train) 
 
         #utils.set_model_params(self.model, parameters)

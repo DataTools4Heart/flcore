@@ -32,6 +32,10 @@ def check_config(config):
          assert (config['linear_models']['model_type']== 'LR' or \
             config['linear_models']['model_type']== 'elastic_net' or \
             config['linear_models']['model_type']== 'LSVC'), 'the Linear models are not correct: LR, LSVC, elastic_net '
+    
+    if(config['model'] == 'weighted_random_forest'): 
+         assert (config['weighted_random_forest']['levelOfDetail']== 'DecisionTree' or \
+            config['weighted_random_forest']['levelOfDetail']== 'RandomForest'), 'the levels of detail for weighted RF are not correct: DecisionTree and RandomForest '
         
 
 if __name__ == "__main__":
