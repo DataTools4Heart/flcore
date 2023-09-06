@@ -22,6 +22,7 @@ from flwr.common.logger import log
 from flwr.server.client_manager import ClientManager
 from flwr.server.client_proxy import ClientProxy
 import flwr as fl
+from flcore.models.random_forest.aggregatorRF import aggregateRFwithSizeCenterProbs, aggregateRFwithSizeCenterProbs_withprevious
 from flcore.serialization_funs import serialize_RF, deserialize_RF
 
 import numpy as np
@@ -30,6 +31,7 @@ import random
 import time
 import flwr.server.strategy.fedavg as fedav
 from flcore.dropout import select_clients
+from flcore.smoothWeights import smooth_aggregate,computeSmoothedWeights
 
 WARNING_MIN_AVAILABLE_CLIENTS_TOO_LOW = """
 Setting `min_available_clients` lower than `min_fit_clients` or
@@ -38,75 +40,6 @@ connected to the server. `min_available_clients` must be set to a value larger
 than or equal to the values of `min_fit_clients` and `min_evaluate_clients`.
 """
 
-def aggregateRF_random(rfs,bal_RF):
-    rfa= get_model(bal_RF)
-    number_Clients = len(rfs)
-    numberTreesperclient = int(len(rfs[0][0][0]))
-    random_select = int(numberTreesperclient/number_Clients)
-    #TypeError: 'list' object cannot be interpreted as an integer
-    #I need to add double parenthesis for concatenation
-    rf0 = np.concatenate((random.choices(rfs[0][0][0],k=random_select), random.choices(rfs[1][0][0],k=random_select)))
-    for i in range(2,len(rfs)):
-        rf0 = np.concatenate((rf0, random.choices(rfs[i][0][0],k=random_select)))
-    rfa.estimators_=np.array(rf0)
-    rfa.n_estimators = len(rfa.estimators_)
-
-    return [rfa],rfa.estimators_
-
-
-def aggregateRF_withprevious_random(rfs,previous_estimators,bal_RF):
-    rfa= get_model(bal_RF)
-    number_Clients = len(rfs)
-    numberTreesperclient = int(len(rfs[0][0][0]))
-    random_select =int(numberTreesperclient/number_Clients)
-    #TypeError: 'list' object cannot be interpreted as an integer
-    #I need to add double parenthesis for concatenation
-    rf0 = np.concatenate((random.choices(rfs[0][0][0],k=random_select), random.choices(rfs[1][0][0],k=random_select)))
-    for i in range(2,len(rfs)):
-        rf0 = np.concatenate((rf0, random.choices(rfs[i][0][0],k=random_select)))
-
-    #TypeError: 'list' object cannot be interpreted as an integer
-    #I need to add double parenthesis for concatenation
-    all_concats = np.concatenate((rf0,previous_estimators))
-    rfa.estimators_=np.array(all_concats)
-    rfa.n_estimators = len(rfa.estimators_)
-
-    return [rfa],rfa.estimators_
-
-#We merge all the trees in one RF
-#https://ai.stackexchange.com/questions/34250/random-forests-are-more-estimators-always-better
-def aggregateRF(rfs,bal_RF):
-    rfa= get_model(bal_RF)
-    #number_Clients = len(rfs)
-    numberTreesperclient = int(len(rfs[0][0][0]))
-    random_select = numberTreesperclient #int(numberTreesperclient/number_Clients)
-    #TypeError: 'list' object cannot be interpreted as an integer
-    #I need to add double parenthesis for concatenation
-    rf0 = np.concatenate(((rfs[0][0][0]), (rfs[1][0][0])))
-    for i in range(2,len(rfs)):
-        rf0 = np.concatenate((rf0, (rfs[i][0][0])))
-    rfa.estimators_=np.array(rf0)
-    rfa.n_estimators = len(rfa.estimators_)
-
-    return [rfa],rfa.estimators_
-
-#We merge all the trees in one RF
-#https://ai.stackexchange.com/questions/34250/random-forests-are-more-estimators-always-better
-def aggregateRF_withprevious(rfs,previous_estimators,bal_RF):
-    rfa= get_model(bal_RF)
-    #TypeError: 'list' object cannot be interpreted as an integer
-    #I need to add double parenthesis for concatenation
-    rf0 = np.concatenate(((rfs[0][0][0]), (rfs[1][0][0])))
-    for i in range(2,len(rfs)):
-        rf0 = np.concatenate((rf0, (rfs[i][0][0])))
-
-    #TypeError: 'list' object cannot be interpreted as an integer
-    #I need to add double parenthesis for concatenation
-    all_concats = np.concatenate((rf0,previous_estimators))
-    rfa.estimators_=np.array(all_concats)
-    rfa.n_estimators = len(rfa.estimators_)
-
-    return [rfa],rfa.estimators_
 
 class FedCustom(fl.server.strategy.FedAvg):
     """Configurable FedAvg strategy implementation."""
@@ -117,6 +50,9 @@ class FedCustom(fl.server.strategy.FedAvg):
     time_server_round = time.time()
     bal_RF = None
     dropout_method = None
+    server_estimators = []
+    server_estimators_weights = []
+    accum_time = 0
     # pylint: disable=too-many-arguments,too-many-instance-attributes,line-too-long
     
     def configure_fit(
@@ -185,9 +121,11 @@ class FedCustom(fl.server.strategy.FedAvg):
         ]
 
         if(server_round == 1):
-            aggregation_result,self.server_estimators = aggregateRF(weights_results,self.bal_RF)
+            aggregation_result,self.server_estimators,self.server_estimators_weights = aggregateRFwithSizeCenterProbs(weights_results,self.bal_RF)
+            #aggregation_result,self.server_estimators = aggregateRF(weights_results,self.bal_RF)
         else:
-            aggregation_result,self.server_estimators = aggregateRF_withprevious(weights_results,self.server_estimators,self.bal_RF)
+            aggregation_result,self.server_estimators,self.server_estimators_weights = aggregateRFwithSizeCenterProbs_withprevious(weights_results,self.bal_RF,self.server_estimators,self.server_estimators_weights)
+            #aggregation_result,self.server_estimators = aggregateRF_withprevious(weights_results,self.server_estimators,self.bal_RF)
 
         #ndarrays_to_parameters necessary to send the message
         parameters_aggregated = serialize_RF(aggregation_result)
@@ -211,8 +149,16 @@ class FedCustom(fl.server.strategy.FedAvg):
             log(WARNING, "No fit_metrics_aggregation_fn provided")
 
         elapsed_time =  (time.time() - self.time_server_round)
+        self.accum_time = self.accum_time+ elapsed_time
         self.time_server_round = time.time()
         print(f"Elapsed time: {elapsed_time} for round {server_round}")
+        
+        filename = 'server_results.txt'
+        with open(
+        filename,
+        "a",
+        ) as f:
+            f.write(f"Accumulated Time: {self.accum_time} for round {server_round}\n")
 
         return parameters_aggregated, metrics_aggregated
     
@@ -246,6 +192,15 @@ class FedCustom(fl.server.strategy.FedAvg):
             metrics_aggregated = self.evaluate_metrics_aggregation_fn(eval_metrics)
         elif server_round == 1:  # Only log this warning once
             log(WARNING, "No evaluate_metrics_aggregation_fn provided")
+
+        filename = 'server_results.txt'
+        with open(
+        filename,
+        "a",
+        ) as f:
+            f.write(f"Accuracy: {metrics_aggregated['accuracy']} \n")
+            f.write(f"Sensitivity: {metrics_aggregated['sensitivity']} \n")
+            f.write(f"Specificity: {metrics_aggregated['specificity']} \n")
 
         return loss_aggregated, metrics_aggregated
 
