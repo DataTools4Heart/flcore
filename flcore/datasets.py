@@ -1,21 +1,45 @@
 import bz2
 import os
+import openml
 import shutil
 import urllib.request
-from typing import Tuple
-
+import torch as T
 import numpy as np
-import openml
 import pandas as pd
+
+from typing import Tuple
 from sklearn.datasets import load_svmlight_file
 from sklearn.model_selection import KFold, StratifiedShuffleSplit, train_test_split
 from sklearn.utils import shuffle
 
 from flcore.models.xgb.utils import TreeDataset, do_fl_partitioning, get_dataloader
 
-XY = Tuple[np.ndarray, np.ndarray]
-Dataset = Tuple[XY, XY]
+XY = Tuple[ np.ndarray, np.ndarray ]
+Dataset = Tuple[ XY, XY ]
 
+def load_iris():
+    class IrisDataset( T.utils.data.Dataset ):
+        def __init__( self ):
+            iris_openml = openml.datasets.get_dataset( 61 )
+            Xy, _, _, _ = iris_openml.get_data( dataset_format = 'dataframe' )
+            Xy = Xy.to_numpy()
+
+            self.x_data = T.tensor( Xy[:, :-1], dtype = T.float32 )
+            self.y_data = T.tensor( Xy[:, -1], dtype = T.int64 )
+        
+        def __len__(self):
+            return len( self.x_data )
+
+        def __getitem__(self, idx):
+            if T.is_tensor(idx):
+                idx = idx.tolist()
+            preds  = self.x_data[idx]
+            spcs   = self.y_data[idx] 
+            sample = { 'predictors' : preds, 'species' : spcs }
+    
+    ds = IrisDataset()
+    return ds
+    
 
 def load_mnist(center_id=None, num_splits=5):
     """Loads the MNIST dataset using OpenML.
