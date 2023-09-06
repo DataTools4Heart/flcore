@@ -12,8 +12,13 @@ def get_model_server_and_strategy(config, data=None):
         )
     elif model == "rf":
         pass
+
     elif model == "xgb":
         server, strategy = xgb_server.get_server_and_strategy(config, data)
+    
+    elif model == "bnn":
+        pass
+    
     else:
         raise ValueError(f"Unknown model: {model}")
 
