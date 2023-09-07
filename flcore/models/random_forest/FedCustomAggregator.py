@@ -121,10 +121,10 @@ class FedCustom(fl.server.strategy.FedAvg):
         ]
 
         if(server_round == 1):
-            aggregation_result,self.server_estimators,self.server_estimators_weights = aggregateRFwithSizeCenterProbs(weights_results,self.bal_RF)
+            aggregation_result,self.server_estimators,self.server_estimators_weights = aggregateRFwithSizeCenterProbs(weights_results,self.bal_RF,self.smoothing_method,self.smoothing_strenght)
             #aggregation_result,self.server_estimators = aggregateRF(weights_results,self.bal_RF)
         else:
-            aggregation_result,self.server_estimators,self.server_estimators_weights = aggregateRFwithSizeCenterProbs_withprevious(weights_results,self.bal_RF,self.server_estimators,self.server_estimators_weights)
+            aggregation_result,self.server_estimators,self.server_estimators_weights = aggregateRFwithSizeCenterProbs_withprevious(weights_results,self.bal_RF,self.server_estimators,self.server_estimators_weights,self.smoothing_method,self.smoothing_strenght)
             #aggregation_result,self.server_estimators = aggregateRF_withprevious(weights_results,self.server_estimators,self.bal_RF)
 
         #ndarrays_to_parameters necessary to send the message

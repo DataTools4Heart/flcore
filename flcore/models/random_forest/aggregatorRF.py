@@ -116,14 +116,19 @@ def aggregateRF_withprevious(rfs,previous_estimators,bal_RF):
 #In this version of aggregation we weight according to smoothing
 #weigth, we transform into probability /sum(weights)
 #and random choice select according to probability distribution
-def aggregateRFwithSizeCenterProbs(rfs,bal_RF):
+def aggregateRFwithSizeCenterProbs(rfs,bal_RF,smoothing_method,smoothing_strenght):
     rfa= get_model(bal_RF)
     numberTreesperclient = int(len(rfs[0][0][0]))
     number_Clients = len(rfs)
     random_select =int(numberTreesperclient/number_Clients)
     list_classifiers = []
     weights_classifiers = [] 
-    weights_centers = computeSmoothedWeights(rfs,True,0.5)
+    if(smoothing_method!= 'None'):
+        weights_centers = computeSmoothedWeights(rfs,True,smoothing_strenght)
+    else:
+        #If smooth weights is not available all the trees have the
+        #same probability
+        weights_centers = [1]*(number_Clients)
     for i in range(number_Clients):
         list_classifiers = np.concatenate(((list_classifiers),(rfs[i][0][0])))
         weights_smooth = weights_centers[i]
@@ -141,8 +146,8 @@ def aggregateRFwithSizeCenterProbs(rfs,bal_RF):
 
     return [rfa],rfa.estimators_,weights_selectedTrees
 
-def aggregateRFwithSizeCenterProbs_withprevious(rfs,bal_RF,previous_estimators,previous_estimator_weights):
-            [rfa],rfa.estimators_,weights_selectedTrees = aggregateRFwithSizeCenterProbs(rfs,bal_RF)
+def aggregateRFwithSizeCenterProbs_withprevious(rfs,bal_RF,previous_estimators,previous_estimator_weights,smoothing_method,smoothing_strenght):
+            [rfa],rfa.estimators_,weights_selectedTrees = aggregateRFwithSizeCenterProbs(rfs,bal_RF,smoothing_method,smoothing_strenght)
 
             rfa.estimators_= np.concatenate(((previous_estimators), (rfa.estimators_)))
             rfa.estimators_=np.array(rfa.estimators_)
