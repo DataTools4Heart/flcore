@@ -1,6 +1,6 @@
 # Bayesian Neural Network
 
-The implementation of the BNN is based on the description from [torchbnn](https://github.com/Harry24k/bayesian-neural-network-pytorch) and from (Tutorial 1: Bayesian Neural Networks with Pyro)[https://uvadlc-notebooks.readthedocs.io/en/latest/tutorial_notebooks/DL2/Bayesian_Neural_Networks/dl2_bnn_tut1_students_with_answers.html].
+The implementation of the BNN is based on the description from [torchbnn](https://github.com/Harry24k/bayesian-neural-network-pytorch) and from [Tutorial 1: Bayesian Neural Networks with Pyro](https://uvadlc-notebooks.readthedocs.io/en/latest/tutorial_notebooks/DL2/Bayesian_Neural_Networks/dl2_bnn_tut1_students_with_answers.html).
 
 ## Ho wot use it?
 
