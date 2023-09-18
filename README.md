@@ -6,6 +6,7 @@ Library of Federated Learning models integrated within the DataTools4Heart proje
 |---|---|---|
 |Logistic regression| FedAvg |[flower.dev/docs/framework/quickstart-scikitlearn.html](https://flower.dev/docs/framework/quickstart-scikitlearn.html)|
 |XGBoost| FedXgbNnAvg |[Gradient-less Federated Gradient Boosting Trees with Learnable Learning Rates](https://arxiv.org/abs/2304.07537)|
+|BNN| --- |[Bayesian Neural Networks with Pyro](https://uvadlc-notebooks.readthedocs.io/en/latest/tutorial_notebooks/DL2/Bayesian_Neural_Networks/dl2_bnn_tut1_students_with_answers.html)|
 
 ## Quickstart
 Install necessary dependencies:

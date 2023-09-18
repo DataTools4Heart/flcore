@@ -17,7 +17,7 @@ def get_model_client(config, data, client_id):
     elif model == "xgb":
         client = xgb.client.get_client(config, data, client_id)
 
-    elif model == "":
+    elif model == "bnn":
         client = bnn.client.get_client(config, data, client_id)
     
     else:
