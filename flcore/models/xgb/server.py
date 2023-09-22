@@ -145,10 +145,12 @@ class FL_Server(fl.server.Server):
     ]:
         """Validate current global model on a number of clients."""
 
+        parameters_packed = serialize_objects_to_parameters(self.parameters)
         # Get clients and their respective instructions from strategy
         client_instructions = self.strategy.configure_evaluate(
             server_round=server_round,
-            parameters=self.parameters,
+            # parameters=self.parameters,
+            parameters=parameters_packed,
             client_manager=self._client_manager,
         )
         if not client_instructions:
@@ -368,6 +370,14 @@ def serverside_eval(
         print(f"Evaluation on the server: test_loss={loss:.4f}, test_mse={result:.4f}")
         return loss, {"mse": result}
 
+# def metrics_aggregation_fn(eval_metrics):
+#     metrics = eval_metrics[0][1].keys()
+#     metrics_dict = {}
+#     for metric in metrics:
+#         metric_sum = sum([result[1][metric]*result[0] for result in eval_metrics])
+#         metrics_dict[metric] = []
+#     for result in eval_metrics:
+#         print(result)
 
 def get_server_and_strategy(
     config, data

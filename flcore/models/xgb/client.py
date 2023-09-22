@@ -60,6 +60,10 @@ class FL_Client(fl.client.Client):
         self.client_num = client_num
         self.properties = {"tensor_type": "numpy.ndarray"}
         self.log_progress = log_progress
+        self.tree_config_dict = {
+            "client_tree_num": self.client_tree_num,
+            "task_type": self.task_type,
+        }
         self.tmp_dir = ""
 
         # instantiate model
@@ -108,13 +112,9 @@ class FL_Client(fl.client.Client):
         # Process incoming request to train
         num_iterations = fit_params.config["num_iterations"]
         batch_size = fit_params.config["batch_size"]
-        tree_config_dict = {
-            "client_tree_num": self.client_tree_num,
-            "task_type": self.task_type,
-        }
 
         objects = parameters_to_objects(
-            fit_params.parameters, tree_config_dict, self.tmp_dir
+            fit_params.parameters, self.tree_config_dict, self.tmp_dir
         )
 
         aggregated_trees = self.set_parameters(objects)
@@ -174,8 +174,15 @@ class FL_Client(fl.client.Client):
             )
 
     def evaluate(self, eval_params: EvaluateIns) -> EvaluateRes:
+
+        print(
+            f"Client {self.cid}: Start evaluation round"
+        )
         # Process incoming request to evaluate
-        self.set_parameters(eval_params.parameters)
+        objects = parameters_to_objects(
+            eval_params.parameters, self.tree_config_dict, self.tmp_dir
+        )
+        self.set_parameters(objects)
 
         # Evaluate the model
         self.net.to(self.device)
@@ -218,13 +225,14 @@ def get_client(config, data, client_id) -> fl.client.Client:
     batch_size = "whole"
     cid = str(client_id)
     trainset = TreeDataset(np.array(X_train, copy=True), np.array(y_train, copy=True))
-    testset = TreeDataset(np.array(X_test, copy=True), np.array(y_test, copy=True))
+    valset = TreeDataset(np.array(X_test, copy=True), np.array(y_test, copy=True))
     trainloader = get_dataloader(trainset, "train", batch_size)
+    valloader = get_dataloader(valset, "test", batch_size)
 
     client = FL_Client(
         task_type,
         trainloader,
-        None,
+        valloader,
         client_tree_num,
         client_num,
         cid,

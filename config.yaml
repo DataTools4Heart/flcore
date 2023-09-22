@@ -14,3 +14,5 @@ xgb:
   batch_size: 32
   num_iterations: 100
   tree_num: 500
+
+production_mode: False # Turn on to use environment variables such as data path, server address, certificates etc.

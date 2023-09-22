@@ -173,8 +173,7 @@ def test(
                 if task_type == "MULTICLASS":
                     raise NotImplementedError()
                 acc = Accuracy(task=task_type.lower())(
-                    outputs.cpu(), labels.type(torch.int).cpu(), num_classes=num_classes
-                )
+                    outputs.cpu(), labels.type(torch.int).cpu())
                 total_result += acc * labels.size(0)
             elif task_type == "REG":
                 mse = MeanSquaredError()(outputs.cpu(), labels.type(torch.int).cpu())
