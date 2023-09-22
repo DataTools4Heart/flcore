@@ -1,18 +1,41 @@
 import warnings
+import os
+import sys
 from pathlib import Path
 
 import flwr as fl
 import yaml
-
 import flcore.datasets as datasets
 from flcore.server_selector import get_model_server_and_strategy
 
 warnings.filterwarnings("ignore")
 
 if __name__ == "__main__":
+
+    if len(sys.argv) == 2:
+        config_path = sys.argv[1]
+    else:
+        config_path = "config.yaml"
+
     # Read the config file
-    with open("config.yaml", "r") as f:
+
+    with open(config_path, "r") as f:
         config = yaml.safe_load(f)
+
+    if config["production_mode"]:
+        data_path = os.getenv("DATA_PATH")
+        central_ip = os.getenv("FLOWER_CENTRAL_SERVER_IP")
+        central_port = os.getenv("FLOWER_CENTRAL_SERVER_PORT")
+        certificates = certificates = (
+            Path( '.cache/certificates/rootCA_cert.pem' ).read_bytes(),
+            Path( '.cache/certificates/server_cert.pem' ).read_bytes(),
+            Path( '.cache/certificates/server_key.pem'  ).read_bytes(),
+        ),
+    else:
+        data_path = config["data_path"]
+        central_ip = "LOCALHOST"
+        central_port = "8080"
+        certificates = None
 
     # Create experiment directory
     experiment_dir = Path("results") / config["experiment"]["name"]
@@ -45,15 +68,11 @@ if __name__ == "__main__":
 
     # Start Flower server for three rounds of federated learning
     history = fl.server.start_server(
-        server_address="[::]:8080",
+        server_address=f"{central_ip}:{central_port}",
         config=fl.server.ServerConfig(num_rounds=config["num_rounds"]),
         server=server,
         strategy=strategy,
-        # certificates = (
-        #     Path( '.cache/certificates/rootCA_cert.pem' ).read_bytes(),
-        #     Path( '.cache/certificates/server_cert.pem' ).read_bytes(),
-        #     Path( '.cache/certificates/server_key.pem'  ).read_bytes(),
-        # ),
+        certificates = certificates,
     )
     # # Save the model and the history
     # filename = os.path.join( checkpoint_dir, 'final_model.pt' )
