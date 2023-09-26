@@ -1,7 +1,7 @@
 num_clients: 2
 num_rounds: 10
-model: logistic_regression # xgb, logistic_regression
-dataset: cvd # mnist, cvd, libsvm
+model: xgb # xgb, logistic_regression
+dataset: kaggle_hf # mnist, cvd, libsvm, kaggle_hf
 data_path: dataset/
 
 experiment:

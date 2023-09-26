@@ -145,7 +145,7 @@ def load_cvd(data_path, center_id=None) -> Dataset:
 def load_kaggle_hf(data_path, center_id=None) -> Dataset:
     id = center_id
     
-    if id == 0:
+    if id == 4:
         id = 'switzerland'
     elif id == 1:
         id = 'hungarian'
