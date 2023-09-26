@@ -8,6 +8,7 @@ import numpy as np
 import openml
 import pandas as pd
 from sklearn.datasets import load_svmlight_file
+from sklearn.preprocessing import LabelEncoder, MinMaxScaler,StandardScaler
 from sklearn.model_selection import KFold, StratifiedShuffleSplit, train_test_split
 from sklearn.utils import shuffle
 
@@ -138,6 +139,84 @@ def load_cvd(data_path, center_id=None) -> Dataset:
     # print(train_max_acc)
     # print(test_max_acc)
 
+    return (X_train, y_train), (X_test, y_test)
+
+
+def load_kaggle_hf(data_path, center_id=None) -> Dataset:
+    id = center_id
+    
+    if id == 4:
+        id = 'switzerland'
+    elif id == 1:
+        id = 'hungarian'
+    elif id == 2:
+        id = 'va'
+    elif id == 3:
+        id = 'cleveland'
+
+    file_name = os.path.join(data_path, "kaggle_hf.csv")
+    data = pd.read_csv(file_name)
+    if id is not None:
+        data = data.loc[(data['data_center'] == id)]
+
+    col = list(data.columns)
+    categorical_features = []
+    numerical_features = []
+    for i in col:
+        if len(data[i].unique()) > 6:
+            numerical_features.append(i)
+        else:
+            categorical_features.append(i)
+
+    # print('Categorical Features :',*categorical_features)
+    # print('Numerical Features :',*numerical_features)
+
+    le = LabelEncoder()
+    df1 = data.copy(deep = True)
+
+    df1['Sex'] = le.fit_transform(df1['Sex'])
+    df1['ChestPainType'] = le.fit_transform(df1['ChestPainType'])
+    df1['RestingECG'] = le.fit_transform(df1['RestingECG'])
+    df1['ExerciseAngina'] = le.fit_transform(df1['ExerciseAngina'])
+    df1['ST_Slope'] = le.fit_transform(df1['ST_Slope'])
+
+    
+    # mms = MinMaxScaler() # Normalization
+    # ss = StandardScaler() # Standardization
+    # df1['Oldpeak'] = mms.fit_transform(df1[['Oldpeak']])
+    # df1['Age'] = ss.fit_transform(df1[['Age']])
+    # df1['RestingBP'] = ss.fit_transform(df1[['RestingBP']])
+    # df1['Cholesterol'] = ss.fit_transform(df1[['Cholesterol']])
+    # df1['MaxHR'] = ss.fit_transform(df1[['MaxHR']])
+
+    # features = df1[df1.columns.drop(['HeartDisease','RestingBP','RestingECG', 'data_center'])].values
+    # target = df1['HeartDisease'].values
+    features = df1[df1.columns.drop(['HeartDisease','RestingBP','RestingECG', 'data_center'])]
+    target = df1['HeartDisease']
+    X_train, X_test, y_train, y_test = train_test_split(features, target, test_size = 0.20, random_state = 2)
+
+    mms = MinMaxScaler() # Normalization
+    ss = StandardScaler() # Standardization
+
+    X_train['Oldpeak'] = mms.fit_transform(X_train[['Oldpeak']])
+    X_test['Oldpeak'] = mms.transform(X_test[['Oldpeak']])
+
+    X_train['Age'] = ss.fit_transform(X_train[['Age']])
+    X_test['Age'] = ss.transform(X_test[['Age']])
+
+    # X_train['RestingBP'] = ss.fit_transform(X_train[['RestingBP']])
+    # X_test['RestingBP'] = ss.transform(X_test[['RestingBP']])
+
+    X_train['Cholesterol'] = ss.fit_transform(X_train[['Cholesterol']])
+    X_test['Cholesterol'] = ss.transform(X_test[['Cholesterol']])
+
+    X_train['MaxHR'] = ss.fit_transform(X_train[['MaxHR']])
+    X_test['MaxHR'] = ss.transform(X_test[['MaxHR']])
+    
+    # print(X_train.shape)
+    # print(y_train.shape)
+    # print(X_test.shape)
+    # print(y_test.shape)
     return (X_train, y_train), (X_test, y_test)
 
 
@@ -286,6 +365,8 @@ def load_dataset(config, id=None):
         return load_mnist(id, config["num_clients"])
     elif config["dataset"] == "cvd":
         return load_cvd(config["data_path"], id)
+    elif config["dataset"] == "kaggle_hf":
+        return load_kaggle_hf(config["data_path"], id)
     elif config["dataset"] == "libsvm":
         return load_libsvm(config, id)
     else:

@@ -1,9 +1,10 @@
 import warnings
+import os
+import sys
 from pathlib import Path
 
 import flwr as fl
 import yaml
-
 import flcore.datasets as datasets
 from flcore.server_selector import get_model_server_and_strategy
 
@@ -39,8 +40,15 @@ def check_config(config):
         
 
 if __name__ == "__main__":
+
+    if len(sys.argv) == 2:
+        config_path = sys.argv[1]
+    else:
+        config_path = "config.yaml"
+
     # Read the config file
-    with open("config.yaml", "r") as f:
+
+    with open(config_path, "r") as f:
         config = yaml.safe_load(f)
 
     #Check the config file
@@ -61,15 +69,11 @@ if __name__ == "__main__":
 
     # Start Flower server for three rounds of federated learning
     history = fl.server.start_server(
-        server_address="[::]:8080",
+        server_address=f"{central_ip}:{central_port}",
         config=fl.server.ServerConfig(num_rounds=config["num_rounds"]),
         server=server,
         strategy=strategy,
-        # certificates = (
-        #     Path( '.cache/certificates/rootCA_cert.pem' ).read_bytes(),
-        #     Path( '.cache/certificates/server_cert.pem' ).read_bytes(),
-        #     Path( '.cache/certificates/server_key.pem'  ).read_bytes(),
-        # ),
+        certificates = certificates,
     )
     # # Save the model and the history
     # filename = os.path.join( checkpoint_dir, 'final_model.pt' )
