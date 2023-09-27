@@ -99,5 +99,21 @@ if __name__ == "__main__":
     # joblib.dump(model, filename)
     # Save the history as a yaml file
     print(history)
+    with open(history_dir / "results.txt", "w") as f:
+        per_client_values = {}
+        for metric in history.metrics_distributed:
+            metric_value = history.metrics_distributed[metric][-1][1]
+            if type(metric_value) == float:
+                f.write(f"{metric} {metric_value:.4f} \n")
+            else:
+                for metric in metric_value:
+                    if metric not in per_client_values:
+                        per_client_values[metric] = []
+                    per_client_values[metric].append(round(metric_value[metric], 3))
+        
+        f.write(f"\nPer client results:\n")
+        for metric in per_client_values:
+            f.write(f"{metric} {per_client_values[metric]} \n")
+
     with open(history_dir / "history.yaml", "w") as f:
         yaml.dump(history, f)

@@ -1,7 +1,7 @@
 ## Create Flower custom client
 
 from typing import List, Tuple, Union
-
+import time
 import flwr as fl
 import numpy as np
 import torch
@@ -32,6 +32,7 @@ from flcore.models.xgb.utils import (
     parameters_to_objects,
     serialize_objects_to_parameters,
     tree_encoding_loader,
+    train_test
 )
 
 
@@ -143,6 +144,7 @@ class FL_Client(fl.client.Client):
 
         # Train the model
         print(f"Client {self.cid}: training for {num_iterations} iterations/updates")
+        start_time = time.time()
         self.net.to(self.device)
         train_loss, train_result, num_examples = train(
             self.task_type,
@@ -155,6 +157,15 @@ class FL_Client(fl.client.Client):
         print(
             f"Client {self.cid}: training round complete, {num_examples} examples processed"
         )
+        # accuracy,specificity,sensitivity,balanced_accuracy, precision, F1_score = \
+        #         measurements_metrics(self.model,self.X_test.loc[:, parameters[2].astype(bool)], self.y_test)
+        #     print(f"Accuracy client in fit:  {accuracy}")
+        #     print(f"Sensitivity client in fit:  {sensitivity}")
+        #     print(f"Specificity client in fit:  {specificity}")
+        #     print(f"Balanced_accuracy in fit:  {balanced_accuracy}")
+        #     print(f"precision in fit:  {precision}")
+        #     print(f"F1_score in fit:  {F1_score}")
+        elapsed_time = (time.time() - start_time)
 
         # Return training information: model, number of examples processed and metrics
         if self.task_type == "BINARY":
@@ -163,14 +174,14 @@ class FL_Client(fl.client.Client):
                 # parameters=self.get_parameters(fit_params.config),
                 parameters=self.get_parameters(fit_params.config).parameters,
                 num_examples=num_examples,
-                metrics={"loss": train_loss, "accuracy": train_result},
+                metrics={"loss": train_loss, "accuracy": train_result, "running_time":elapsed_time},
             )
         elif self.task_type == "REG":
             return FitRes(
                 status=Status(Code.OK, ""),
                 parameters=self.get_parameters(fit_params.config),
                 num_examples=num_examples,
-                metrics={"loss": train_loss, "mse": train_result},
+                metrics={"loss": train_loss, "mse": train_result, "running_time":elapsed_time},
             )
 
     def evaluate(self, eval_params: EvaluateIns) -> EvaluateRes:
@@ -194,16 +205,21 @@ class FL_Client(fl.client.Client):
             log_progress=self.log_progress,
         )
 
+        metrics = result
+        metrics["client_id"] = int(self.cid)
+
         # Return evaluation information
         if self.task_type == "BINARY":
+            accuracy = metrics["accuracy"]
             print(
-                f"Client {self.cid}: evaluation on {num_examples} examples: loss={loss:.4f}, accuracy={result:.4f}"
+                f"Client {self.cid}: evaluation on {num_examples} examples: loss={loss:.4f}, accuracy={accuracy:.4f}"
             )
             return EvaluateRes(
                 status=Status(Code.OK, ""),
                 loss=loss,
                 num_examples=num_examples,
-                metrics={"accuracy": result},
+                # metrics={"accuracy": result},
+                metrics=metrics,
             )
         elif self.task_type == "REG":
             print(
@@ -213,7 +229,7 @@ class FL_Client(fl.client.Client):
                 status=Status(Code.OK, ""),
                 loss=loss,
                 num_examples=num_examples,
-                metrics={"mse": result},
+                metrics=metrics,
             )
 
 
@@ -228,6 +244,21 @@ def get_client(config, data, client_id) -> fl.client.Client:
     valset = TreeDataset(np.array(X_test, copy=True), np.array(y_test, copy=True))
     trainloader = get_dataloader(trainset, "train", batch_size)
     valloader = get_dataloader(valset, "test", batch_size)
+
+    metrics = train_test(data, client_tree_num)
+    from flcore import datasets
+    if client_id == 1:
+        cross_id = 2
+    else:
+        cross_id = 1
+    _, (X_test, y_test) = datasets.load_dataset(config, cross_id)
+
+    data = (X_train, y_train), (X_test, y_test)
+    metrics_cross = train_test(data, client_tree_num)
+    print("Client " + cid + " non-federated training results:")
+    print(metrics)
+    print("Cross testing model on client " + str(cross_id) + ":")
+    print(metrics_cross)
 
     client = FL_Client(
         task_type,

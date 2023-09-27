@@ -13,6 +13,7 @@ import torch.nn as nn
 from sklearn.metrics import accuracy_score, mean_squared_error
 from torch.utils.data import DataLoader
 from torchmetrics import Accuracy, MeanSquaredError
+from flcore.metrics import get_metrics_collection
 from tqdm import tqdm
 
 
@@ -157,6 +158,7 @@ def test(
         criterion = nn.MSELoss()
 
     total_loss, total_result, n_samples = 0.0, 0.0, 0
+    metrics = get_metrics_collection()
     net.eval()
     with torch.no_grad():
         pbar = tqdm(testloader, desc="TEST") if log_progress else testloader
@@ -169,22 +171,30 @@ def test(
             n_samples += labels.size(0)
             num_classes = np.unique(labels.cpu().numpy()).size
 
-            if task_type == "BINARY" or task_type == "MULTICLASS":
-                if task_type == "MULTICLASS":
-                    raise NotImplementedError()
-                acc = Accuracy(task=task_type.lower())(
-                    outputs.cpu(), labels.type(torch.int).cpu())
-                total_result += acc * labels.size(0)
-            elif task_type == "REG":
-                mse = MeanSquaredError()(outputs.cpu(), labels.type(torch.int).cpu())
-                total_result += mse * labels.size(0)
+            y_pred = outputs.cpu()
+            y_true = labels.cpu()
+            metrics.update(y_pred, y_true)
 
-    total_result = total_result.item()
+            # if task_type == "BINARY" or task_type == "MULTICLASS":
+            #     if task_type == "MULTICLASS":
+            #         raise NotImplementedError()
+                
+            #     # acc = Accuracy(task=task_type.lower())(
+            #     #     outputs.cpu(), labels.type(torch.int).cpu())
+            #     # total_result += acc * labels.size(0)
+            # elif task_type == "REG":
+            #     mse = MeanSquaredError()(outputs.cpu(), labels.type(torch.int).cpu())
+            #     total_result += mse * labels.size(0)
+    
+    metrics = metrics.compute()
+    metrics = {k: v.item() for k, v in metrics.items()}
+
+    # total_result = total_result.item()
 
     if log_progress:
         print("\n")
 
-    return total_loss / n_samples, total_result / n_samples, n_samples
+    return total_loss / n_samples, metrics, n_samples
 
 
 def print_model_layers(model: nn.Module) -> None:
