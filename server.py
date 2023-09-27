@@ -54,6 +54,21 @@ if __name__ == "__main__":
     #Check the config file
     check_config(config)
 
+    if config["production_mode"]:
+        data_path = os.getenv("DATA_PATH")
+        central_ip = os.getenv("FLOWER_CENTRAL_SERVER_IP")
+        central_port = os.getenv("FLOWER_CENTRAL_SERVER_PORT")
+        certificates = (
+            Path('.cache/certificates/rootCA_cert.pem').read_bytes(),
+            Path('.cache/certificates/server_cert.pem').read_bytes(),
+            Path('.cache/certificates/server_key.pem').read_bytes(),
+        )
+    else:
+        data_path = config["data_path"]
+        central_ip = "LOCALHOST"
+        central_port = "8080"
+        certificates = None
+
     # Create experiment directory
     experiment_dir = Path("results") / config["experiment"]["name"]
     experiment_dir.mkdir(parents=True, exist_ok=True)
@@ -65,7 +80,11 @@ if __name__ == "__main__":
     history_dir = experiment_dir / "history"
     history_dir.mkdir(parents=True, exist_ok=True)
 
-    server, strategy = get_model_server_and_strategy(config)
+    (X_train, y_train), (X_test, y_test) = datasets.load_dataset(config)
+
+    data = (X_train, y_train), (X_test, y_test)
+
+    server, strategy = get_model_server_and_strategy(config, data)
 
     # Start Flower server for three rounds of federated learning
     history = fl.server.start_server(

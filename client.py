@@ -19,7 +19,6 @@ if __name__ == "__main__":
         config_path = "config.yaml"
 
     num_client = int(sys.argv[1])
-    #num_client = 1
 
     with open(config_path, "r") as f:
         config = yaml.safe_load(f)

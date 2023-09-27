@@ -1,7 +1,7 @@
-num_clients: 3
-num_rounds: 3
-model:  random_forest #weighted_random_forest, linear_models, xgb, random_forest, logistic_regression (old version)
-dataset: cvd # mnist, cvd, libsvm
+num_clients: 2
+num_rounds: 10
+model:  xgb #weighted_random_forest, linear_models, xgb, random_forest, logistic_regression (old version)
+dataset: kaggle_hf # mnist, cvd, libsvm
 data_path: dataset/
 dropout_method: None #None, Fast_at_odd_rounds, Fast_every_three, random_dropout,Less_participants_at_odd_rounds
 smooth_method: None #None,EqualVoting,SlowerQuartile, SsupperQuartile
@@ -33,3 +33,5 @@ dropout:
   
 smoothWeights: 
   smoothing_strenght: 0.5 #Value between 0 and 1
+
+production_mode: True # Turn on to use environment variables such as data path, server address, certificates etc.
