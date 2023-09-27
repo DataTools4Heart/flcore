@@ -16,6 +16,8 @@ from flwr.common.typing import Parameters
 from matplotlib import pyplot as plt  # pylint: disable=E0401
 from torch.utils.data import DataLoader, Dataset, random_split
 from xgboost import XGBClassifier, XGBRegressor
+from flcore.metrics import calculate_metrics
+
 
 
 def get_dataloader(
@@ -324,3 +326,59 @@ def json_to_tree(tree_json, client_tree_num, task_type, tmp_directory=""):
     os.remove(tmp_path)
 
     return tree
+
+def train_test(data, client_tree_num):
+    (X_train, y_train), (X_test, y_test) = data
+
+    X_train.flags.writeable = True
+    y_train.flags.writeable = True
+    X_test.flags.writeable = True
+    y_test.flags.writeable = True
+
+    # If the feature dimensions of the trainset and testset do not agree,
+    # specify n_features in the load_svmlight_file function in the above cell.
+    # https://scikit-learn.org/stable/modules/generated/sklearn.datasets.load_svmlight_file.html
+    # print("Feature dimension of the dataset:", X_train.shape[1])
+    print("Size of the trainset:", X_train.shape[0])
+    print("Size of the testset:", X_test.shape[0])
+    assert X_train.shape[1] == X_test.shape[1]
+
+    # Try to automatically determine the type of task
+    n_classes = np.unique(y_train).shape[0]
+    if n_classes == 2:
+        task_type = "BINARY"
+    elif n_classes > 2 and n_classes < 100:
+        task_type = "MULTICLASS"
+    else:
+        task_type = "REG"
+
+    if task_type == "BINARY":
+        y_train[y_train == -1] = 0
+        y_test[y_test == -1] = 0
+
+    trainset = TreeDataset(np.array(X_train, copy=True), np.array(y_train, copy=True))
+    testset = TreeDataset(np.array(X_test, copy=True), np.array(y_test, copy=True))
+
+    # ## Conduct tabular dataset partition for Federated Learning
+
+    # ## Define global variables for Federated XGBoost Learning
+
+    # ## Build global XGBoost tree for comparison
+    global_tree = construct_tree(X_train, y_train, client_tree_num, task_type)
+    preds_train = global_tree.predict(X_train)
+    preds_test = global_tree.predict(X_test)
+
+    # metrics = calculate_metrics(y_train, preds_train, task_type)
+    # print("Global XGBoost Training Metrics:", metrics)
+    metrics = calculate_metrics(y_test, preds_test, task_type)
+    return metrics
+    # if task_type == "BINARY":
+    #     result_train = accuracy_score(y_train, preds_train)
+    #     result_test = accuracy_score(y_test, preds_test)
+    #     print("Global XGBoost Training Accuracy: %f" % (result_train))
+    #     print("Global XGBoost Testing Accuracy: %f" % (result_test))
+    # elif task_type == "REG":
+    #     result_train = mean_squared_error(y_train, preds_train)
+    #     result_test = mean_squared_error(y_test, preds_test)
+    #     print("Global XGBoost Training MSE: %f" % (result_train))
+    #     print("Global XGBoost Testing MSE: %f" % (result_test))
