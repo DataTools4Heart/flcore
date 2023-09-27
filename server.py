@@ -10,6 +10,35 @@ from flcore.server_selector import get_model_server_and_strategy
 
 warnings.filterwarnings("ignore")
 
+def check_config(config):
+    assert isinstance(config['num_clients'], int), 'num_clients should be an int'
+    assert isinstance(config['num_rounds'], int), 'num_rounds should be an int'
+    if(config['smooth_method'] != 'None'):
+        assert config['smoothWeights']['smoothing_strenght'] >= 0 and config['smoothWeights']['smoothing_strenght'] <= 1, 'smoothing_strenght should be betwen 0 and 1'
+    if(config['dropout_method'] != 'None'):
+        assert config['dropout']['percentage_drop'] >= 0 and config['dropout']['percentage_drop'] < 100, 'percentage_drop should be betwen 0 and 100'
+    
+    assert (config['smooth_method']== 'EqualVoting' or \
+        config['smooth_method']== 'SlowerQuartile' or \
+        config['smooth_method']== 'SsupperQuartile' or \
+        config['smooth_method']== 'None'), 'the smooth methods are not correct: EqualVoting, SlowerQuartile and SsupperQuartile' 
+    
+    assert (config['model']== 'linear_models' or \
+            config['model']== 'xgb' or \
+            config['model']== 'random_forest' or \
+            config['model']== 'weighted_random_forest' or \
+            config['model']== 'logistic_regression'), 'the ML methods are not correct: linear_models. xgb, random_forest,weighted_random_forest' 
+    
+    if(config['model']== 'linear_models'):
+         assert (config['linear_models']['model_type']== 'LR' or \
+            config['linear_models']['model_type']== 'elastic_net' or \
+            config['linear_models']['model_type']== 'LSVC'), 'the Linear models are not correct: LR, LSVC, elastic_net '
+    
+    if(config['model'] == 'weighted_random_forest'): 
+         assert (config['weighted_random_forest']['levelOfDetail']== 'DecisionTree' or \
+            config['weighted_random_forest']['levelOfDetail']== 'RandomForest'), 'the levels of detail for weighted RF are not correct: DecisionTree and RandomForest '
+        
+
 if __name__ == "__main__":
 
     if len(sys.argv) == 2:
@@ -21,6 +50,9 @@ if __name__ == "__main__":
 
     with open(config_path, "r") as f:
         config = yaml.safe_load(f)
+
+    #Check the config file
+    check_config(config)
 
     if config["production_mode"]:
         data_path = os.getenv("DATA_PATH")
@@ -48,18 +80,6 @@ if __name__ == "__main__":
     history_dir = experiment_dir / "history"
     history_dir.mkdir(parents=True, exist_ok=True)
 
-    # # Create an instance of the model and get the parameters
-    # model = LogisticRegression()
-    # utils.set_initial_params( model )
-
-    # # Pass parameters to the Strategy for server-side parameter initialization
-    # strategy = fl.server.strategy.FedAvg(
-    #     min_available_clients = 2,
-    #     evaluate_fn           = get_evaluate_fn( model ),
-    #     on_fit_config_fn      = fit_round,
-    # )
-    # (X_train, y_train), (X_test, y_test) = datasets.load_cvd(DATA_PATH, 'All')
-    # (X_train, y_train), (X_test, y_test) = datasets.load_mnist()
     (X_train, y_train), (X_test, y_test) = datasets.load_dataset(config)
 
     data = (X_train, y_train), (X_test, y_test)

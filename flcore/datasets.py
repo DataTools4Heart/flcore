@@ -76,7 +76,7 @@ def load_cvd(data_path, center_id=None) -> Dataset:
     #
     if id == None:
         # id = 'All'
-        data_centers = [1, 2]
+        data_centers = ['All']
     else:
         data_centers = [id]
 
@@ -373,3 +373,12 @@ def load_dataset(config, id=None):
         return load_libsvm(config, id)
     else:
         raise ValueError("Invalid dataset name")
+
+def get_stratifiedPartitions(n_splits,test_size, random_state):
+    sss = StratifiedShuffleSplit(n_splits=n_splits,test_size=test_size, random_state=random_state)
+    return sss
+
+def split_partitions(n_splits,test_size, random_state,X_data, y_data):
+    sss = get_stratifiedPartitions(n_splits,test_size, random_state)
+    splits_nested = (sss.split(X_data, y_data))
+    return splits_nested
