@@ -1,18 +1,37 @@
 num_clients: 5
 num_rounds: 10
-model: xgb # xgb, logistic_regression
-dataset: kaggle_hf # mnist, cvd, libsvm, kaggle_hf
+model: xgb #weighted_random_forest, linear_models, xgb, random_forest, logistic_regression (old version)
+dataset: kaggle_hf # mnist, cvd, libsvm
 data_path: dataset/
+dropout_method: None #None, Fast_at_odd_rounds, Fast_every_three, random_dropout,Less_participants_at_odd_rounds
+smooth_method: None #None,EqualVoting,SlowerQuartile, SsupperQuartile
 
 experiment:
   name: "test_run_1"
   results_path: "results"
   debug: True
 
+random_forest:
+  balanced_rf: True  
+
+weighted_random_forest:  
+  balanced_rf: True
+  levelOfDetail: 'DecisionTree' #DecisionTree, RandomForest
+
 xgb:
   task_type: BINARY
   batch_size: 32
   num_iterations: 100
   tree_num: 500
+
+linear_models:
+  model_type: LR #elastic_net,LSVC, LR
+  n_features: 9 
+
+dropout: 
+  percentage_drop: 25
+  
+smoothWeights: 
+  smoothing_strenght: 0.5 #Value between 0 and 1
 
 production_mode: True # Turn on to use environment variables such as data path, server address, certificates etc.

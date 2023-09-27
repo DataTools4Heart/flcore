@@ -1,17 +1,21 @@
 import numpy as np
 
-import flcore.models.logistic_regression as logistic_regression
+import flcore.models.linear_models as linear_models
 import flcore.models.xgb as xgb
-
+import flcore.models.random_forest as random_forest
+import flcore.models.weighted_random_forest as weighted_random_forest
 
 def get_model_client(config, data, client_id):
     model = config["model"]
 
-    if model == "logistic_regression":
-        client = logistic_regression.client.get_client(data)
+    if model == "linear_models": 
+        client = linear_models.client.get_client(config,data,client_id)
 
-    elif model == "rf":
-        pass
+    elif model == "random_forest":
+        client = random_forest.client.get_client(config,data,client_id) 
+    
+    elif model == "weighted_random_forest":
+        client = weighted_random_forest.client.get_client(config,data,client_id)
 
     elif model == "xgb":
         client = xgb.client.get_client(config, data, client_id)

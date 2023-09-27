@@ -5,6 +5,10 @@ Library of Federated Learning models integrated within the DataTools4Heart proje
 | Model | Aggregation method | Link |
 |---|---|---|
 |Logistic regression| FedAvg |[flower.dev/docs/framework/quickstart-scikitlearn.html](https://flower.dev/docs/framework/quickstart-scikitlearn.html)|
+|SGD Classifier| - | To be added |
+|Elastic Net| - | To be added |
+|Random Forest| - | To be added |
+|Balanced Random Forest| - | To be added |
 |XGBoost| FedXgbNnAvg |[Gradient-less Federated Gradient Boosting Trees with Learnable Learning Rates](https://arxiv.org/abs/2304.07537)|
 
 ## Quickstart
@@ -60,5 +64,5 @@ After implementing the necessary methods follow the remaining steps:
 1. Create a new branch in `flcore` repository
 2. Copy your model package to `flcore/models` directory
 3. Add cases for the new model in `server_selector.py` and `client_selector.py` modules in `flcore/` directory
-4. Add the model to the avaialable models table in `README.md` file
+4. Add the model to the available models table in `README.md` file
 5. Open a Pull Request and wait for review
