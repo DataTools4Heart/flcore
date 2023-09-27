@@ -145,13 +145,15 @@ def load_cvd(data_path, center_id=None) -> Dataset:
 def load_kaggle_hf(data_path, center_id=None) -> Dataset:
     id = center_id
     
-    if id == 4:
+    if id == 1:
         id = 'switzerland'
-    elif id == 1:
-        id = 'hungarian'
     elif id == 2:
-        id = 'va'
+        id = 'hungarian'
     elif id == 3:
+        id = 'va'
+    elif id == 4:
+        id = 'cleveland'
+    elif id == 5:
         id = 'cleveland'
 
     file_name = os.path.join(data_path, "kaggle_hf.csv")
