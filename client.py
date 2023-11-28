@@ -1,3 +1,5 @@
+# client.py
+
 import sys
 import os
 from pathlib import Path
@@ -6,8 +8,8 @@ import yaml
 
 import flcore.datasets as datasets
 from flcore.client_selector import get_model_client
+from flcore.smpc_module import SMPClient, SMPClientEvaluator
 
-# Start Flower client but after the server or error
 
 if __name__ == "__main__":
     if len(sys.argv) == 1:
@@ -38,21 +40,26 @@ if __name__ == "__main__":
 
     print("Client id:" + str(num_client))
 
-(X_train, y_train), (X_test, y_test) = datasets.load_dataset(config, num_client)
+    (X_train, y_train), (X_test, y_test) = datasets.load_dataset(config, num_client)
 
-data = (X_train, y_train), (X_test, y_test)
+    data = (X_train, y_train), (X_test, y_test)
 
-client = get_model_client(config, data, num_client)
+    client = get_model_client(config, data, num_client)
 
-if isinstance(client, fl.client.NumPyClient):
-    fl.client.start_numpy_client(
-        server_address=f"{central_ip}:{central_port}",
-        root_certificates=root_certificate,
-        client=client,
-    )
-else:
-    fl.client.start_client(
-        server_address=f"{central_ip}:{central_port}",
-        root_certificates=root_certificate,
-        client=client,
-    )
+    if config.get("use_smpc", False):
+        smpc_client = SMPClient(client.model)
+        smpc_evaluator = SMPClientEvaluator(client.model)
+        client.set_custom_client(smpc_client, smpc_evaluator)
+
+    if isinstance(client, fl.client.NumPyClient):
+        fl.client.start_numpy_client(
+            server_address=f"{central_ip}:{central_port}",
+            root_certificates=root_certificate,
+            client=client,
+        )
+    else:
+        fl.client.start_client(
+            server_address=f"{central_ip}:{central_port}",
+            root_certificates=root_certificate,
+            client=client,
+        )

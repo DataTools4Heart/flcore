@@ -7,6 +7,7 @@ import flwr as fl
 import yaml
 import flcore.datasets as datasets
 from flcore.server_selector import get_model_server_and_strategy
+from flcore.smpc_module import SMPServerStrategy
 
 warnings.filterwarnings("ignore")
 
@@ -66,7 +67,7 @@ if __name__ == "__main__":
     else:
         data_path = config["data_path"]
         central_ip = "LOCALHOST"
-        central_port = "8080"
+        central_port = "8000"
         certificates = None
 
     # Create experiment directory
@@ -84,7 +85,12 @@ if __name__ == "__main__":
 
     data = (X_train, y_train), (X_test, y_test)
 
-    server, strategy = get_model_server_and_strategy(config, data)
+    if config.get("use_smpc", False):
+        smp_strategy = SMPServerStrategy(min_available_clients=2)
+        strategy = smp_strategy  # Use SMP strategy if use_smpc is True
+    else:
+        server, strategy = get_model_server_and_strategy(config, data)
+
 
     # Start Flower server for three rounds of federated learning
     history = fl.server.start_server(

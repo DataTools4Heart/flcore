@@ -1,0 +1,163 @@
+# Weight Sharing Format: The current implementation assumes that the model weights can be flattened and sent as a list of floats. This approach works well for simple models but may need adjustments for more complex architectures. Deep learning models with convolutional layers, for example, may have multi-dimensional weight tensors.
+# smpc_module.py
+import requests
+from time import sleep
+import numpy as np
+from flwr.common import FitIns, Parameters, ndarrays_to_parameters
+
+# Prefix for random keys used in the SMPClient
+randomprefix = "asdfa"
+
+class SMPClient:
+    def __init__(self, model):
+        """
+        SMPClient class for sharing weights with an external Secure Multi-Party Computation (SMPC) server.
+
+        Args:
+        - model: The machine learning model for which weights will be shared.
+        """
+        self.model = model
+
+    def share_weights(self, weights, config):
+        """
+        Share the flattened weights of the model with an external SMPC server.
+
+        Args:
+        - weights: List of weight arrays from the model.
+        - config: Configuration parameters, including the SMPC server URL and round information.
+        """
+        smpc_weights = []
+        for w in weights:
+            print(f"Shape before flattening: {w.shape}")
+            flat_weights = w.flatten().tolist()
+            print(f"Shape after flattening: {len(flat_weights)}")
+        for arr in [w.flatten().tolist() for w in weights]:
+            smpc_weights.extend(arr)
+
+        data = {
+            "type": "float",
+            "data": smpc_weights
+        }
+        response = requests.post(
+            config["smpc_url"] + "testKey" + randomprefix + str(config["round"]), json=data)
+        if response.ok:
+            print("SMPC Request was successful!")
+            print(response.text)
+        else:
+            print(
+                f"SMPC Request failed with status code {response.status_code}.")
+            print(response.text)
+
+class SMPClientEvaluator:
+    def __init__(self, model):
+        """
+        SMPClientEvaluator class for evaluating model performance based on received parameters.
+
+        Args:
+        - model: The machine learning model for which parameters will be set for evaluation.
+        """
+        self.model = model
+
+    def evaluate(self, parameters, config):
+        """
+        Evaluate the model based on the received parameters.
+
+        Args:
+        - parameters: Model parameters received from the server.
+        - config: Configuration parameters, including test data information.
+        
+        Returns:
+        Tuple containing loss, number of test samples, and accuracy.
+        """
+        self.model.set_weights(parameters)
+        loss, accuracy = self.model.evaluate(config["x_test"], config["y_test"])
+        return loss, len(config["y_test"]), {"accuracy": float(accuracy)}
+
+class SMPServerStrategy:
+    def __init__(self, min_available_clients=2):
+        """
+        SMPServerStrategy class for defining the server-side strategy in a federated learning scenario.
+
+        Args:
+        - min_available_clients: Minimum number of available clients required for aggregation.
+        """
+        self.min_available_clients = min_available_clients
+
+    def configure_fit(self, server_round, parameters, client_manager):
+        """
+        Configure the next round of training.
+
+        Args:
+        - server_round: The current server round.
+        - parameters: Model parameters from the previous round.
+        - client_manager: Client manager for handling client selection and communication.
+
+        Returns:
+        List of client/config pairs for the next round of training.
+        """
+        config = {"round": server_round}
+        if self.on_fit_config_fn is not None:
+            # Custom fit config function provided
+            config = self.on_fit_config_fn(server_round)
+        fit_ins = FitIns(parameters, config)
+
+        # Sample clients
+        sample_size, min_num_clients = self.num_fit_clients(
+            client_manager.num_available()
+        )
+        clients = client_manager.sample(
+            num_clients=sample_size, min_num_clients=min_num_clients
+        )
+
+        # Return client/config pairs
+        return [(client, fit_ins) for client in clients]
+
+    def aggregate_fit(self, server_round, results, failures):
+        """
+        Aggregate the results from the clients using SMP-specific logic.
+
+        Args:
+        - server_round: The current server round.
+        - results: Dictionary containing results from clients.
+        - failures: List of clients that failed during the round.
+
+        Returns:
+        Aggregated model parameters.
+        """
+        # Implement SMP-specific aggregation logic here
+        response = requests.post(
+            url + "testKey" + randomprefix + str(server_round), json=triggerBody)
+        if response.ok:
+            print("Request was successful!")
+            print(response.text)
+        else:
+            print(f"Request failed with status code {response.status_code}.")
+            print(response.text)
+
+        while 1:
+            response = requests.get(
+                resultUrl + "testKey" + randomprefix + str(server_round))
+            print("Response got ", resultUrl + "testKey" + randomprefix +
+                  str(server_round), response)
+            if response.ok:
+                print("Request was successful!")
+                json_data = response.json()
+                print("Result:", json_data)
+                if "computationOutput" in json_data:
+                    print("Result:", json_data["computationOutput"])
+                    first = np.array(
+                        json_data["computationOutput"][:-10]).reshape(-1, 10)
+                    second = np.array(json_data["computationOutput"][-10:])
+                    print("In here", first, second)
+                    print("results", results)
+                    res = ndarrays_to_parameters([first, second])
+                    print("FINAL RESULT", res)
+                    return super().aggregate_fit(server_round, results, failures)
+            else:
+                print(
+                    f"Request failed with status code {response.status_code}.")
+                print(response.text)
+            sleep(1)
+        return super().aggregate_fit(server_round, results, failures)
+
+

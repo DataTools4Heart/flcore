@@ -34,4 +34,8 @@ dropout:
 smoothWeights: 
   smoothing_strenght: 0.5 #Value between 0 and 1
 
-production_mode: True # Turn on to use environment variables such as data path, server address, certificates etc.
+smpc:
+  use_smpc: True
+  smpc_url: "http://your_smpc_server_url" 
+
+production_mode: False # Turn on to use environment variables such as data path, server address, certificates etc.
