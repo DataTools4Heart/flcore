@@ -1,0 +1,222 @@
+Name Model: LR 
+Num features: 9 
+Drop out Method: None 
+Drop out Method: 25 
+Smooth Method: None 
+Smooth Strenght: 0.5 
+Name Model: LR 
+Num features: 9 
+Drop out Method: None 
+Drop out Method: 25 
+Smooth Method: None 
+Smooth Strenght: 0.5 
+Accumulated Time: 8.272092342376709 for round 1
+Accuracy: 0.7461016949152542 
+Sensitivity: 0.7916666666666667 
+Specificity: 0.4473684210526316 
+Accumulated Time: 8.308810234069824 for round 2
+Accuracy: 0.7461016949152542 
+Sensitivity: 0.7916666666666667 
+Specificity: 0.4473684210526316 
+Accumulated Time: 8.344404220581055 for round 3
+Accuracy: 0.7461016949152542 
+Sensitivity: 0.7916666666666667 
+Specificity: 0.4473684210526316 
+Accumulated Time: 8.38129448890686 for round 4
+Accuracy: 0.7461016949152542 
+Sensitivity: 0.7916666666666667 
+Specificity: 0.4473684210526316 
+Accumulated Time: 8.419194221496582 for round 5
+Accuracy: 0.7461016949152542 
+Sensitivity: 0.7916666666666667 
+Specificity: 0.4473684210526316 
+Accumulated Time: 8.456913232803345 for round 6
+Accuracy: 0.7461016949152542 
+Sensitivity: 0.7916666666666667 
+Specificity: 0.4473684210526316 
+Accumulated Time: 8.49500036239624 for round 7
+Accuracy: 0.7461016949152542 
+Sensitivity: 0.7916666666666667 
+Specificity: 0.4473684210526316 
+Accumulated Time: 8.531761646270752 for round 8
+Accuracy: 0.7461016949152542 
+Sensitivity: 0.7916666666666667 
+Specificity: 0.4473684210526316 
+Accumulated Time: 8.566945552825928 for round 9
+Accuracy: 0.7461016949152542 
+Sensitivity: 0.7916666666666667 
+Specificity: 0.4473684210526316 
+Accumulated Time: 8.601425170898438 for round 10
+Accuracy: 0.7461016949152542 
+Sensitivity: 0.7916666666666667 
+Specificity: 0.4473684210526316 
+Name Model: LR 
+Num features: 9 
+Drop out Method: None 
+Drop out Method: 25 
+Smooth Method: None 
+Smooth Strenght: 0.5 
+Accumulated Time: 20.0283465385437 for round 1
+Accuracy: 0.7461016949152542 
+Sensitivity: 0.7916666666666667 
+Specificity: 0.4473684210526316 
+Accumulated Time: 20.06533980369568 for round 2
+Accuracy: 0.7461016949152542 
+Sensitivity: 0.7916666666666667 
+Specificity: 0.4473684210526316 
+Accumulated Time: 20.102208137512207 for round 3
+Accuracy: 0.7461016949152542 
+Sensitivity: 0.7916666666666667 
+Specificity: 0.4473684210526316 
+Accumulated Time: 20.137892484664917 for round 4
+Accuracy: 0.7461016949152542 
+Sensitivity: 0.7916666666666667 
+Specificity: 0.4473684210526316 
+Accumulated Time: 20.173875093460083 for round 5
+Accuracy: 0.7461016949152542 
+Sensitivity: 0.7916666666666667 
+Specificity: 0.4473684210526316 
+Accumulated Time: 20.209693670272827 for round 6
+Accuracy: 0.7461016949152542 
+Sensitivity: 0.7916666666666667 
+Specificity: 0.4473684210526316 
+Accumulated Time: 20.24625825881958 for round 7
+Accuracy: 0.7461016949152542 
+Sensitivity: 0.7916666666666667 
+Specificity: 0.4473684210526316 
+Accumulated Time: 20.282379150390625 for round 8
+Accuracy: 0.7461016949152542 
+Sensitivity: 0.7916666666666667 
+Specificity: 0.4473684210526316 
+Accumulated Time: 20.319552898406982 for round 9
+Accuracy: 0.7461016949152542 
+Sensitivity: 0.7916666666666667 
+Specificity: 0.4473684210526316 
+Accumulated Time: 20.35576343536377 for round 10
+Accuracy: 0.7461016949152542 
+Sensitivity: 0.7916666666666667 
+Specificity: 0.4473684210526316 
+Name Model: LR 
+Num features: 9 
+Drop out Method: None 
+Drop out Method: 25 
+Smooth Method: None 
+Smooth Strenght: 0.5 
+Name Model: LR 
+Num features: 9 
+Drop out Method: None 
+Drop out Method: 25 
+Smooth Method: None 
+Smooth Strenght: 0.5 
+Accumulated Time: 220.32873249053955 for round 1
+Accuracy: 0.7461016949152542 
+Sensitivity: 0.7916666666666667 
+Specificity: 0.4473684210526316 
+Accumulated Time: 220.36758279800415 for round 2
+Accuracy: 0.7461016949152542 
+Sensitivity: 0.7916666666666667 
+Specificity: 0.4473684210526316 
+Accumulated Time: 220.40505623817444 for round 3
+Accuracy: 0.7461016949152542 
+Sensitivity: 0.7916666666666667 
+Specificity: 0.4473684210526316 
+Accumulated Time: 220.44191718101501 for round 4
+Accuracy: 0.7461016949152542 
+Sensitivity: 0.7916666666666667 
+Specificity: 0.4473684210526316 
+Accumulated Time: 220.47776436805725 for round 5
+Accuracy: 0.7461016949152542 
+Sensitivity: 0.7916666666666667 
+Specificity: 0.4473684210526316 
+Accumulated Time: 220.51376628875732 for round 6
+Accuracy: 0.7461016949152542 
+Sensitivity: 0.7916666666666667 
+Specificity: 0.4473684210526316 
+Accumulated Time: 220.54927468299866 for round 7
+Accuracy: 0.7461016949152542 
+Sensitivity: 0.7916666666666667 
+Specificity: 0.4473684210526316 
+Accumulated Time: 220.58612537384033 for round 8
+Accuracy: 0.7461016949152542 
+Sensitivity: 0.7916666666666667 
+Specificity: 0.4473684210526316 
+Accumulated Time: 220.6215784549713 for round 9
+Accuracy: 0.7461016949152542 
+Sensitivity: 0.7916666666666667 
+Specificity: 0.4473684210526316 
+Accumulated Time: 220.65834593772888 for round 10
+Accuracy: 0.7461016949152542 
+Sensitivity: 0.7916666666666667 
+Specificity: 0.4473684210526316 
+Name Model: LR 
+Num features: 9 
+Drop out Method: None 
+Drop out Method: 25 
+Smooth Method: None 
+Smooth Strenght: 0.5 
+Name Model: LR 
+Num features: 9 
+Drop out Method: None 
+Drop out Method: 25 
+Smooth Method: None 
+Smooth Strenght: 0.5 
+Name Model: LR 
+Num features: 9 
+Drop out Method: None 
+Drop out Method: 25 
+Smooth Method: None 
+Smooth Strenght: 0.5 
+Name Model: LR 
+Num features: 9 
+Drop out Method: None 
+Drop out Method: 25 
+Smooth Method: None 
+Smooth Strenght: 0.5 
+Name Model: LR 
+Num features: 9 
+Drop out Method: None 
+Drop out Method: 25 
+Smooth Method: None 
+Smooth Strenght: 0.5 
+Name Model: LR 
+Num features: 9 
+Drop out Method: None 
+Drop out Method: 25 
+Smooth Method: None 
+Smooth Strenght: 0.5 
+Name Model: LR 
+Num features: 9 
+Drop out Method: None 
+Drop out Method: 25 
+Smooth Method: None 
+Smooth Strenght: 0.5 
+Name Model: LR 
+Num features: 9 
+Drop out Method: None 
+Drop out Method: 25 
+Smooth Method: None 
+Smooth Strenght: 0.5 
+Name Model: LR 
+Num features: 9 
+Drop out Method: None 
+Drop out Method: 25 
+Smooth Method: None 
+Smooth Strenght: 0.5 
+Name Model: LR 
+Num features: 9 
+Drop out Method: None 
+Drop out Method: 25 
+Smooth Method: None 
+Smooth Strenght: 0.5 
+Name Model: LR 
+Num features: 9 
+Drop out Method: None 
+Drop out Method: 25 
+Smooth Method: None 
+Smooth Strenght: 0.5 
+Name Model: LR 
+Num features: 9 
+Drop out Method: None 
+Drop out Method: 25 
+Smooth Method: None 
+Smooth Strenght: 0.5 

@@ -9,7 +9,7 @@ from flwr.common import FitIns, Parameters, ndarrays_to_parameters
 randomprefix = "asdfa"
 
 class SMPClient:
-    def __init__(self, model, smpc_base_url):
+    def __init__(self, model, smpc_url):
         """
         SMPClient class for sharing weights with an external Secure Multi-Party Computation (SMPC) server.
 
@@ -17,7 +17,7 @@ class SMPClient:
         - model: The machine learning model for which weights will be shared.
         """
         self.model = model
-        self.smpc_base_url = smpc_base_url
+        self.smpc_url = smpc_url
         self.round = 0  # Initialize the round to 0
 
     def share_weights(self, weights, config):
@@ -28,7 +28,7 @@ class SMPClient:
         - weights: List of weight arrays from the model.
         - config: Configuration parameters, including the SMPC server URL and round information.
         """
-        print(f"SMPC URL: {self.smpc_base_url}")
+        print(f"SMPC URL: {self.smpc_url}")
         smpc_weights = []
         for w in weights:
             print(f"Shape before flattening: {w.shape}")
@@ -44,12 +44,9 @@ class SMPClient:
         
         # Increment the round each time share_weights is called
         self.round += 1
-        # Construct the SMP server URLs based on the current round
-        smpc_url = f"{self.smpc_base_url}secure-aggregation/job-id/testKey{randomprefix}{self.round}/"
-        result_url = f"{self.smpc_base_url}get-result/job-id/testKey{randomprefix}{self.round}/"
 
-        response = requests.post(smpc_url, json=data)
-
+        response = requests.post(
+            self.smpc_url + "testKey" + randomprefix + str(self.round), json=data)
         if response.ok:
             print("SMPC Request was successful!")
             print(response.text)
@@ -84,16 +81,14 @@ class SMPClientEvaluator:
         return loss, len(config["y_test"]), {"accuracy": float(accuracy)}
 
 class SMPServerStrategy:
-    def __init__(self, min_available_clients=2, smpc_base_url="http://167.71.139.232:12314/api/"):
+    def __init__(self, min_available_clients=2):
         """
         SMPServerStrategy class for defining the server-side strategy in a federated learning scenario.
 
         Args:
         - min_available_clients: Minimum number of available clients required for aggregation.
-        - smpc_base_url: The base URL of the SMPC server.
         """
         self.min_available_clients = min_available_clients
-        self.smpc_base_url = smpc_base_url
 
     def configure_fit(self, server_round, parameters, client_manager):
         """
@@ -121,12 +116,8 @@ class SMPServerStrategy:
             num_clients=sample_size, min_num_clients=min_num_clients
         )
 
-        # Construct the SMP server URLs based on the current round
-        smpc_url = f"{self.smpc_base_url}secure-aggregation/job-id/testKey{randomprefix}{server_round}/"
-        result_url = f"{self.smpc_base_url}get-result/job-id/testKey{randomprefix}{server_round}/"
-
         # Return client/config pairs
-        return [(client, fit_ins, smpc_url, result_url) for client in clients]
+        return [(client, fit_ins) for client in clients]
 
     def aggregate_fit(self, server_round, results, failures):
         """
@@ -140,11 +131,9 @@ class SMPServerStrategy:
         Returns:
         Aggregated model parameters.
         """
-        # Extract SMP server URLs from the client/config pairs
-        smpc_url, result_url = results[0][2], results[0][3]
-
+        # Implement SMP-specific aggregation logic here
         response = requests.post(
-            smpc_url, json=triggerBody)
+            url + "testKey" + randomprefix + str(server_round), json=triggerBody)
         if response.ok:
             print("Request was successful!")
             print(response.text)
@@ -153,8 +142,10 @@ class SMPServerStrategy:
             print(response.text)
 
         while 1:
-            response = requests.get(result_url)
-            print("Response got ", result_url, response)
+            response = requests.get(
+                resultUrl + "testKey" + randomprefix + str(server_round))
+            print("Response got ", resultUrl + "testKey" + randomprefix +
+                  str(server_round), response)
             if response.ok:
                 print("Request was successful!")
                 json_data = response.json()
@@ -170,8 +161,10 @@ class SMPServerStrategy:
                     print("FINAL RESULT", res)
                     return super().aggregate_fit(server_round, results, failures)
             else:
-                print(f"Request failed with status code {response.status_code}.")
+                print(
+                    f"Request failed with status code {response.status_code}.")
                 print(response.text)
             sleep(1)
         return super().aggregate_fit(server_round, results, failures)
+
 

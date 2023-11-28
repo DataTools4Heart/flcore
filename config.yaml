@@ -1,6 +1,6 @@
-num_clients: 5
+num_clients: 2
 num_rounds: 10
-model: xgb #weighted_random_forest, linear_models, xgb, random_forest, logistic_regression (old version)
+model: linear_models #xgb #weighted_random_forest, linear_models, xgb, random_forest, logistic_regression (old version)
 dataset: kaggle_hf # mnist, cvd, libsvm
 data_path: dataset/
 dropout_method: None #None, Fast_at_odd_rounds, Fast_every_three, random_dropout,Less_participants_at_odd_rounds
@@ -36,6 +36,6 @@ smoothWeights:
 
 smpc:
   use_smpc: True
-  smpc_url: "http://your_smpc_server_url" 
+  smpc_url: "http://167.71.139.232:12314/api/" 
 
 production_mode: False # Turn on to use environment variables such as data path, server address, certificates etc.

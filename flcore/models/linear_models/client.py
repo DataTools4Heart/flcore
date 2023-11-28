@@ -12,7 +12,7 @@ import time
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 
-
+from flcore.smpc_module import SMPClient
 
 
 # Define Flower client
@@ -37,6 +37,17 @@ class MnistClient(fl.client.NumPyClient):
         self.model = utils.get_model(self.model_name) 
         # Setting initial parameters, akin to model.compile for keras models
         utils.set_initial_params(self.model,self.n_features)
+
+        # Check if SMPC should be used
+        self.use_smpc = config.get("smpc", {}).get("use_smpc", False)
+        self.smpc_url = config.get("smpc", {}).get("smpc_url")
+        if self.use_smpc:
+            # Initialize SMPClient only if use_smpc is True
+            self.smpc_client = SMPClient(self.model, self.smpc_url)
+            
+        else:
+            self.smpc_client = None
+
     
     def get_parameters(self, config):  # type: ignore
         #compute the feature selection
@@ -46,6 +57,16 @@ class MnistClient(fl.client.NumPyClient):
                 fs = SelectKBest(f_classif, k= self.n_features).fit(self.X_train, self.y_train)
                 index_features = fs.get_support()
                 self.model.features = index_features
+
+        # Use SMPClient to share weights with the external SMPC server if enabled
+        if self.use_smpc and self.smpc_client:
+            if isinstance(self.model, SGDClassifier):
+                weights = [self.model.coef_.ravel(), self.model.intercept_]
+            else:
+                # Handle other scikit-learn models or update accordingly
+                weights = [self.model.coef_.ravel(), self.model.intercept_]
+
+            self.smpc_client.share_weights(weights, config)
         return utils.get_model_parameters(self.model)
 
     def fit(self, parameters, config):  # type: ignore
@@ -65,6 +86,11 @@ class MnistClient(fl.client.NumPyClient):
             print(f"precision in fit:  {precision}")
             print(f"F1_score in fit:  {F1_score}")
             ellapsed_time = (time.time() - start_time)
+
+        # Use SMPClient to share weights with the external SMPC server after training if enabled
+        if self.use_smpc and self.smpc_client:
+            self.smpc_client.share_weights(self.model.get_weights(), config)
+
         print(f"Training finished for round {config['server_round']}")
         return utils.get_model_parameters(self.model), len(self.X_train), {"running_time":ellapsed_time}
 
@@ -77,6 +103,11 @@ class MnistClient(fl.client.NumPyClient):
         accuracy = self.model.score(self.X_test.loc[:, parameters[2].astype(bool)], self.y_test)
         accuracy,specificity,sensitivity,balanced_accuracy, precision, F1_score = \
             measurements_metrics(self.model,self.X_test.loc[:, parameters[2].astype(bool)], self.y_test)
+
+        # Use SMPClient to share weights with the external SMPC server during evaluation if enabled
+        if self.use_smpc and self.smpc_client:
+            self.smpc_client.share_weights(self.model.get_weights(), config)
+
         print(f"Accuracy client in evaluate:  {accuracy}")
         print(f"Sensitivity client in evaluate:  {sensitivity}")
         print(f"Specificity client in evaluate:  {specificity}")

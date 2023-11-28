@@ -85,9 +85,14 @@ if __name__ == "__main__":
 
     data = (X_train, y_train), (X_test, y_test)
 
-    if config.get("use_smpc", False):
-        smp_strategy = SMPServerStrategy(min_available_clients=2)
-        strategy = smp_strategy  # Use SMP strategy if use_smpc is True
+    # Check if smpc_url is provided in the config, otherwise set it 
+    smpc_base_url = config.get("smpc", {}).get("smpc_url")
+
+    if config.get("use_smpc", True):
+        smp_strategy = SMPServerStrategy(min_available_clients=2, smpc_base_url=smpc_base_url)
+        server, strategy = get_model_server_and_strategy(config, data)
+        strategy.configure_fit = smp_strategy.configure_fit
+        strategy.aggregate_fit = smp_strategy.aggregate_fit
     else:
         server, strategy = get_model_server_and_strategy(config, data)
 
