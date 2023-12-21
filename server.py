@@ -67,7 +67,7 @@ if __name__ == "__main__":
     else:
         data_path = config["data_path"]
         central_ip = "LOCALHOST"
-        central_port = "8000"
+        central_port = "8090"
         certificates = None
 
     # Create experiment directory
@@ -88,14 +88,14 @@ if __name__ == "__main__":
     # Check if smpc_url is provided in the config, otherwise set it 
     smpc_base_url = config.get("smpc", {}).get("smpc_url")
 
-    if config.get("use_smpc", True):
+    if config.get("smpc", {}).get("use_smpc", True):
         smp_strategy = SMPServerStrategy(min_available_clients=2, smpc_base_url=smpc_base_url)
         server, strategy = get_model_server_and_strategy(config, data)
         strategy.configure_fit = smp_strategy.configure_fit
         strategy.aggregate_fit = smp_strategy.aggregate_fit
     else:
+        # If use_smpc is False, use a regular strategy
         server, strategy = get_model_server_and_strategy(config, data)
-
 
     # Start Flower server for three rounds of federated learning
     history = fl.server.start_server(
@@ -109,19 +109,20 @@ if __name__ == "__main__":
     # filename = os.path.join( checkpoint_dir, 'final_model.pt' )
     # joblib.dump(model, filename)
     # Save the history as a yaml file
+# Save the history as a yaml file
     print(history)
     with open(history_dir / "results.txt", "w") as f:
         per_client_values = {}
         for metric in history.metrics_distributed:
-            metric_value = history.metrics_distributed[metric][-1][1]
-            if type(metric_value) == float:
-                f.write(f"{metric} {metric_value:.4f} \n")
+            metric_values = history.metrics_distributed[metric][-1][1]
+            if isinstance(metric_values, float):
+                f.write(f"{metric} {metric_values:.4f} \n")
             else:
-                for metric in metric_value:
+                for client_id, value in metric_values:
                     if metric not in per_client_values:
                         per_client_values[metric] = []
-                    per_client_values[metric].append(round(metric_value[metric], 3))
-        
+                    per_client_values[metric].append(round(value, 3))
+
         f.write(f"\nPer client results:\n")
         for metric in per_client_values:
             f.write(f"{metric} {per_client_values[metric]} \n")

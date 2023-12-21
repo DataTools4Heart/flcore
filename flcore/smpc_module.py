@@ -5,11 +5,15 @@ from time import sleep
 import numpy as np
 from flwr.common import FitIns, Parameters, ndarrays_to_parameters
 
+from time import sleep
+import flwr as fl
+import numpy as np
+
 # Prefix for random keys used in the SMPClient
 randomprefix = "asdfa"
 
 class SMPClient:
-    def __init__(self, model, smpc_base_url):
+    def __init__(self, model, smpc_base_url, client_id):
         """
         SMPClient class for sharing weights with an external Secure Multi-Party Computation (SMPC) server.
 
@@ -19,6 +23,8 @@ class SMPClient:
         self.model = model
         self.smpc_base_url = smpc_base_url
         self.round = 0  # Initialize the round to 0
+        self.client_id = client_id
+        self.client_base_url = f"http://167.71.139.232:900{client_id}/api/update-dataset/"
 
     def share_weights(self, weights, config):
         """
@@ -44,12 +50,14 @@ class SMPClient:
         
         # Increment the round each time share_weights is called
         self.round += 1
-        # Construct the SMP server URLs based on the current round
-        smpc_url = f"{self.smpc_base_url}secure-aggregation/job-id/testKey{randomprefix}{self.round}/"
-        result_url = f"{self.smpc_base_url}get-result/job-id/testKey{randomprefix}{self.round}/"
-
-        response = requests.post(smpc_url, json=data)
-
+        request = self.client_base_url + "testKey" + randomprefix + str(self.round)
+        print(request)
+        print(data)
+        requests.get("http://167.71.139.232:9001/api/ping")
+        #print("ping successful")
+        response = requests.post(
+                self.client_base_url + "testKey" + randomprefix + str(self.round), json=data)
+        print("response", response)
         if response.ok:
             print("SMPC Request was successful!")
             print(response.text)
@@ -83,7 +91,9 @@ class SMPClientEvaluator:
         loss, accuracy = self.model.evaluate(config["x_test"], config["y_test"])
         return loss, len(config["y_test"]), {"accuracy": float(accuracy)}
 
-class SMPServerStrategy:
+
+# SMPServerStrategy class
+class SMPServerStrategy(fl.server.strategy.FedAvg):
     def __init__(self, min_available_clients=2, smpc_base_url="http://167.71.139.232:12314/api/"):
         """
         SMPServerStrategy class for defining the server-side strategy in a federated learning scenario.
@@ -92,41 +102,14 @@ class SMPServerStrategy:
         - min_available_clients: Minimum number of available clients required for aggregation.
         - smpc_base_url: The base URL of the SMPC server.
         """
-        self.min_available_clients = min_available_clients
-        self.smpc_base_url = smpc_base_url
-
-    def configure_fit(self, server_round, parameters, client_manager):
-        """
-        Configure the next round of training.
-
-        Args:
-        - server_round: The current server round.
-        - parameters: Model parameters from the previous round.
-        - client_manager: Client manager for handling client selection and communication.
-
-        Returns:
-        List of client/config pairs for the next round of training.
-        """
-        config = {"round": server_round}
-        if self.on_fit_config_fn is not None:
-            # Custom fit config function provided
-            config = self.on_fit_config_fn(server_round)
-        fit_ins = FitIns(parameters, config)
-
-        # Sample clients
-        sample_size, min_num_clients = self.num_fit_clients(
-            client_manager.num_available()
-        )
-        clients = client_manager.sample(
-            num_clients=sample_size, min_num_clients=min_num_clients
-        )
-
-        # Construct the SMP server URLs based on the current round
-        smpc_url = f"{self.smpc_base_url}secure-aggregation/job-id/testKey{randomprefix}{server_round}/"
-        result_url = f"{self.smpc_base_url}get-result/job-id/testKey{randomprefix}{server_round}/"
-
-        # Return client/config pairs
-        return [(client, fit_ins, smpc_url, result_url) for client in clients]
+        super().__init__(min_available_clients=min_available_clients)
+        self.smpc_base_url = "http://167.71.139.232:12314/api/secure-aggregation/job-id/"
+        self.result_base_url = "http://167.71.139.232:12314/api/get-result/job-id/"
+        self.triggerBody = {
+            "computationType": "fsum",
+            "returnUrl": "http://localhost:4100",
+            "clients": ["WomenHealthClinica", "ChildrensHospital"]
+        }
 
     def aggregate_fit(self, server_round, results, failures):
         """
@@ -140,11 +123,8 @@ class SMPServerStrategy:
         Returns:
         Aggregated model parameters.
         """
-        # Extract SMP server URLs from the client/config pairs
-        smpc_url, result_url = results[0][2], results[0][3]
-
         response = requests.post(
-            smpc_url, json=triggerBody)
+            self.smpc_base_url + "testKey" + randomprefix + str(server_round), json=self.triggerBody)
         if response.ok:
             print("Request was successful!")
             print(response.text)
@@ -153,25 +133,41 @@ class SMPServerStrategy:
             print(response.text)
 
         while 1:
-            response = requests.get(result_url)
-            print("Response got ", result_url, response)
+            response = requests.get(
+                self.result_base_url + "testKey" + randomprefix + str(server_round))
+            print("Response got ", self.result_base_url, response)
             if response.ok:
                 print("Request was successful!")
                 json_data = response.json()
                 print("Result:", json_data)
                 if "computationOutput" in json_data:
-                    print("Result:", json_data["computationOutput"])
-                    first = np.array(
-                        json_data["computationOutput"][:-10]).reshape(-1, 10)
-                    second = np.array(json_data["computationOutput"][-10:])
-                    print("In here", first, second)
-                    print("results", results)
-                    res = ndarrays_to_parameters([first, second])
-                    print("FINAL RESULT", res)
+                    computation_output = json_data["computationOutput"]
+                    try:
+                        # Conditionally reshape only if the array size allows it
+                        if len(computation_output) > 1:
+                            reshaped_output = np.array(computation_output).reshape(-1, 10)
+                            res = ndarrays_to_parameters([reshaped_output])
+                        else:
+                            res = ndarrays_to_parameters([computation_output])
+                        print("FINAL RESULT", res)
+                        return super().aggregate_fit(server_round, results, failures)
+                    except ValueError as e:
+                        print(f"Error while reshaping array: {e}")
+                        # Handle error, e.g., log it or return default parameters
+                        return super().aggregate_fit(server_round, results, failures)
+                elif "status" in json_data and json_data["status"] == "FAILED":
+                    # Handle failure by logging and continuing with the aggregation
+                    print(f"Computation failed: {json_data['message']}")
                     return super().aggregate_fit(server_round, results, failures)
             else:
                 print(f"Request failed with status code {response.status_code}.")
                 print(response.text)
             sleep(1)
         return super().aggregate_fit(server_round, results, failures)
+
+
+
+
+
+
 

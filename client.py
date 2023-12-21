@@ -36,7 +36,7 @@ if __name__ == "__main__":
         data_path = config["data_path"]
         root_certificate = None
         central_ip = "LOCALHOST"
-        central_port = "8000"
+        central_port = "8090"
 
     print("Client id:" + str(num_client))
 
@@ -49,8 +49,8 @@ if __name__ == "__main__":
     # Check if smpc_url is provided in the config, otherwise set it to a default value
     smpc_base_url = config.get("smpc", {}).get("smpc_url", "http://default-smpc-url.com")
 
-    if config.get("use_smpc", True):
-        smpc_client = SMPClient(client.model, smpc_base_url)
+    if config.get("smpc", {}).get("use_smpc", True):
+        smpc_client = SMPClient(client.model, smpc_base_url, str(num_client))
         smpc_evaluator = SMPClientEvaluator(client.model)
  
     if isinstance(client, fl.client.NumPyClient):
