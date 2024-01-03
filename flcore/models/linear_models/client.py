@@ -73,6 +73,7 @@ class MnistClient(fl.client.NumPyClient):
                 # Handle other scikit-learn models or update accordingly
                 weights = [self.model.coef_.ravel(), self.model.intercept_]
 
+            weights = weights if weights else []
             self.smpc_client.share_weights(weights, config)
             return utils.get_model_parameters(self.model2)
         else:
@@ -109,6 +110,8 @@ class MnistClient(fl.client.NumPyClient):
         return utils.get_model_parameters(self.model), len(self.X_train), {"running_time": elapsed_time}
 
     def evaluate(self, parameters, config):  # type: ignore
+        weights = []
+
         utils.set_model_params(self.model, parameters)
         if isinstance(self.model, SGDClassifier):
             loss = 1.0

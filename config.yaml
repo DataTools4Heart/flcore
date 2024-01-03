@@ -36,6 +36,6 @@ smoothWeights:
 
 smpc:
   use_smpc: True
-  smpc_url: "http://167.71.139.232:12314/api/" 
+  smpc_url: "${SMPC_SERVER_IP}" #SMPC_SERVER=167.71.139.232 
 
 production_mode: False # Turn on to use environment variables such as data path, server address, certificates etc.

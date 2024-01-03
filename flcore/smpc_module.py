@@ -3,6 +3,7 @@
 # Deep learning models with convolutional layers, for example, may have multi-dimensional weight tensors.
 
 # smpc_module.py
+import os
 import requests
 from time import sleep
 import numpy as np
@@ -26,7 +27,9 @@ class SMPClient:
         self.smpc_base_url = smpc_base_url
         self.round = 0  # Initialize the round to 0
         self.client_id = client_id
-        self.client_base_url = f"http://167.71.139.232:900{client_id}/api/update-dataset/"
+        self.client_base_url = f"http://{os.getenv('SMPC_SERVER_IP', '167.71.139.232')}:900{client_id}/api/update-dataset/"
+
+
 
     def share_weights(self, weights, config):
         """
@@ -55,7 +58,6 @@ class SMPClient:
         request = self.client_base_url + "testKey" + randomprefix + str(self.round)
         print(request)
         print(data)
-        requests.get("http://167.71.139.232:9001/api/ping")
         response = requests.post(
                 self.client_base_url + "testKey" + randomprefix + str(self.round), json=data)
         print("response", response)
@@ -102,8 +104,9 @@ class SMPServerStrategy(fl.server.strategy.FedAvg):
         - smpc_base_url: The base URL of the SMPC server.
         """
         super().__init__(min_available_clients=min_available_clients)
-        self.smpc_base_url = "http://167.71.139.232:12314/api/secure-aggregation/job-id/"
-        self.result_base_url = "http://167.71.139.232:12314/api/get-result/job-id/"
+        self.smpc_base_url = os.getenv("SMPC_SERVER_IP", "http://167.71.139.232:12314") + "/api/secure-aggregation/job-id/"
+        self.result_base_url = os.getenv("SMPC_SERVER_IP", "http://167.71.139.232:12314") + "/api/get-result/job-id/"
+
         self.triggerBody = {
             "computationType": "fsum",
             "returnUrl": "http://localhost:4100",
