@@ -130,9 +130,6 @@ class MnistClient(fl.client.NumPyClient):
         if self.use_smpc and self.smpc_client:
             if isinstance(self.model, SGDClassifier):
                 weights = [self.model.coef_.ravel(), self.model.intercept_]
-            else:
-                # Handle other scikit-learn models or update accordingly
-                weights = [self.model.coef_.ravel(), self.model.intercept_]
 
             self.smpc_client.share_weights(weights, config)
 

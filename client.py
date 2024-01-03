@@ -36,7 +36,7 @@ if __name__ == "__main__":
         data_path = config["data_path"]
         root_certificate = None
         central_ip = "LOCALHOST"
-        central_port = "8090"
+        central_port = "8080"
 
     print("Client id:" + str(num_client))
 

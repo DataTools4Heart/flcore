@@ -1,13 +1,13 @@
-# Weight Sharing Format: The current implementation assumes that the model weights can be flattened and sent as a list of floats. This approach works well for simple models but may need adjustments for more complex architectures. Deep learning models with convolutional layers, for example, may have multi-dimensional weight tensors.
+# Weight Sharing Format: The current implementation assumes that the model weights can be flattened and sent as a list of floats.
+# This approach works well for simple models but may need adjustments for more complex architectures. 
+# Deep learning models with convolutional layers, for example, may have multi-dimensional weight tensors.
+
 # smpc_module.py
 import requests
 from time import sleep
 import numpy as np
 from flwr.common import FitIns, Parameters, ndarrays_to_parameters
-
-from time import sleep
 import flwr as fl
-import numpy as np
 
 # Prefix for random keys used in the SMPClient
 randomprefix = "asdfa"
@@ -19,6 +19,8 @@ class SMPClient:
 
         Args:
         - model: The machine learning model for which weights will be shared.
+        - smpc_base_url: The base URL of the SMPC server.
+        - client_id: Unique identifier for the client.
         """
         self.model = model
         self.smpc_base_url = smpc_base_url
@@ -47,14 +49,13 @@ class SMPClient:
             "type": "float",
             "data": smpc_weights
         }
-        
+
         # Increment the round each time share_weights is called
         self.round += 1
         request = self.client_base_url + "testKey" + randomprefix + str(self.round)
         print(request)
         print(data)
         requests.get("http://167.71.139.232:9001/api/ping")
-        #print("ping successful")
         response = requests.post(
                 self.client_base_url + "testKey" + randomprefix + str(self.round), json=data)
         print("response", response)
@@ -62,8 +63,7 @@ class SMPClient:
             print("SMPC Request was successful!")
             print(response.text)
         else:
-            print(
-                f"SMPC Request failed with status code {response.status_code}.")
+            print(f"SMPC Request failed with status code {response.status_code}.")
             print(response.text)
 
 class SMPClientEvaluator:
@@ -90,7 +90,6 @@ class SMPClientEvaluator:
         self.model.set_weights(parameters)
         loss, accuracy = self.model.evaluate(config["x_test"], config["y_test"])
         return loss, len(config["y_test"]), {"accuracy": float(accuracy)}
-
 
 # SMPServerStrategy class
 class SMPServerStrategy(fl.server.strategy.FedAvg):
@@ -164,10 +163,4 @@ class SMPServerStrategy(fl.server.strategy.FedAvg):
                 print(response.text)
             sleep(1)
         return super().aggregate_fit(server_round, results, failures)
-
-
-
-
-
-
 
