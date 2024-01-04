@@ -50,8 +50,8 @@ if __name__ == "__main__":
     smpc_base_url = config.get("smpc", {}).get("smpc_url", "http://default-smpc-url.com")
 
     if config.get("smpc", {}).get("use_smpc", True):
-        smpc_client = SMPClient(client.model, smpc_base_url, str(num_client))
-        smpc_evaluator = SMPClientEvaluator(client.model)
+        SMPClient(client.model, smpc_base_url, str(num_client))
+        SMPClientEvaluator(client.model)
  
     if isinstance(client, fl.client.NumPyClient):
         fl.client.start_numpy_client(
