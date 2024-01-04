@@ -36,11 +36,11 @@ class MnistClient(fl.client.NumPyClient):
         self.model_name = config['linear_models']['model_type']
         self.n_features = config['linear_models']['n_features']
         self.model = utils.get_model(self.model_name)
-        self.model2 = utils.get_model(self.model_name)
+        self.model_placeholder = utils.get_model(self.model_name)
 
         # Setting initial parameters, akin to model.compile for keras models
         utils.set_initial_params(self.model, self.n_features)
-        utils.set_initial_params(self.model2, self.n_features)
+        utils.set_initial_params(self.model_placeholder, self.n_features)
 
         # Check if SMPC should be used
         self.use_smpc = config.get("smpc", {}).get("use_smpc", False)
@@ -63,7 +63,7 @@ class MnistClient(fl.client.NumPyClient):
             fs = SelectKBest(f_classif, k=self.n_features).fit(self.X_train, self.y_train)
             index_features = fs.get_support()
             self.model.features = index_features
-            self.model2.features = index_features
+            self.model_placeholder.features = index_features
 
         # Use SMPClient to share weights with the external SMPC server if enabled
         if self.use_smpc and self.smpc_client:
@@ -75,7 +75,7 @@ class MnistClient(fl.client.NumPyClient):
 
             weights = weights if weights else []
             self.smpc_client.share_weights(weights, config)
-            return utils.get_model_parameters(self.model2)
+            return utils.get_model_parameters(self.model_placeholder)
         else:
             return utils.get_model_parameters(self.model)
 
