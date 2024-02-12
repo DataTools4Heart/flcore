@@ -9,7 +9,7 @@ import flcore.models.weighted_random_forest.server as weighted_random_forest_ser
 def get_model_server_and_strategy(config, data=None):
     model = config["model"]
 
-    if model == "linear_models":
+    if model in ("logistic_regression", "elastic_net", "lsvc"):
         server, strategy = linear_models_server.get_server_and_strategy(
             config
         )

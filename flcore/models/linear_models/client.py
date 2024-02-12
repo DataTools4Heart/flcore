@@ -7,7 +7,7 @@ import warnings
 import flcore.models.linear_models.utils as utils
 import flwr as fl
 from sklearn.metrics import log_loss
-from flcore.performance import measurements_metrics
+from flcore.performance import measurements_metrics, get_metrics
 import time
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
@@ -32,7 +32,7 @@ class MnistClient(fl.client.NumPyClient):
         scaled_features_df = pd.DataFrame(scaled_features, index=self.X_test.index, columns=self.X_test.columns)
         self.X_test = scaled_features_df
 
-        self.model_name = config['linear_models']['model_type']
+        self.model_name = config['model']
         self.n_features = config['linear_models']['n_features']
         self.model = utils.get_model(self.model_name) 
         # Setting initial parameters, akin to model.compile for keras models
@@ -56,34 +56,48 @@ class MnistClient(fl.client.NumPyClient):
             #To implement the center dropout, we need the execution time
             start_time = time.time()
             self.model.fit(self.X_train.loc[:, parameters[2].astype(bool)], self.y_train)
+            y_pred = self.model.predict(self.X_test.loc[:, parameters[2].astype(bool)])
+
             accuracy,specificity,sensitivity,balanced_accuracy, precision, F1_score = \
                 measurements_metrics(self.model,self.X_test.loc[:, parameters[2].astype(bool)], self.y_test)
-            print(f"Accuracy client in fit:  {accuracy}")
-            print(f"Sensitivity client in fit:  {sensitivity}")
-            print(f"Specificity client in fit:  {specificity}")
-            print(f"Balanced_accuracy in fit:  {balanced_accuracy}")
-            print(f"precision in fit:  {precision}")
-            print(f"F1_score in fit:  {F1_score}")
+            
+            metrics = get_metrics(y_pred, self.y_test)
+
+            # print(f"Accuracy client in fit:  {accuracy}")
+            # print(f"Sensitivity client in fit:  {sensitivity}")
+            # print(f"Specificity client in fit:  {specificity}")
+            # print(f"Balanced_accuracy in fit:  {balanced_accuracy}")
+            # print(f"precision in fit:  {precision}")
+            # print(f"F1_score in fit:  {F1_score}")
             ellapsed_time = (time.time() - start_time)
+
+            metrics["running_time"] = ellapsed_time
+
         print(f"Training finished for round {config['server_round']}")
-        return utils.get_model_parameters(self.model), len(self.X_train), {"running_time":ellapsed_time}
+        return utils.get_model_parameters(self.model), len(self.X_train), metrics
 
     def evaluate(self, parameters, config):  # type: ignore
         utils.set_model_params(self.model, parameters)
+        y_pred = self.model.predict(self.X_test.loc[:, parameters[2].astype(bool)])
+
         if(isinstance(self.model, SGDClassifier)):
             loss = 1.0
         else:
             loss = log_loss(self.y_test, self.model.predict_proba(self.X_test.loc[:, parameters[2].astype(bool)]))
-        accuracy = self.model.score(self.X_test.loc[:, parameters[2].astype(bool)], self.y_test)
+        # accuracy = self.model.score(self.X_test.loc[:, parameters[2].astype(bool)], self.y_test)
+       
         accuracy,specificity,sensitivity,balanced_accuracy, precision, F1_score = \
             measurements_metrics(self.model,self.X_test.loc[:, parameters[2].astype(bool)], self.y_test)
-        print(f"Accuracy client in evaluate:  {accuracy}")
-        print(f"Sensitivity client in evaluate:  {sensitivity}")
-        print(f"Specificity client in evaluate:  {specificity}")
-        print(f"Balanced_accuracy in evaluate:  {balanced_accuracy}")
-        print(f"precision in evaluate:  {precision}")
-        print(f"F1_score in evaluate:  {F1_score}")
-        return loss, len(self.X_test.loc[:, parameters[2].astype(bool)]),  {"accuracy": float(accuracy),"sensitivity":float(sensitivity),"specificity":float(specificity)},
+        
+        metrics = get_metrics(y_pred, self.y_test)
+        # print(f"Accuracy client in evaluate:  {accuracy}")
+        # print(f"Sensitivity client in evaluate:  {sensitivity}")
+        # print(f"Specificity client in evaluate:  {specificity}")
+        # print(f"Balanced_accuracy in evaluate:  {balanced_accuracy}")
+        # print(f"precision in evaluate:  {precision}")
+        # print(f"F1_score in evaluate:  {F1_score}")
+        # return loss, len(self.X_test.loc[:, parameters[2].astype(bool)]),  {"accuracy": float(accuracy),"sensitivity":float(sensitivity),"specificity":float(specificity)},
+        return loss, len(y_pred),  metrics
 
 
 

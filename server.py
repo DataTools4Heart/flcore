@@ -4,6 +4,7 @@ import sys
 from pathlib import Path
 
 import flwr as fl
+import numpy
 import yaml
 import flcore.datasets as datasets
 from flcore.server_selector import get_model_server_and_strategy
@@ -22,17 +23,6 @@ def check_config(config):
         config['smooth_method']== 'SlowerQuartile' or \
         config['smooth_method']== 'SsupperQuartile' or \
         config['smooth_method']== 'None'), 'the smooth methods are not correct: EqualVoting, SlowerQuartile and SsupperQuartile' 
-    
-    assert (config['model']== 'linear_models' or \
-            config['model']== 'xgb' or \
-            config['model']== 'random_forest' or \
-            config['model']== 'weighted_random_forest' or \
-            config['model']== 'logistic_regression'), 'the ML methods are not correct: linear_models. xgb, random_forest,weighted_random_forest' 
-    
-    if(config['model']== 'linear_models'):
-         assert (config['linear_models']['model_type']== 'LR' or \
-            config['linear_models']['model_type']== 'elastic_net' or \
-            config['linear_models']['model_type']== 'LSVC'), 'the Linear models are not correct: LR, LSVC, elastic_net '
     
     if(config['model'] == 'weighted_random_forest'): 
          assert (config['weighted_random_forest']['levelOfDetail']== 'DecisionTree' or \
@@ -103,7 +93,7 @@ if __name__ == "__main__":
         per_client_values = {}
         for metric in history.metrics_distributed:
             metric_value = history.metrics_distributed[metric][-1][1]
-            if type(metric_value) == float:
+            if type(metric_value) in [int, float, numpy.float64]:
                 f.write(f"{metric} {metric_value:.4f} \n")
             else:
                 for metric in metric_value:
