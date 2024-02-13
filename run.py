@@ -26,3 +26,5 @@ except KeyboardInterrupt:
     for client_process in client_processes:
         client_process.terminate()
         client_process.wait()
+        
+    print("Server and clients stopped")

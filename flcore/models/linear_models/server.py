@@ -49,7 +49,7 @@ def fit_round( server_round: int ) -> Dict:
 
 
 def get_server_and_strategy(config):
-    model_type = config['linear_models']['model_type']
+    model_type = config['model']
     model = get_model(model_type)
     n_features = config['linear_models']['n_features']
     utils.set_initial_params( model, n_features)
