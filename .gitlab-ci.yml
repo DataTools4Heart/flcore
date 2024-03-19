@@ -18,7 +18,7 @@ cache:
     - .cache/pip
 
 before_script:
-  - python --version ; pip --version  # For debugging
+  - python3 --version ; pip --version  # For debugging
   - pip install virtualenv
   - virtualenv venv
   - source venv/bin/activate
