@@ -1,0 +1,20 @@
+[project]
+name = "flcore"
+description = "FLCore library of federated machine learning models"
+version = "0.1.0"
+authors = [
+    { name = "Grzegorz Skorupko", email = "grzegorz.skorupko@ub.edu" },
+    { name = "Socayna Jouide"},
+    { name = "Esmeralda Ruiz Pujadas"}
+]
+dynamic = ["dependencies"]
+
+[tool.setuptools]
+py-modules = ["flcore"]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta:__legacy__"
