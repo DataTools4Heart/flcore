@@ -12,6 +12,11 @@ image: python:latest
 variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
 
+stages:
+  - build
+  - test
+  - lint
+
 # https://pip.pypa.io/en/stable/topics/caching/
 cache:
   paths:
@@ -23,13 +28,8 @@ before_script:
   - virtualenv venv
   - source venv/bin/activate
 
-test:
-  script:
-    - pip install ruff tox  # you can also use tox
-    - pip install --editable ".[test]"
-    - tox -e py,ruff
-
-run:
+build:
+  stage: build
   script:
     - pip install .
     # run the command here
@@ -37,19 +37,17 @@ run:
     paths:
       - build/*
 
-# pages:
-#   script:
-#     - pip install sphinx sphinx-rtd-theme
-#     - cd doc
-#     - make html
-#     - mv build/html/ ../public/
-#   artifacts:
-#     paths:
-#       - public
-#   rules:
-#     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+test:
+  stage: test
+  script:
+    - pip install ruff tox  # you can also use tox
+    # - pip install --editable ".[test]"
+    - tox -e py
 
-# deploy:
-#   stage: deploy
-#   script: echo "Define your deployment script!"
-#   environment: production
+lint:
+  stage: lint
+  script:
+    - pip install ruff tox  # you can also use tox
+    # - pip install --editable ".[test]"
+    - tox -e ruff
+  
