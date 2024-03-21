@@ -30,10 +30,10 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.ref }} # ${{ github.event.pull_request.head.sha }} 
 
-      - name: Setup Python 3.8
+      - name: Setup Python 3.10
         uses: actions/setup-python@v2
         with:
-          python-version: "3.8"
+          python-version: "3.10"
           cache: 'pip'
 
       - name: Setup isort and Black
@@ -75,10 +75,10 @@ jobs:
         ref: ${{ needs.formatting.outputs.new_sha }}
         fetch-depth: 0
 
-    - name: Set up Python 3.8
+    - name: Set up Python 3.10
       uses: actions/setup-python@v2
       with:
-        python-version: "3.8"
+        python-version: "3.10"
         cache: 'pip'
 
     - name: Install dependencies
@@ -99,10 +99,10 @@ jobs:
         ref: ${{ needs.formatting.outputs.new_sha }}
         fetch-depth: 0
 
-    - name: Set up Python 3.8
+    - name: Set up Python 3.10
       uses: actions/setup-python@v2
       with:
-        python-version: "3.8"
+        python-version: "3.10"
         cache: 'pip'
 
     - name: Install cached dependencies
@@ -130,10 +130,10 @@ jobs:
         ref: ${{ needs.formatting.outputs.new_sha }}
         fetch-depth: 0
 
-    - name: Set up Python 3.8
+    - name: Set up Python 3.10
       uses: actions/setup-python@v2
       with:
-        python-version: "3.8"
+        python-version: "3.10"
         cache: 'pip'
 
     - name: Install cached dependencies
