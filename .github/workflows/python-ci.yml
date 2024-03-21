@@ -49,18 +49,18 @@ jobs:
         run: |
           black .
 
-      - name: Commit changes
-        uses: EndBug/add-and-commit@v8
-        with:
-          message: 'Fix styling'
-          add: '*.py'
+      # - name: Commit changes
+      #   uses: EndBug/add-and-commit@v8
+      #   with:
+      #     message: 'Fix styling'
+      #     add: '*.py'
       
-      - name: Get commit hash
-        id: sha
-        run: |
-          sha_new=$(git rev-parse HEAD)
-          echo $sha_new
-          echo "::set-output name=SHA::$sha_new"
+      # - name: Get commit hash
+      #   id: sha
+      #   run: |
+      #     sha_new=$(git rev-parse HEAD)
+      #     echo $sha_new
+      #     echo "::set-output name=SHA::$sha_new"
 
 
   build:
