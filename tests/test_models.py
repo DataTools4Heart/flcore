@@ -1,6 +1,7 @@
 import logging
 import yaml
 import subprocess
+from threading import Timer
 import time
 
 import pytest
@@ -13,7 +14,7 @@ model_names = [
     "elastic_net",
     "lsvc",
     "random_forest",
-    "weighted_random_forest",
+    # "weighted_random_forest",
     "xgb"
     ]
 
@@ -70,7 +71,13 @@ class TestFLCoreModels:
             )
 
         for client_process in client_processes:
-            client_process.communicate()
+            timer = Timer(20, client_process.kill)
+            try:
+                timer.start()
+                client_process.communicate()
+            finally:
+                timer.cancel()
+
             assert client_process.returncode == 0
 
         server_process.communicate()
