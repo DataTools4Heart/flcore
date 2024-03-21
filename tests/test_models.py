@@ -15,7 +15,7 @@ model_names = [
     "random_forest",
     "weighted_random_forest",
     "xgb"
-    ],
+    ]
 
 class TestFLCoreModels:
     def setup_class(self):
@@ -32,7 +32,7 @@ class TestFLCoreModels:
     def test_get_model_client(
         self, model_name
     ):
-        self.config["model_name"] = model_name
+        self.config["model"] = model_name
         
         from flcore.client_selector import get_model_client
         from flcore.datasets import load_dataset
@@ -49,7 +49,7 @@ class TestFLCoreModels:
     )
     def test_run(self, model_name):
 
-        self.config["model_name"] = model_name
+        self.config["model"] = model_name
         
         with open("config.yaml", "r") as f:
             config = yaml.safe_load(f)
@@ -66,7 +66,12 @@ class TestFLCoreModels:
         for i in range(1, config["num_clients"] + 1):
             print("Starting client " + str(i))
             client_processes.append(
-                subprocess.Popen("python client.py " + str(i), shell=True)
+                subprocess.Popen("python client.py " + str(i), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             )
 
-        server_process.wait()
+        for client_process in client_processes:
+            client_process.communicate()
+            assert client_process.returncode == 0
+
+        server_process.communicate()
+        assert server_process.returncode == 0
