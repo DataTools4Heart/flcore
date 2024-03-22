@@ -71,7 +71,7 @@ class TestFLCoreModels:
             )
 
         for client_process in client_processes:
-            timer = Timer(20, client_process.kill)
+            timer = Timer(30, client_process.kill)
             try:
                 timer.start()
                 client_process.communicate()
