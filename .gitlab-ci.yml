@@ -29,7 +29,7 @@ build:
 test:
   stage: test
   script:
-    - pip install ruff tox
+    - pip install pytest
     - pip install .
     # - tox -e py
     - pytest -vvv
