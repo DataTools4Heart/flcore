@@ -30,7 +30,9 @@ test:
   stage: test
   script:
     - pip install ruff tox
-    - tox -e py
+    - pip install .
+    # - tox -e py
+    - pytest -vvv
 
 lint:
   stage: lint
