@@ -71,8 +71,8 @@ class TestFLCoreModels:
             yaml.dump(config, f)
 
         free_port(config["local_port"])
-
-        run_process = subprocess.Popen("python run.py", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        run_log = open("run.log", "w")
+        run_process = subprocess.Popen("python run.py", shell=True, stdout=run_log, stderr=run_log)
 
         timer = Timer(40, run_process.kill)
         try:
@@ -80,6 +80,11 @@ class TestFLCoreModels:
             run_process.communicate()
         finally:
             timer.cancel()
+        
+        # Print run_log
+        run_log.close()
+        run_log = open("run.log", "r")
+        print(run_log.read())
         
         assert run_process.returncode == 0
 
