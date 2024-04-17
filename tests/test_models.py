@@ -13,11 +13,11 @@ LOGGING_LEVEL = logging.INFO  # WARNING  # logging.INFO
 
 model_names = [
     "logistic_regression", 
-    # "elastic_net",
-    # "lsvc",
+    "elastic_net",
+    "lsvc",
     "random_forest",
     # "weighted_random_forest",
-    # "xgb"
+    "xgb"
     ]
 
 def free_port(port):
@@ -74,7 +74,7 @@ class TestFLCoreModels:
         run_log = open("run.log", "w")
         run_process = subprocess.Popen("python run.py", shell=True, stdout=run_log, stderr=run_log)
 
-        timer = Timer(40, run_process.kill)
+        timer = Timer(60, run_process.kill)
         try:
             timer.start()
             run_process.communicate()
