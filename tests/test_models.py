@@ -1,6 +1,8 @@
 import logging
 import yaml
 import subprocess
+import os
+import signal
 from threading import Timer
 import time
 
@@ -17,6 +19,15 @@ model_names = [
     # "weighted_random_forest",
     # "xgb"
     ]
+
+def free_port(port):
+    process = subprocess.Popen(["lsof", "-i", ":{0}".format(port)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    stdout, stderr = process.communicate()
+    for process in str(stdout.decode("utf-8")).split("\n")[1:]:       
+        data = [x for x in process.split(" ") if x != '']
+        if (len(data) <= 1):
+            continue
+        os.kill(int(data[1]), signal.SIGKILL)
 
 class TestFLCoreModels:
     def setup_class(self):
@@ -58,27 +69,54 @@ class TestFLCoreModels:
 
         with open("config.yaml", "w") as f:
             yaml.dump(config, f)
+
+        free_port(config["local_port"])
+
+        run_process = subprocess.Popen("python run.py", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        timer = Timer(40, run_process.kill)
+        try:
+            timer.start()
+            run_process.communicate()
+        finally:
+            timer.cancel()
+        
+        assert run_process.returncode == 0
+
+        #     try:
+        #         timer.start()
+        #         client_process.communicate()
+        #     finally:
+        #         timer.cancel()
+
+        #     assert client_process.returncode == 0
     
-        print("Starting server")
-        server_process = subprocess.Popen("python server.py", shell=True)
-        time.sleep(20)
+        # print("Starting server")
+        # server_process = subprocess.Popen("python server.py", shell=True)
+        # time.sleep(20)
 
-        client_processes = []
-        for i in range(1, config["num_clients"] + 1):
-            print("Starting client " + str(i))
-            client_processes.append(
-                subprocess.Popen("python client.py " + str(i), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            )
+        # client_processes = []
+        # for i in range(1, config["num_clients"] + 1):
+        #     print("Starting client " + str(i))
+        #     client_processes.append(
+        #         subprocess.Popen("python client.py " + str(i), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        #     )
 
-        for client_process in client_processes:
-            timer = Timer(30, client_process.kill)
-            try:
-                timer.start()
-                client_process.communicate()
-            finally:
-                timer.cancel()
+        # for client_process in client_processes:
+        #     timer = Timer(30, client_process.kill)
+        #     try:
+        #         timer.start()
+        #         client_process.communicate()
+        #     finally:
+        #         timer.cancel()
 
-            assert client_process.returncode == 0
+        #     assert client_process.returncode == 0
 
-        server_process.communicate()
-        assert server_process.returncode == 0
+        # timer = Timer(30, server_process.kill)
+        # try:
+        #     timer.start()
+        #     server_process.communicate()
+        # finally:
+        #     timer.cancel()
+        
+        # assert server_process.returncode == 0
