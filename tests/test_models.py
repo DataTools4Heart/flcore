@@ -17,7 +17,7 @@ model_names = [
     "lsvc",
     "random_forest",
     # "weighted_random_forest",
-    "xgb"
+    # "xgb"
     ]
 
 def free_port(port):
