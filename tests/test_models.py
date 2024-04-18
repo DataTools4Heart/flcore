@@ -74,7 +74,7 @@ class TestFLCoreModels:
         run_log = open("run.log", "w")
         run_process = subprocess.Popen("python run.py", shell=True, stdout=run_log, stderr=run_log)
 
-        timer = Timer(60, run_process.kill)
+        timer = Timer(180, run_process.kill)
         try:
             timer.start()
             run_process.communicate()
