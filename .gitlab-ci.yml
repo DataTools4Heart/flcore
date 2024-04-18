@@ -29,10 +29,11 @@ build:
 test:
   stage: test
   script:
-    - pip install pytest
-    - pip install .
-    # - tox -e py
-    - pytest -vvv
+    - pip install ruff tox
+    # - pip install pytest
+    # - pip install .
+    - tox -e py --verbose
+    # - pytest -vvv
 
 lint:
   stage: lint
