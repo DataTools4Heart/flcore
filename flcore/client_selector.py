@@ -8,7 +8,7 @@ import flcore.models.weighted_random_forest as weighted_random_forest
 def get_model_client(config, data, client_id):
     model = config["model"]
 
-    if model == "linear_models": 
+    if model in ("logistic_regression", "elastic_net", "lsvc"):
         client = linear_models.client.get_client(config,data,client_id)
 
     elif model == "random_forest":

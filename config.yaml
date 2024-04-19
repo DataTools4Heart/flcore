@@ -25,7 +25,6 @@ xgb:
   tree_num: 500
 
 linear_models:
-  model_type: LR #elastic_net,LSVC, LR
   n_features: 9 
 
 dropout: 
