@@ -7,7 +7,7 @@ import warnings
 import flcore.models.linear_models.utils as utils
 import flwr as fl
 from sklearn.metrics import log_loss
-from flcore.performance import measurements_metrics
+from flcore.performance import measurements_metrics, get_metrics
 import time
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
@@ -33,7 +33,7 @@ class MnistClient(fl.client.NumPyClient):
         scaled_features_df = pd.DataFrame(scaled_features, index=self.X_test.index, columns=self.X_test.columns)
         self.X_test = scaled_features_df
 
-        self.model_name = config['linear_models']['model_type']
+        self.model_name = config['model']
         self.n_features = config['linear_models']['n_features']
         self.model = utils.get_model(self.model_name)
         self.model_placeholder = utils.get_model(self.model_name)
@@ -59,11 +59,10 @@ class MnistClient(fl.client.NumPyClient):
         # at the beginning to start the parameters
 
         print("calling get_parameters", self.use_smpc, self.smpc_client)
-        if not bool(config):
-            fs = SelectKBest(f_classif, k=self.n_features).fit(self.X_train, self.y_train)
-            index_features = fs.get_support()
-            self.model.features = index_features
-            self.model_placeholder.features = index_features
+        fs = SelectKBest(f_classif, k=self.n_features).fit(self.X_train, self.y_train)
+        index_features = fs.get_support()
+        self.model.features = index_features
+        self.model_placeholder.features = [0] * len(index_features)  #dummy values for model2 instead of leaking information
 
         # Use SMPClient to share weights with the external SMPC server if enabled
         if self.use_smpc and self.smpc_client:

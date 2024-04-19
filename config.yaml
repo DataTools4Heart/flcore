@@ -35,7 +35,7 @@ smoothWeights:
   smoothing_strenght: 0.5 #Value between 0 and 1
 
 smpc:
-  use_smpc: True
+  use_smpc: False
   smpc_url: "${SMPC_SERVER_IP}" #SMPC_SERVER=167.71.139.232 
 
 production_mode: False # Turn on to use environment variables such as data path, server address, certificates etc.
