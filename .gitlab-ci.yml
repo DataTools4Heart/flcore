@@ -1,0 +1,40 @@
+# Change pip's cache directory to be inside the project directory since we can
+# only cache local items.
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+
+stages:
+  - build
+  - test
+  - lint
+
+cache:
+  paths:
+    - .cache/pip
+
+before_script:
+  - python3 --version ; pip --version  # For debugging
+  - pip install virtualenv
+  - virtualenv venv
+  - source venv/bin/activate
+
+build:
+  stage: build
+  script:
+    - pip install .
+  artifacts:
+    paths:
+      - build/*
+
+test:
+  stage: test
+  script:
+    - pip install ruff tox
+    - tox -e py
+
+lint:
+  stage: lint
+  script:
+    - pip install ruff tox
+    - tox -e ruff
+  
