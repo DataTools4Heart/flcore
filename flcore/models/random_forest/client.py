@@ -7,6 +7,7 @@ import flcore.datasets as datasets
 from flcore.serialization_funs import serialize_RF, deserialize_RF
 import flcore.models.random_forest.utils as utils
 from flcore.performance import measurements_metrics
+from flcore.metrics import calculate_metrics
 from flwr.common import (
     Code,
     EvaluateIns,
@@ -18,9 +19,6 @@ from flwr.common import (
     Status,
 )
 import time
-
-
-
 
 
 # Define Flower client
@@ -67,17 +65,21 @@ class MnistClient(fl.client.Client):
             start_time = time.time()
             self.model.fit(X_train_2, y_train_2)
             #accuracy = model.score( X_test, y_test )
-            accuracy,specificity,sensitivity,balanced_accuracy, precision, F1_score = \
-            measurements_metrics(self.model,X_val, y_val)
-            print(f"Accuracy client in fit:  {accuracy}")
-            print(f"Sensitivity client in fit:  {sensitivity}")
-            print(f"Specificity client in fit:  {specificity}")
-            print(f"Balanced_accuracy in fit:  {balanced_accuracy}")
-            print(f"precision in fit:  {precision}")
-            print(f"F1_score in fit:  {F1_score}")
+            # accuracy,specificity,sensitivity,balanced_accuracy, precision, F1_score = \
+            # measurements_metrics(self.model,X_val, y_val)
+            y_pred = self.model.predict(X_val)
+            metrics = calculate_metrics(y_val, y_pred)
+            # print(f"Accuracy client in fit:  {accuracy}")
+            # print(f"Sensitivity client in fit:  {sensitivity}")
+            # print(f"Specificity client in fit:  {specificity}")
+            # print(f"Balanced_accuracy in fit:  {balanced_accuracy}")
+            # print(f"precision in fit:  {precision}")
+            # print(f"F1_score in fit:  {F1_score}")
     
-            ellapsed_time = (time.time() - start_time)
-            print(f"num_client {self.client_id} has an ellapsed time {ellapsed_time}")
+            elapsed_time = (time.time() - start_time)
+            metrics["running_time"] = elapsed_time
+
+            print(f"num_client {self.client_id} has an elapsed time {elapsed_time}")
             
         print(f"Training finished for round {ins.config['server_round']}")
 
@@ -91,7 +93,7 @@ class MnistClient(fl.client.Client):
             status=status,
             parameters=parameters_updated,
             num_examples=len(self.X_train),
-            metrics= {"running_time":ellapsed_time},
+            metrics=metrics,
         )
         
 
@@ -102,14 +104,16 @@ class MnistClient(fl.client.Client):
         utils.set_model_params(self.model, parameters)
         y_pred_prob = self.model.predict_proba(self.X_test)
         loss = log_loss(self.y_test, y_pred_prob)
-        accuracy,specificity,sensitivity,balanced_accuracy, precision, F1_score = \
-        measurements_metrics(self.model,self.X_test, self.y_test)
-        print(f"Accuracy client in evaluate:  {accuracy}")
-        print(f"Sensitivity client in evaluate:  {sensitivity}")
-        print(f"Specificity client in evaluate:  {specificity}")
-        print(f"Balanced_accuracy in evaluate:  {balanced_accuracy}")
-        print(f"precision in evaluate:  {precision}")
-        print(f"F1_score in evaluate:  {F1_score}")
+        # accuracy,specificity,sensitivity,balanced_accuracy, precision, F1_score = \
+        # measurements_metrics(self.model,self.X_test, self.y_test)
+        y_pred = self.model.predict(self.X_test)
+        metrics = calculate_metrics(self.y_test, y_pred)
+        # print(f"Accuracy client in evaluate:  {accuracy}")
+        # print(f"Sensitivity client in evaluate:  {sensitivity}")
+        # print(f"Specificity client in evaluate:  {specificity}")
+        # print(f"Balanced_accuracy in evaluate:  {balanced_accuracy}")
+        # print(f"precision in evaluate:  {precision}")
+        # print(f"F1_score in evaluate:  {F1_score}")
 
         # Serialize to send it to the server
         #params = get_model_parameters(model)
@@ -120,7 +124,7 @@ class MnistClient(fl.client.Client):
             status=status,
             loss=float(loss),
             num_examples=len(self.X_test),
-            metrics={"accuracy": float(accuracy),"sensitivity":float(sensitivity),"specificity":float(specificity)},
+            metrics=metrics,
         )
 
 

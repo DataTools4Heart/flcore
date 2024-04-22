@@ -157,14 +157,7 @@ class FL_Client(fl.client.Client):
         print(
             f"Client {self.cid}: training round complete, {num_examples} examples processed"
         )
-        # accuracy,specificity,sensitivity,balanced_accuracy, precision, F1_score = \
-        #         measurements_metrics(self.model,self.X_test.loc[:, parameters[2].astype(bool)], self.y_test)
-        #     print(f"Accuracy client in fit:  {accuracy}")
-        #     print(f"Sensitivity client in fit:  {sensitivity}")
-        #     print(f"Specificity client in fit:  {specificity}")
-        #     print(f"Balanced_accuracy in fit:  {balanced_accuracy}")
-        #     print(f"precision in fit:  {precision}")
-        #     print(f"F1_score in fit:  {F1_score}")
+        
         elapsed_time = (time.time() - start_time)
 
         # Return training information: model, number of examples processed and metrics

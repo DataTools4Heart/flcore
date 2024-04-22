@@ -32,6 +32,7 @@ from pathlib import Path
 
 import flwr as fl
 import flcore.models.linear_models.utils as utils
+from flcore.metrics import evaluate_metrics_aggregation_fn
 from sklearn.metrics import log_loss
 from typing import Dict
 import joblib
@@ -63,7 +64,7 @@ def get_server_and_strategy(config):
         min_evaluate_clients = config['num_clients'],
         #enable evaluate_fn  if we have data to evaluate in the server
         #evaluate_fn           = utils_RF.get_evaluate_fn( model ), #no data in server
-        evaluate_metrics_aggregation_fn = utils.evaluate_metrics_aggregation_fn,
+        evaluate_metrics_aggregation_fn = evaluate_metrics_aggregation_fn,
         on_fit_config_fn      = fit_round      
     )
 

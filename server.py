@@ -70,6 +70,9 @@ if __name__ == "__main__":
     history_dir = experiment_dir / "history"
     history_dir.mkdir(parents=True, exist_ok=True)
 
+    # Copy the config file to the experiment directory
+    os.system(f"cp {config_path} {experiment_dir}")
+
     (X_train, y_train), (X_test, y_test) = datasets.load_dataset(config)
 
     data = (X_train, y_train), (X_test, y_test)
@@ -90,18 +93,25 @@ if __name__ == "__main__":
     # Save the history as a yaml file
     print(history)
     with open(history_dir / "results.txt", "w") as f:
+        f.write(f"Results of the experiment {config['experiment']['name']}\n")
+        f.write(f"Model: {config['model']}\n")
+        f.write(f"Data: {config['dataset']}\n")
+        f.write(f"Number of clients: {config['num_clients']}\n")
+        f.write(f"\nAggregated results:\n\n")
+
         per_client_values = {}
         for metric in history.metrics_distributed:
             metric_value = history.metrics_distributed[metric][-1][1]
             if type(metric_value) in [int, float, numpy.float64]:
                 f.write(f"{metric} {metric_value:.4f} \n")
             else:
-                for metric in metric_value:
+                for per_client_metric_value in metric_value:
+                    metric = metric.replace("per client ", "")
                     if metric not in per_client_values:
                         per_client_values[metric] = []
-                    per_client_values[metric].append(round(metric_value[metric], 3))
+                    per_client_values[metric].append(round(per_client_metric_value, 3))
         
-        f.write(f"\nPer client results:\n")
+        f.write(f"\n\nPer client results:\n\n")
         for metric in per_client_values:
             f.write(f"{metric} {per_client_values[metric]} \n")
 

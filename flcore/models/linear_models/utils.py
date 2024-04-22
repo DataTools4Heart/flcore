@@ -1,11 +1,6 @@
 from typing import Tuple, Union, List
 import numpy as np
 from sklearn.linear_model import LogisticRegression,SGDClassifier
-import openml
-import pandas as pd
-from sklearn.model_selection import KFold, StratifiedKFold,StratifiedShuffleSplit
-from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import confusion_matrix
 
 XY = Tuple[np.ndarray, np.ndarray]
 Dataset = Tuple[XY, XY]
@@ -49,7 +44,7 @@ def get_model_parameters(model: LinearClassifier) -> LinearMLParams:
             model.coef_,
             model.intercept_,
             #For feature selection
-            model.features.astype(bool)
+            # model.features.astype(bool)
         ]
     else:
         params = [
@@ -66,7 +61,7 @@ def set_model_params(
     if model.fit_intercept:
         model.intercept_ = params[1]
     #For feature selection
-    model.features = params[2].astype(bool)  
+    # model.features = params[2].astype(bool)  
     return model
 
 
@@ -106,14 +101,14 @@ def evaluate_metrics_aggregation_fn(eval_metrics):
         metrics[kn] = np.mean(results)
         #print(f"Metric {kn} in aggregation evaluate: {metrics[kn]}\n")
 
-    filename = 'server_results.txt'
-    with open(
-    filename,
-    "a",
-    ) as f:
-        f.write(f"Accuracy: {metrics['accuracy']} \n")
-        f.write(f"Sensitivity: {metrics['sensitivity']} \n")
-        f.write(f"Specificity: {metrics['specificity']} \n")
+    # filename = 'server_results.txt'
+    # with open(
+    # filename,
+    # "a",
+    # ) as f:
+    #     f.write(f"Accuracy: {metrics['accuracy']} \n")
+    #     f.write(f"Sensitivity: {metrics['sensitivity']} \n")
+    #     f.write(f"Specificity: {metrics['specificity']} \n")
 
     return metrics
         

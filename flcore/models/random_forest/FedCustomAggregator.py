@@ -193,14 +193,14 @@ class FedCustom(fl.server.strategy.FedAvg):
         elif server_round == 1:  # Only log this warning once
             log(WARNING, "No evaluate_metrics_aggregation_fn provided")
 
-        filename = 'server_results.txt'
-        with open(
-        filename,
-        "a",
-        ) as f:
-            f.write(f"Accuracy: {metrics_aggregated['accuracy']} \n")
-            f.write(f"Sensitivity: {metrics_aggregated['sensitivity']} \n")
-            f.write(f"Specificity: {metrics_aggregated['specificity']} \n")
+        # filename = 'server_results.txt'
+        # with open(
+        # filename,
+        # "a",
+        # ) as f:
+        #     f.write(f"Accuracy: {metrics_aggregated['accuracy']} \n")
+        #     f.write(f"Sensitivity: {metrics_aggregated['sensitivity']} \n")
+        #     f.write(f"Specificity: {metrics_aggregated['specificity']} \n")
 
         return loss_aggregated, metrics_aggregated
 
