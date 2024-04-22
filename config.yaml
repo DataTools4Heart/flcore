@@ -33,4 +33,6 @@ dropout:
 smoothWeights: 
   smoothing_strenght: 0.5 #Value between 0 and 1
 
+local_port: 8081
+
 production_mode: False # Turn on to use environment variables such as data path, server address, certificates etc.

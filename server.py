@@ -56,7 +56,7 @@ if __name__ == "__main__":
     else:
         data_path = config["data_path"]
         central_ip = "LOCALHOST"
-        central_port = "8080"
+        central_port = config["local_port"]
         certificates = None
 
     # Create experiment directory
