@@ -35,7 +35,8 @@ class MnistClient(fl.client.NumPyClient):
 
         self.model_name = config['model']
         self.n_features = config['linear_models']['n_features']
-        self.model = utils.get_model(self.model_name) 
+        self.model = utils.get_model(self.model_name)
+        self.round_time = 0
         # Setting initial parameters, akin to model.compile for keras models
         utils.set_initial_params(self.model,self.n_features)
     
@@ -63,9 +64,9 @@ class MnistClient(fl.client.NumPyClient):
 
             metrics = calculate_metrics(self.y_test, y_pred)
 
-            ellapsed_time = (time.time() - start_time)
+            self.round_time = (time.time() - start_time)
 
-            metrics["running_time"] = ellapsed_time
+            metrics["running_time"] = self.round_time
 
         print(f"Training finished for round {config['server_round']}")
         return utils.get_model_parameters(self.model), len(self.X_train), metrics
@@ -78,9 +79,11 @@ class MnistClient(fl.client.NumPyClient):
         if(isinstance(self.model, SGDClassifier)):
             loss = 1.0
         else:
-            loss = log_loss(self.y_test, self.model.predict_proba(self.X_test))
+            loss = log_loss(self.y_test, self.model.predict_proba(self.X_test), labels=[0, 1])
        
         metrics = calculate_metrics(self.y_test, y_pred)
+        metrics["round_time [s]"] = self.round_time
+        metrics["client_id"] = self.client_id
 
         return loss, len(y_pred),  metrics
 

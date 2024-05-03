@@ -19,7 +19,7 @@ def get_model(model_name):
             model = LogisticRegression(
             penalty="l2",
             #max_iter=1,  # local epoch ==>> it doesn't work
-            max_iter=100000,  # local epoch
+            max_iter=2,  # local epoch
             warm_start=True,  # prevent refreshing weights when fitting
             class_weight= "balanced" #For unbalanced
         )
