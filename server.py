@@ -60,15 +60,16 @@ if __name__ == "__main__":
         certificates = None
 
     # Create experiment directory
-    experiment_dir = Path("results") / config["experiment"]["name"]
+    experiment_dir = Path(os.path.join(config["experiment"]["log_path"], config["experiment"]["name"]))
     experiment_dir.mkdir(parents=True, exist_ok=True)
+    config["experiment_dir"] = experiment_dir
 
     # Checkpoint directory for saving the model
     checkpoint_dir = experiment_dir / "checkpoints"
     checkpoint_dir.mkdir(parents=True, exist_ok=True)
-    # History directory for saving the history
-    history_dir = experiment_dir / "history"
-    history_dir.mkdir(parents=True, exist_ok=True)
+    # # History directory for saving the history
+    # history_dir = experiment_dir / "history"
+    # history_dir.mkdir(parents=True, exist_ok=True)
 
     # Copy the config file to the experiment directory
     os.system(f"cp {config_path} {experiment_dir}")
@@ -92,7 +93,7 @@ if __name__ == "__main__":
     # joblib.dump(model, filename)
     # Save the history as a yaml file
     print(history)
-    with open(history_dir / "results.txt", "w") as f:
+    with open(experiment_dir / "metrics.txt", "w") as f:
         f.write(f"Results of the experiment {config['experiment']['name']}\n")
         f.write(f"Model: {config['model']}\n")
         f.write(f"Data: {config['dataset']}\n")
@@ -114,6 +115,12 @@ if __name__ == "__main__":
         f.write(f"\n\nPer client results:\n\n")
         for metric in per_client_values:
             f.write(f"{metric} {per_client_values[metric]} \n")
+        
+        f.write(f"\n\nHeld out set evaluation:\n\n")
+        for metric in history.metrics_centralized:
+            metric_value = history.metrics_centralized[metric][-1][1]
+            if type(metric_value) in [int, float, numpy.float64]:
+                f.write(f"{metric} {metric_value:.4f} \n")
 
-    with open(history_dir / "history.yaml", "w") as f:
+    with open(experiment_dir / "history.yaml", "w") as f:
         yaml.dump(history, f)
