@@ -122,5 +122,21 @@ if __name__ == "__main__":
             if type(metric_value) in [int, float, numpy.float64]:
                 f.write(f"{metric} {metric_value:.4f} \n")
 
-    with open(experiment_dir / "history.yaml", "w") as f:
-        yaml.dump(history, f)
+dict_history = {}
+history = history.__dict__
+for logs in history.keys():
+    if isinstance(history[logs], list):
+        history[logs] = [float(loss) for (round, loss) in history[logs]]
+    if isinstance(history[logs], dict):
+        for metric in history[logs]:
+            extracted_values = [value for (round, value) in history[logs][metric]]
+            if isinstance(extracted_values[0], list):
+                # Convert list elements to float
+                extracted_values = [[float(value) for value in sublist] for sublist in extracted_values]
+            else:
+                extracted_values = [float(value) for value in extracted_values]
+            history[logs][metric] = extracted_values
+
+
+with open(experiment_dir / "history.yaml", "w") as f:
+    yaml.dump(history, f)
