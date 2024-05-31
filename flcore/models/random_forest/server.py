@@ -21,7 +21,7 @@ import joblib
 from flcore.models.random_forest.FedCustomAggregator import FedCustom
 from sklearn.ensemble import RandomForestClassifier
 from flcore.models.random_forest.utils import get_model
-from flcore.metrics import evaluate_metrics_aggregation_fn
+from flcore.metrics import metrics_aggregation_fn
 
 
 
@@ -46,7 +46,7 @@ def get_server_and_strategy(config):
         min_evaluate_clients = config['num_clients'],
         #enable evaluate_fn  if we have data to evaluate in the server
         #evaluate_fn           = utils_RF.get_evaluate_fn( model ), #no data in server
-        evaluate_metrics_aggregation_fn = evaluate_metrics_aggregation_fn,
+        evaluate_metrics_aggregation_fn = metrics_aggregation_fn,
         on_fit_config_fn      = fit_round      
     )
     #Select normal RF or Balanced RF from config

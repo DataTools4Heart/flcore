@@ -34,7 +34,7 @@ from pathlib import Path
 
 import flwr as fl
 import flcore.models.linear_models.utils as utils
-from flcore.metrics import evaluate_metrics_aggregation_fn
+from flcore.metrics import metrics_aggregation_fn
 from sklearn.metrics import log_loss
 from typing import Dict
 import joblib
@@ -62,14 +62,18 @@ def evaluate_held_out(
     
     """Evaluate the current model on the held-out validation set."""
     # Load held-out validation data
+    client_id = 19
     model = get_model(config['model'])
     utils.set_model_params(model, parameters)
-    (X_train, y_train), (X_test, y_test) = load_dataset(config, -1)
+    (X_train, y_train), (X_test, y_test) = load_dataset(config, client_id)
     model.classes_ = np.unique(y_test)
     # Evaluate the model
     y_pred = model.predict(X_test)
     loss = log_loss(y_test, y_pred)
     metrics = calculate_metrics(y_test, y_pred)
+    n_samples = len(y_test)
+    metrics['n samples'] = n_samples
+    metrics['client_id'] = client_id
 
     return loss, metrics
 
@@ -92,7 +96,8 @@ def get_server_and_strategy(config):
             evaluate_held_out,
             config=config,
         ),
-        evaluate_metrics_aggregation_fn = evaluate_metrics_aggregation_fn,
+        fit_metrics_aggregation_fn = metrics_aggregation_fn,
+        evaluate_metrics_aggregation_fn = metrics_aggregation_fn,
         on_fit_config_fn = fit_round,
         checkpoint_dir = config["experiment_dir"] / "checkpoints",
         dropout_method = config['dropout_method'],

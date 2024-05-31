@@ -29,7 +29,7 @@ from sklearn.metrics import accuracy_score, mean_squared_error
 from torch.utils.data import DataLoader
 from xgboost import XGBClassifier, XGBRegressor
 
-import flcore.datasets as datasets
+from flcore.metrics import metrics_aggregation_fn
 from flcore.models.xgb.client import FL_Client
 from flcore.models.xgb.fed_custom_strategy import FedCustomStrategy
 from flcore.models.xgb.cnn import CNN, test
@@ -104,21 +104,21 @@ class FL_Server(fl.server.Server):
                     self.parameters = parameters_prime
 
             # Evaluate model using strategy implementation
-            # res_cen = self.strategy.evaluate(current_round, parameters=self.parameters)
-            # if res_cen is not None:
-            #     loss_cen, metrics_cen = res_cen
-            #     log(
-            #         INFO,
-            #         "fit progress: (%s, %s, %s, %s)",
-            #         current_round,
-            #         loss_cen,
-            #         metrics_cen,
-            #         timeit.default_timer() - start_time,
-            #     )
-            #     history.add_loss_centralized(server_round=current_round, loss=loss_cen)
-            #     history.add_metrics_centralized(
-            #         server_round=current_round, metrics=metrics_cen
-            #     )
+            res_cen = self.strategy.evaluate(current_round, parameters=self.parameters)
+            if res_cen is not None:
+                loss_cen, metrics_cen = res_cen
+                log(
+                    INFO,
+                    "fit progress: (%s, %s, %s, %s)",
+                    current_round,
+                    loss_cen,
+                    metrics_cen,
+                    timeit.default_timer() - start_time,
+                )
+                history.add_loss_centralized(server_round=current_round, loss=loss_cen)
+                history.add_metrics_centralized(
+                    server_round=current_round, metrics=metrics_cen
+                )
 
             # Evaluate model on a sample of available clients
             res_fed = self.evaluate_round(server_round=current_round, timeout=timeout)
@@ -134,9 +134,9 @@ class FL_Server(fl.server.Server):
             # if self.best_score < evaluate_metrics_fed[self.metric_to_track]:
                 # self.best_score = evaluate_metrics_fed[self.metric_to_track]
 
-        history.add_metrics_distributed(
-            server_round=0, metrics=self.final_metrics
-        )
+        # history.add_metrics_distributed(
+        #     server_round=0, metrics=self.final_metrics
+        # )
 
         # Bookkeeping
         end_time = timeit.default_timer()
@@ -192,10 +192,10 @@ class FL_Server(fl.server.Server):
             Dict[str, Scalar],
         ] = self.strategy.aggregate_evaluate(server_round, results, failures)
 
-        #Save per client results
-        for result in results:
-            result[1].metrics["num_examples"] = result[1].num_examples
-            self.final_metrics["client_" + str(result[1].metrics["client_id"])] = result[1].metrics
+        # #Save per client results
+        # for result in results:
+        #     result[1].metrics["num_examples"] = result[1].num_examples
+        #     self.final_metrics["client_" + str(result[1].metrics["client_id"])] = result[1].metrics
 
 
         loss_aggregated, metrics_aggregated = aggregated_result
@@ -371,34 +371,33 @@ def serverside_eval(
     testloader = tree_encoding_loader(
         testloader, batch_size, trees_aggregated, client_tree_num, client_num
     )
-    loss, result, _ = test(
+    loss, metrics, _ = test(
         task_type, model, testloader, device=device, log_progress=False
     )
 
     if task_type == "BINARY":
-        result = result["accuracy"]
         print(
-            f"Evaluation on the server: test_loss={loss:.4f}, test_accuracy={result:.4f}"
+            f"Evaluation on the server: test_loss={loss:.4f}, test_accuracy={metrics['accuracy']:.4f}"
         )
-        return loss, {"accuracy": result}
+        return loss, metrics
     elif task_type == "REG":
-        print(f"Evaluation on the server: test_loss={loss:.4f}, test_mse={result:.4f}")
-        return loss, {"mse": result}
+        print(f"Evaluation on the server: test_loss={loss:.4f}, test_mse={metrics['mse']:.4f}")
+        return loss, metrics
 
-def metrics_aggregation_fn(eval_metrics):
-    metrics = eval_metrics[0][1].keys()
-    metrics_distribitued_dict = {}
-    aggregated_metrics = {}
+# def metrics_aggregation_fn(eval_metrics):
+#     metrics = eval_metrics[0][1].keys()
+#     metrics_distribitued_dict = {}
+#     aggregated_metrics = {}
 
-    n_samples_list = [result[0] for result in eval_metrics]
-    for metric in metrics:
-        metrics_distribitued_dict[metric] = [result[1][metric] for result in eval_metrics]
-        aggregated_metrics[metric] = float(np.average(
-            metrics_distribitued_dict[metric], weights=n_samples_list
-        ))
+#     n_samples_list = [result[0] for result in eval_metrics]
+#     for metric in metrics:
+#         metrics_distribitued_dict[metric] = [result[1][metric] for result in eval_metrics]
+#         aggregated_metrics[metric] = float(np.average(
+#             metrics_distribitued_dict[metric], weights=n_samples_list
+#         ))
     
-    print("Metrics aggregated on the server:")
-    return aggregated_metrics
+#     print("Metrics aggregated on the server:")
+#     return aggregated_metrics
     
 
 def get_server_and_strategy(
@@ -577,6 +576,7 @@ def get_server_and_strategy(
             client_tree_num=client_tree_num,
             client_num=client_num,
         ),
+        fit_metrics_aggregation_fn=metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=metrics_aggregation_fn,
         accept_failures=False,
         dropout_method=config["dropout_method"],

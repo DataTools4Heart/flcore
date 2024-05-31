@@ -9,17 +9,23 @@ LinearClassifier = Union[LogisticRegression, SGDClassifier]
 XYList = List[XY]
 
 
-def get_model(model_name):
+def get_model(model_name, local=False):
+
+    if local:
+        max_iter = 100000
+    else:
+        max_iter = 10
+    
     match model_name:
         case "lsvc":
             #Linear classifiers (SVM, logistic regression, etc.) with SGD training.
             #If we use hinge, it implements SVM
-            model = SGDClassifier( max_iter= 100000,n_iter_no_change=1000,average=True,random_state=42,class_weight= "balanced",warm_start=True,fit_intercept=True,loss="hinge", learning_rate='optimal')
+            model = SGDClassifier(max_iter=max_iter,n_iter_no_change=1000,average=True,random_state=42,class_weight= "balanced",warm_start=True,fit_intercept=True,loss="hinge", learning_rate='optimal')
         case "logistic_regression":
             model = LogisticRegression(
             penalty="l2",
             #max_iter=1,  # local epoch ==>> it doesn't work
-            max_iter=2,  # local epoch
+            max_iter=max_iter,  # local epoch
             warm_start=True,  # prevent refreshing weights when fitting
             class_weight= "balanced" #For unbalanced
         )
@@ -29,7 +35,7 @@ def get_model(model_name):
             penalty="elasticnet",
             solver='saga', #necessary param for elasticnet otherwise error
             #max_iter=1,  # local epoch ==>> it doesn't work
-            max_iter=100000,  # local epoch
+            max_iter=max_iter,  # local epoch
             warm_start=True,  # prevent refreshing weights when fitting
             class_weight= "balanced" #For unbalanced
         )

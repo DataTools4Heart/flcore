@@ -74,19 +74,19 @@ def calculate_metrics(y_true, y_pred, task_type="binary"):
 
     return metrics
 
-def evaluate_metrics_aggregation_fn(eval_metrics):
-    print(eval_metrics[0][1].keys())
-    keys_names = eval_metrics[0][1].keys()
+def metrics_aggregation_fn(distributed_metrics):
+    print(distributed_metrics[0][1].keys())
+    keys_names = distributed_metrics[0][1].keys()
     keys_names = list(keys_names)
 
     metrics ={}
 
     for kn in keys_names:
-        results = [ evaluate_res[kn] for _, evaluate_res in eval_metrics]
+        results = [ evaluate_res[kn] for _, evaluate_res in distributed_metrics]
         metrics[kn] = np.mean(results)
         metrics['per client ' + kn] = results
         #print(f"Metric {kn} in aggregation evaluate: {metrics[kn]}\n")
 
-    metrics['per client n samples'] = [res[0] for res in eval_metrics]
+    metrics['per client n samples'] = [res[0] for res in distributed_metrics]
 
     return metrics

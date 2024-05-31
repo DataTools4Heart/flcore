@@ -72,6 +72,7 @@ class FL_Client(fl.client.Client):
 
         # determine device
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.round_time = -1
 
     def get_properties(self, ins: GetPropertiesIns) -> GetPropertiesRes:
         return GetPropertiesRes(properties=self.properties)
@@ -158,7 +159,7 @@ class FL_Client(fl.client.Client):
             f"Client {self.cid}: training round complete, {num_examples} examples processed"
         )
         
-        elapsed_time = (time.time() - start_time)
+        self.round_time = (time.time() - start_time)
 
         # Return training information: model, number of examples processed and metrics
         if self.task_type == "BINARY":
@@ -167,14 +168,14 @@ class FL_Client(fl.client.Client):
                 # parameters=self.get_parameters(fit_params.config),
                 parameters=self.get_parameters(fit_params.config).parameters,
                 num_examples=num_examples,
-                metrics={"loss": train_loss, "accuracy": train_result, "running_time":elapsed_time},
+                metrics={"loss": train_loss, "accuracy": train_result, "running_time":self.round_time},
             )
         elif self.task_type == "REG":
             return FitRes(
                 status=Status(Code.OK, ""),
                 parameters=self.get_parameters(fit_params.config),
                 num_examples=num_examples,
-                metrics={"loss": train_loss, "mse": train_result, "running_time":elapsed_time},
+                metrics={"loss": train_loss, "mse": train_result, "running_time":self.round_time},
             )
 
     def evaluate(self, eval_params: EvaluateIns) -> EvaluateRes:
@@ -200,6 +201,7 @@ class FL_Client(fl.client.Client):
 
         metrics = result
         metrics["client_id"] = int(self.cid)
+        metrics["round_time [s]"] = self.round_time
 
         # Return evaluation information
         if self.task_type == "BINARY":

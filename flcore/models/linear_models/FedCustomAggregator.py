@@ -49,7 +49,8 @@ class FedCustom(fl.server.strategy.FedAvg):
                 Optional[Tuple[float, Dict[str, Scalar]]],
             ]
         ] = None,
-        evaluate_metrics_aggregation_fn: MetricsAggregationFn = None,
+        fit_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
+        evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
         on_fit_config_fn: Optional[Callable[[int], Dict[str, fl.common.Scalar]]] = None,
         accept_failures: bool = False,
         dropout_method = None,
@@ -59,7 +60,7 @@ class FedCustom(fl.server.strategy.FedAvg):
         checkpoint_dir: Optional[str] = None,
     ) -> None:
         
-        super().__init__(min_available_clients=min_available_clients, min_fit_clients=min_fit_clients, min_evaluate_clients=min_evaluate_clients, evaluate_fn=evaluate_fn, evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn, on_fit_config_fn=on_fit_config_fn, accept_failures=accept_failures)
+        super().__init__(min_available_clients=min_available_clients, min_fit_clients=min_fit_clients, min_evaluate_clients=min_evaluate_clients, evaluate_fn=evaluate_fn, fit_metrics_aggregation_fn=fit_metrics_aggregation_fn, evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn, on_fit_config_fn=on_fit_config_fn, accept_failures=accept_failures)
         
         #DropOut center variable to get the initial execution time of the first round
         self.clients_first_round_time = {}

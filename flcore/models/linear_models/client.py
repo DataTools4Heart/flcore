@@ -3,6 +3,7 @@ from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import log_loss
 import time
 from sklearn.feature_selection import SelectKBest, f_classif
+from sklearn.model_selection import KFold, StratifiedShuffleSplit, train_test_split
 import warnings
 import flcore.models.linear_models.utils as utils
 import flwr as fl
@@ -22,6 +23,9 @@ class MnistClient(fl.client.NumPyClient):
         self.client_id = client_id
         # Load data
         (self.X_train, self.y_train), (self.X_test, self.y_test) = data
+
+        # Create train and validation split
+        self.X_train, self.X_val, self.y_train, self.y_val = train_test_split(self.X_train, self.y_train, test_size=0.2, random_state=42, stratify=self.y_train)
         
         # #Only use the standardScaler to the continous variables
         # scaled_features_train = StandardScaler().fit_transform(self.X_train.values)
@@ -37,6 +41,7 @@ class MnistClient(fl.client.NumPyClient):
         self.n_features = config['linear_models']['n_features']
         self.model = utils.get_model(self.model_name)
         self.round_time = 0
+        self.first_round = True
         # Setting initial parameters, akin to model.compile for keras models
         utils.set_initial_params(self.model,self.n_features)
     
@@ -51,6 +56,8 @@ class MnistClient(fl.client.NumPyClient):
         return utils.get_model_parameters(self.model)
 
     def fit(self, parameters, config):  # type: ignore
+
+        
         utils.set_model_params(self.model, parameters)
         # Ignore convergence failure due to low local epochs
         with warnings.catch_warnings():
@@ -67,12 +74,30 @@ class MnistClient(fl.client.NumPyClient):
             self.round_time = (time.time() - start_time)
 
             metrics["running_time"] = self.round_time
+            print(f"Client {self.client_id} Evaluation just after local training: {metrics['balanced_accuracy']}")
 
         print(f"Training finished for round {config['server_round']}")
+
+        if self.first_round:
+            local_model = utils.get_model(self.model_name, local=True)
+            utils.set_initial_params(self.model,self.n_features)
+            local_model.fit(self.X_train, self.y_train)
+            y_pred = local_model.predict(self.X_test)
+            metrics = calculate_metrics(self.y_test, y_pred)
+            #Add 'local' to the metrics to identify them
+            local_metrics = {f"local {key}": metrics[key] for key in metrics}
+            metrics.update(local_metrics)
+            self.first_round = False
+
         return utils.get_model_parameters(self.model), len(self.X_train), metrics
 
     def evaluate(self, parameters, config):  # type: ignore
         utils.set_model_params(self.model, parameters)
+
+        # Calculate validation set metrics
+        y_pred = self.model.predict(self.X_val)
+        val_metrics = calculate_metrics(self.y_val, y_pred)
+
         y_pred = self.model.predict(self.X_test)
         # y_pred = self.model.predict(self.X_test.loc[:, parameters[2].astype(bool)])
 
@@ -85,6 +110,14 @@ class MnistClient(fl.client.NumPyClient):
         metrics["round_time [s]"] = self.round_time
         metrics["client_id"] = self.client_id
 
+        print(f"Client {self.client_id} Evaluation after aggregated model: {metrics['balanced_accuracy']}")
+
+
+        # Add validation metrics to the evaluation metrics with a prefix
+        val_metrics = {f"val {key}": val_metrics[key] for key in val_metrics}
+        metrics.update(val_metrics)
+
+
         return loss, len(y_pred),  metrics
 
 
@@ -92,3 +125,4 @@ def get_client(config,data,client_id) -> fl.client.Client:
     return MnistClient(data,client_id,config)
     # # Start Flower client
     # fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=MnistClient())
+
