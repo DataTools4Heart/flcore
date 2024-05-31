@@ -11,6 +11,8 @@ from sklearn.datasets import load_svmlight_file
 from sklearn.preprocessing import OrdinalEncoder, MinMaxScaler,StandardScaler
 from sklearn.model_selection import KFold, StratifiedShuffleSplit, train_test_split
 from sklearn.utils import shuffle
+from sklearn.feature_selection import SelectKBest, f_classif
+
 
 from flcore.models.xgb.utils import TreeDataset, do_fl_partitioning, get_dataloader
 
@@ -71,7 +73,7 @@ def load_cvd(data_path, center_id=None) -> Dataset:
     elif center_id == 3:
         file_name = data_path+'data_center3.csv'
     else:
-        file_name = data_path+'data_center1.csv'
+        file_name = data_path+'data_center3.csv'
     
     if id == None:
         # id = 'All'
@@ -85,7 +87,8 @@ def load_cvd(data_path, center_id=None) -> Dataset:
     train_index_list = []
 
     for id in data_centers:
-        file_name = os.path.join(data_path, f"data_center{id}.csv")
+        # file_name = os.path.join(data_path, f"data_center{id}.csv")
+        # file_name = os.path.join(data_path, file_name)
 
         code_id = "f_eid"
         code_outcome = "Eval"
@@ -96,7 +99,7 @@ def load_cvd(data_path, center_id=None) -> Dataset:
         f_eid = data[code_id]
 
         # Split the data
-        sss = StratifiedShuffleSplit(n_splits=1, test_size=0.2, random_state=42)
+        sss = StratifiedShuffleSplit(n_splits=1, test_size=0.2, random_state=None)
         train_index, test_index = next(sss.split(X_data, y_data))
         X_test = X_data.iloc[test_index, :]
         X_train = X_data.iloc[train_index, :]
@@ -137,6 +140,124 @@ def load_cvd(data_path, center_id=None) -> Dataset:
     # print(np.unique(y_test, return_counts=True))
     # print(train_max_acc)
     # print(test_max_acc)
+
+    return (X_train, y_train), (X_test, y_test)
+
+def load_ukbb_cvd(data_path, center_id=None) -> Dataset:
+
+    data_path = os.path.join(data_path, "CVDMortalityData.csv")
+    data = pd.read_csv(data_path)
+
+    # print(len(data))
+
+    center_key = 'f.54.0.0'
+    patient_key = 'f.eid'
+    label_key = 'label'
+
+    # center_id = None
+    # center_id = 1
+    preprocessing_data = data.loc[(data[center_key] == 1)]
+
+    if center_id is not None:
+        center_id = center_id
+        data = data.loc[(data[center_key] == center_id)]
+
+    # center_names = ['Bristol', 'Newcastle', 'Oxford', 'Stockport (pilot)', 'Reading',
+    #                 'Middlesborough', 'Leeds', 'Liverpool', 'Nottingham', 'Glasgow', 'Croydon',
+    #                 'Hounslow', 'Barts', 'Edinburgh', 'Birmingham', 'Manchester', 'Cardiff',
+    #                 'Stoke', 'Bury', 'Sheffield', 'Swansea', 'Wrexham']
+    # center_keys = [2, 13, 15, 18, 16, 12, 9, 10, 14, 7, 5, 8, 0, 6, 1, 11, 4, 19, 3, 17, 20, 21]
+    # center_dict = dict(zip(center_keys, center_names))
+    # # sort dictionary and convert to list
+    # center_dict = dict(sorted(center_dict.items()))
+    # center_dict = list(center_dict.values())
+    # print(center_dict)
+
+    # xx
+
+    # for i in range(0, 23):
+    #     center_data = data.loc[(data[center_key] == i)]
+    #     print(f'Center ID: {i} {center_dict[i]} with {len(center_data)} samples of which positive samples are {len(center_data.loc[center_data[label_key] == 1])})')
+    # xx
+    # features = data.drop([label_key, center_key, patient_key], axis=1)
+    # target = data[label_key]
+
+    # print(len(data))
+    # print(features.head())
+    # print(f'Center ID: {center_id} with {len(data)} samples of which positive samples are {len(data.loc[data[label_key] == 1])})')
+    # print(target.head())
+
+    def get_preprocessing_params(preprocessing_data):
+
+        data = preprocessing_data
+        features = data.drop([label_key, center_key, patient_key], axis=1)
+        target = data[label_key]
+        X_train, X_test, y_train, y_test = train_test_split(features, target, test_size = 0.20, random_state = 42, stratify=target)
+
+        n_features = 12
+        fs = SelectKBest(f_classif, k=n_features).fit(X_train, y_train)
+        index_features = fs.get_support()
+        X_train = X_train.iloc[:, index_features]
+
+        # print(X_train.head())
+
+        # Get the unique values of the categorical features
+        col = list(X_train.columns)
+        categorical_features = []
+        numerical_features = []
+        for i in col:
+            if len(X_train[i].unique()) > 24:
+                numerical_features.append(i)
+            # else:
+                # categorical_features.append(i)
+
+        transformers_dict = {}
+
+        for i in categorical_features:
+            transformers_dict[i] = OrdinalEncoder()
+        for i in numerical_features:
+            transformers_dict[i] = StandardScaler()
+        
+        # df1 = data.copy(deep = True)
+
+        for feature in transformers_dict:
+            transformers_dict[feature].fit(X_train[feature].values.reshape(-1, 1))
+
+        return index_features, transformers_dict
+
+    
+    index_features, transformers_dict = get_preprocessing_params(preprocessing_data)
+
+    def preprocess_data(data, index_features, column_transformer):
+        # Scale the data using the precomputed parameters
+        data = data.copy(deep = True)
+        features = data.drop([label_key, center_key, patient_key], axis=1)
+        features = features.iloc[:, index_features]
+        target = data[label_key]
+
+        for feature in column_transformer:
+            features[feature] = column_transformer[feature].transform(features[feature].values.reshape(-1, 1))
+
+        X_train, X_test, y_train, y_test = train_test_split(features, target, test_size = 0.20, random_state = None, stratify=target)
+
+        return X_train, X_test, y_train, y_test
+    
+    X_train, X_test, y_train, y_test = preprocess_data(data, index_features, transformers_dict)
+
+    # print shapes of the data
+    # print(X_train.shape)
+    # print(X_test.shape)
+    # print(y_train.shape)
+    # print(y_test.shape)
+
+    # features = features.iloc[:, index_features]
+
+    # X_train, X_test, y_train, y_test = train_test_split(features, target, test_size = 0.20, random_state = None, stratify=target)
+
+    # print(features.head())
+
+    print(f'Center ID: {center_id} with {len(data)} samples of which positive samples are {len(data.loc[data[label_key] == 1])})')
+    
 
     return (X_train, y_train), (X_test, y_test)
 
@@ -219,7 +340,7 @@ def load_kaggle_hf(data_path, center_id=None) -> Dataset:
         for feature in column_transformer:
             features[feature] = column_transformer[feature].transform(features[feature].values.reshape(-1, 1))
 
-        X_train, X_test, y_train, y_test = train_test_split(features, target, test_size = 0.20, random_state = None)
+        X_train, X_test, y_train, y_test = train_test_split(features, target, test_size = 0.20, random_state = None, stratify=target)
 
         return (X_train, y_train), (X_test, y_test)
     
@@ -376,6 +497,8 @@ def load_dataset(config, id=None):
         return load_mnist(id, config["num_clients"])
     elif config["dataset"] == "cvd":
         return load_cvd(config["data_path"], id)
+    elif config["dataset"] == "ukbb_cvd":
+        return load_ukbb_cvd(config["data_path"], id)
     elif config["dataset"] == "kaggle_hf":
         return load_kaggle_hf(config["data_path"], id)
     elif config["dataset"] == "libsvm":
