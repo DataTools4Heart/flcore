@@ -35,4 +35,4 @@ smoothWeights:
 
 local_port: 8081
 
-production_mode: False # Turn on to use environment variables such as data path, server address, certificates etc.
+production_mode: True # Turn on to use environment variables such as data path, server address, certificates etc.
