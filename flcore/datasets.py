@@ -6,7 +6,9 @@ from typing import Tuple
 
 import numpy as np
 import openml
+import torch
 import pandas as pd
+
 from sklearn.datasets import load_svmlight_file
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler,StandardScaler
 from sklearn.model_selection import KFold, StratifiedShuffleSplit, train_test_split
@@ -361,6 +363,75 @@ def load_libsvm(config, center_id=None, task_type="BINARY"):
 
     return (X_train, y_train), (X_test, y_test)
 
+def load_custom(config):
+    data_file = config["data_file"]
+    ext = data_file.split(".")[-1]
+    if ext == "pqt" or ext == "parquet":
+        dat = pd.read_parquet(data_file)
+    elif ext == "csv":
+        dat = pd.read_csv(data_file)
+    dat_len = len(dat)
+
+    dat_shuffled = dat.sample(frac=1).reset_index(drop=True)
+
+    target_labels = config["target_label"]
+    train_labels = config["train_labels"]
+
+    data_train = dat_shuffled[train_labels].to_numpy()
+    data_target = dat_shuffled[target_labels].to_numpy()
+    
+    X_train = data_train[:int(dat_len*config["train_size"])]
+    y_train = data_target[:int(dat_len*config["train_size"])]
+
+    X_test = data_train[int(dat_len*config["train_size"]):]
+    y_test = data_target[int(dat_len*config["train_size"]):]
+
+    return (X_train, y_train), (X_test, y_test)
+
+def cvd_to_torch(config):
+    pass
+def mnist_to_torch(config):
+    pass
+def kaggle_to_torch(config):
+    pass
+def libsvm_to_torch(config):
+    pass
+
+def custom_to_torch(config):
+    data_file = config["data_file"]
+    # Base function, modify according with konstantinos especifications:
+    ext = data_file.split(".")[-1]
+    nome = data_file.split("/")[-1].split(".")[0]
+    if ext == "pqt" or ext == "parquet":
+        dat = pd.read_parquet(data_file)
+    elif ext == "csv":
+        dat = pd.read_csv(data_file)
+        
+    keys = list(dat.keys())
+    data_set = []
+    for i in range(len(dat)):
+        temp = {}
+        for j in keys:
+            temp[j] = dat.iloc[i][j]
+        data_set.append(temp)
+    # Maybe we have to add the path too
+    torch.save(data_set,config["data_path"]+nome+".pt")
+# x_train y x_test : (n_samples_train, n_features)
+# y_train y y_test : (n_samples_train,)
+
+def convert_dataset(config):
+    if config["dataset"] == "mnist":
+        mnist_to_torch(config["num_clients"])
+    elif config["dataset"] == "cvd":
+        cvd_to_torch(config["data_path"], id)
+    elif config["dataset"] == "kaggle_hf":
+        kaggle_to_torch(config["data_path"], id)
+    elif config["dataset"] == "libsvm":
+        libsvm_to_torch(config, id)
+    elif config["dataset"] == "custom":
+        custom_to_torch(config)
+    else:
+        raise ValueError("Invalid dataset name")
 
 def load_dataset(config, id=None):
     if config["dataset"] == "mnist":
@@ -371,6 +442,8 @@ def load_dataset(config, id=None):
         return load_kaggle_hf(config["data_path"], id)
     elif config["dataset"] == "libsvm":
         return load_libsvm(config, id)
+    elif config["dataset"] == "custom":
+        return load_custom(config, id)
     else:
         raise ValueError("Invalid dataset name")
 
