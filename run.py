@@ -1,22 +1,39 @@
 import subprocess
 import time
+import sys
+import os
 
 import yaml
 
-with open("config.yaml", "r") as f:
+if len(sys.argv) == 2:
+    config_path = sys.argv[1]
+else:
+    config_path = "config.yaml"
+
+with open(config_path, "r") as f:
     config = yaml.safe_load(f)
 
 try:
     print("Starting server")
-    server_process = subprocess.Popen("python server.py", shell=True)
-    time.sleep(20)
+    server_process = subprocess.Popen(f"python server.py {config_path}", shell=True, stderr=subprocess.PIPE, text=True)
+    # server_process = subprocess.Popen(f"python server.py {config_path}", stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    # print(server_process.stdout)
+    # Break when "ready" is printed
+    for line in server_process.stderr:
+        print(line, end='') # process line here
+        if "Requesting initial parameters" in line:
+            break
+    
 
     client_processes = []
-    for i in range(1, config["num_clients"] + 1):
+    for i in range(0, config["num_clients"]):
         print("Starting client " + str(i))
         client_processes.append(
-            subprocess.Popen("python client.py " + str(i), shell=True)
+            subprocess.Popen(f"python client.py {i} {config_path}", shell=True)
         )
+    
+    for line in server_process.stderr:
+        print(line, end='')
 
     server_process.wait()
 
