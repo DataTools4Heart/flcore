@@ -40,5 +40,18 @@ xgb:
   task_type: BINARY
   tree_num: 500
 
+linear_models:
+  n_features: 9 
+
+dropout: 
+  percentage_drop: 25
+  
+smoothWeights: 
+  smoothing_strenght: 0.5 #Value between 0 and 1
+
 checkpoint_selection_metric: balanced_accuracy
 seed: 42
+
+local_port: 8081
+
+production_mode: True # Turn on to use environment variables such as data path, server address, certificates etc.
