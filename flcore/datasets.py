@@ -143,8 +143,9 @@ def load_cvd(data_path, center_id=None) -> Dataset:
 
     return (X_train, y_train), (X_test, y_test)
 
-def load_ukbb_cvd(data_path, center_id=None) -> Dataset:
+def load_ukbb_cvd(data_path, center_id, config) -> Dataset:
 
+    seed = config["seed"]
     data_path = os.path.join(data_path, "CVDMortalityData.csv")
     data = pd.read_csv(data_path)
 
@@ -157,9 +158,13 @@ def load_ukbb_cvd(data_path, center_id=None) -> Dataset:
     # center_id = None
     # center_id = 1
     preprocessing_data = data.loc[(data[center_key] == 1)]
-
+    # center_id = None
     if center_id is not None:
         center_id = center_id
+        if center_id == 19:
+            center_id = 21
+        elif center_id == 21:
+            center_id = 19
         data = data.loc[(data[center_key] == center_id)]
 
     # center_names = ['Bristol', 'Newcastle', 'Oxford', 'Stockport (pilot)', 'Reading',
@@ -192,9 +197,9 @@ def load_ukbb_cvd(data_path, center_id=None) -> Dataset:
         data = preprocessing_data
         features = data.drop([label_key, center_key, patient_key], axis=1)
         target = data[label_key]
-        X_train, X_test, y_train, y_test = train_test_split(features, target, test_size = 0.20, random_state = 42, stratify=target)
+        X_train, X_test, y_train, y_test = train_test_split(features, target, test_size = 0.20, random_state = seed, stratify=target)
 
-        n_features = 12
+        n_features = 40
         fs = SelectKBest(f_classif, k=n_features).fit(X_train, y_train)
         index_features = fs.get_support()
         X_train = X_train.iloc[:, index_features]
@@ -238,7 +243,7 @@ def load_ukbb_cvd(data_path, center_id=None) -> Dataset:
         for feature in column_transformer:
             features[feature] = column_transformer[feature].transform(features[feature].values.reshape(-1, 1))
 
-        X_train, X_test, y_train, y_test = train_test_split(features, target, test_size = 0.20, random_state = None, stratify=target)
+        X_train, X_test, y_train, y_test = train_test_split(features, target, test_size = 0.20, random_state = seed, stratify=target)
 
         return X_train, X_test, y_train, y_test
     
@@ -262,16 +267,17 @@ def load_ukbb_cvd(data_path, center_id=None) -> Dataset:
     return (X_train, y_train), (X_test, y_test)
 
 
-def load_kaggle_hf(data_path, center_id=None) -> Dataset:
+def load_kaggle_hf(data_path, center_id, config) -> Dataset:
     id = center_id
+    seed = config["seed"]
     
-    if id == 1:
+    if id == -1:
         id = 'switzerland'
-    elif id == 2:
+    elif id == 1:
         id = 'hungarian'
-    elif id == 3:
+    elif id == 2:
         id = 'va'
-    elif id == -1:
+    elif id == 0:
         id = 'cleveland'
     # elif id == 5:
         # id = 'cleveland'
@@ -323,10 +329,15 @@ def load_kaggle_hf(data_path, center_id=None) -> Dataset:
         df1 = data.copy(deep = True)
 
         target = df1['HeartDisease']
-        X_train, X_test, y_train, y_test = train_test_split(df1, target, test_size = 0.20, random_state = 2)
+        X_train, X_test, y_train, y_test = train_test_split(df1, target, test_size = 0.20, random_state = seed)
 
         for feature in transformers_dict:
-            transformers_dict[feature].fit(X_train[feature].values.reshape(-1, 1))
+            if feature == 'ST_Slope':
+                # Change value of last row to 'Down' to avoid error as it is missing in some splits
+                X_train[feature].iloc[-1] = 'Down'
+                transformers_dict[feature].fit(X_train[feature].values.reshape(-1, 1))
+            else:
+                transformers_dict[feature].fit(X_train[feature].values.reshape(-1, 1))
 
         return transformers_dict
         
@@ -340,7 +351,7 @@ def load_kaggle_hf(data_path, center_id=None) -> Dataset:
         for feature in column_transformer:
             features[feature] = column_transformer[feature].transform(features[feature].values.reshape(-1, 1))
 
-        X_train, X_test, y_train, y_test = train_test_split(features, target, test_size = 0.20, random_state = None, stratify=target)
+        X_train, X_test, y_train, y_test = train_test_split(features, target, test_size = 0.20, random_state = seed, stratify=target)
 
         return (X_train, y_train), (X_test, y_test)
     
@@ -348,6 +359,8 @@ def load_kaggle_hf(data_path, center_id=None) -> Dataset:
     preprocessing_params = get_preprocessing_params(scaling_data)
 
     (X_train, y_train), (X_test, y_test) = preprocess_data(data, preprocessing_params)
+    # print(f'Center ID: {id} with {len(data)} total samples of which positive samples are {len(data[data["HeartDisease"] == 1])})')
+    # print(f'Center ID: {id} with {len(y_test)} test samples of which positive samples are {len(y_test[y_test == 1])})')
     
     return (X_train, y_train), (X_test, y_test)
 
@@ -498,9 +511,9 @@ def load_dataset(config, id=None):
     elif config["dataset"] == "cvd":
         return load_cvd(config["data_path"], id)
     elif config["dataset"] == "ukbb_cvd":
-        return load_ukbb_cvd(config["data_path"], id)
+        return load_ukbb_cvd(config["data_path"], id, config)
     elif config["dataset"] == "kaggle_hf":
-        return load_kaggle_hf(config["data_path"], id)
+        return load_kaggle_hf(config["data_path"], id, config)
     elif config["dataset"] == "libsvm":
         return load_libsvm(config, id)
     else:

@@ -122,6 +122,8 @@ def get_tree(n_estimators: int, tree_type: str) -> Union[XGBClassifier, XGBRegre
             gamma=5,
             num_parallel_tree=1,
             min_child_weight=1,
+            scale_pos_weight=50,
+
         )
 
     return tree

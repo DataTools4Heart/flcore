@@ -62,7 +62,8 @@ def evaluate_held_out(
     
     """Evaluate the current model on the held-out validation set."""
     # Load held-out validation data
-    client_id = 19
+    client_id = 21
+    # client_id = -1 # kaggle hf
     model = get_model(config['model'])
     utils.set_model_params(model, parameters)
     (X_train, y_train), (X_test, y_test) = load_dataset(config, client_id)
@@ -74,6 +75,53 @@ def evaluate_held_out(
     n_samples = len(y_test)
     metrics['n samples'] = n_samples
     metrics['client_id'] = client_id
+
+    # Train personalized model
+    model.fit(X_train, y_train)
+    y_pred = model.predict(X_test)
+    personalized_metrics = calculate_metrics(y_test, y_pred)
+    #Add 'personalized' to the metrics to identify them
+    personalized_metrics = {f"personalized {key}": personalized_metrics[key] for key in personalized_metrics}
+    metrics.update(personalized_metrics)
+
+
+    if server_round == 0:
+        local_model = utils.get_model(config['model'], local=True)
+        utils.set_initial_params(local_model, config['linear_models']['n_features'])
+        local_model.fit(X_train, y_train)
+        y_pred = local_model.predict(X_test)
+        local_metrics = calculate_metrics(y_test, y_pred)
+        #Add 'local' to the metrics to identify them
+        local_metrics = {f"local {key}": local_metrics[key] for key in local_metrics}
+        metrics.update(local_metrics)
+
+        # Train model in centralized way (if possible)
+        (X_train, y_train), (X_test, y_test) = load_dataset(config, id=None)
+        centralized_model = get_model(config['model'], local=True)
+        utils.set_initial_params(centralized_model, config['linear_models']['n_features'])
+        centralized_model.fit(X_train, y_train)
+        y_pred = centralized_model.predict(X_test)
+        centralized_metrics = calculate_metrics(y_test, y_pred)
+        #Add 'centralized' to the metrics to identify them
+        centralized_metrics = {f"centralized {key}": centralized_metrics[key] for key in centralized_metrics}
+        metrics.update(centralized_metrics)
+
+        per_center_metrics = []
+        for i in range(0, config['num_clients']):
+            client_id = 10 + i
+            (X_train, y_train), (X_test, y_test) = load_dataset(config, client_id)
+            y_pred = centralized_model.predict(X_test)
+            center_metrics = calculate_metrics(y_test, y_pred)
+            per_center_metrics.append(center_metrics)
+        
+        #Calculate the mean of the metrics
+        non_weighted_centralized_metrics = {}
+        for key in per_center_metrics[0]:
+            non_weighted_centralized_metrics[key] = np.mean([center_metrics[key] for center_metrics in per_center_metrics])
+        #Add 'centralized' to the metrics to identify them
+        non_weighted_centralized_metrics = {f"non weighted centralized {key}": non_weighted_centralized_metrics[key] for key in non_weighted_centralized_metrics}
+        metrics.update(non_weighted_centralized_metrics)
+
 
     return loss, metrics
 

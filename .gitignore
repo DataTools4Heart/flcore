@@ -6,6 +6,7 @@ __pycache__/
 .DS_Store
 results/
 data/
+logs/
 external/
 other/
 # C extensions

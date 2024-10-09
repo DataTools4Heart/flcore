@@ -42,6 +42,7 @@ class MnistClient(fl.client.NumPyClient):
         self.model = utils.get_model(self.model_name)
         self.round_time = 0
         self.first_round = True
+        self.personalize = True
         # Setting initial parameters, akin to model.compile for keras models
         utils.set_initial_params(self.model,self.n_features)
     
@@ -57,7 +58,6 @@ class MnistClient(fl.client.NumPyClient):
 
     def fit(self, parameters, config):  # type: ignore
 
-        
         utils.set_model_params(self.model, parameters)
         # Ignore convergence failure due to low local epochs
         with warnings.catch_warnings():
@@ -70,22 +70,23 @@ class MnistClient(fl.client.NumPyClient):
             y_pred = self.model.predict(self.X_test)
 
             metrics = calculate_metrics(self.y_test, y_pred)
-
-            self.round_time = (time.time() - start_time)
-
-            metrics["running_time"] = self.round_time
             print(f"Client {self.client_id} Evaluation just after local training: {metrics['balanced_accuracy']}")
+            # Add 'personalized' to the metrics to identify them
+            metrics = {f"personalized {key}": metrics[key] for key in metrics}
+            self.round_time = (time.time() - start_time)
+            metrics["running_time"] = self.round_time
+            
 
         print(f"Training finished for round {config['server_round']}")
 
         if self.first_round:
             local_model = utils.get_model(self.model_name, local=True)
-            utils.set_initial_params(self.model,self.n_features)
+            utils.set_initial_params(local_model,self.n_features)
             local_model.fit(self.X_train, self.y_train)
             y_pred = local_model.predict(self.X_test)
-            metrics = calculate_metrics(self.y_test, y_pred)
+            local_metrics = calculate_metrics(self.y_test, y_pred)
             #Add 'local' to the metrics to identify them
-            local_metrics = {f"local {key}": metrics[key] for key in metrics}
+            local_metrics = {f"local {key}": local_metrics[key] for key in local_metrics}
             metrics.update(local_metrics)
             self.first_round = False
 

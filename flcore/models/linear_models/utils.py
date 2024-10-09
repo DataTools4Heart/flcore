@@ -14,7 +14,7 @@ def get_model(model_name, local=False):
     if local:
         max_iter = 100000
     else:
-        max_iter = 10
+        max_iter = 1
     
     match model_name:
         case "lsvc":
@@ -27,6 +27,7 @@ def get_model(model_name, local=False):
             #max_iter=1,  # local epoch ==>> it doesn't work
             max_iter=max_iter,  # local epoch
             warm_start=True,  # prevent refreshing weights when fitting
+            random_state=42,
             class_weight= "balanced" #For unbalanced
         )
         case "elastic_net":
@@ -37,6 +38,7 @@ def get_model(model_name, local=False):
             #max_iter=1,  # local epoch ==>> it doesn't work
             max_iter=max_iter,  # local epoch
             warm_start=True,  # prevent refreshing weights when fitting
+            random_state=42,
             class_weight= "balanced" #For unbalanced
         )
 
