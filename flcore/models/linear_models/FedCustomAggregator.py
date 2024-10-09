@@ -145,6 +145,7 @@ class FedCustom(fl.server.strategy.FedAvg):
         if self.dropout_method != 'None':
             if server_round == 1:
                 for client, res in results:
+                    # print(res.metrics)
                     self.clients_first_round_time[client.cid] = res.metrics['running_time']
                     self.clients_num_examples[client.cid] = res.num_examples
 
@@ -160,6 +161,7 @@ class FedCustom(fl.server.strategy.FedAvg):
         self.accum_time = self.accum_time+ elapsed_time
         self.time_server_round = time.time()
         print(f"Elapsed time: {elapsed_time} for round {server_round}")
+        metrics_aggregated['training_time [s]'] = self.accum_time
 
         filename = 'server_results.txt'
         with open(

@@ -7,7 +7,7 @@ import yaml
 with open("config.yaml", "r") as f:
     config = yaml.safe_load(f)
 
-repetitions = 5
+repetitions = 8
 experiment_name = config['experiment']['name']
 
 config['experiment']['log_path'] = os.path.join(config['experiment']['log_path'], config['experiment']['name'])
@@ -17,11 +17,14 @@ start_time = time.time()
 for i in range(repetitions):
     print(f"Experiment run {i + 1}")
     config['experiment']['name'] = 'run_' + str(i + 1)
+    config['seed'] = i + 10
     config_path = os.path.join(config['experiment']['log_path'], "config.yaml")
+    log_file_path = os.path.join(config['experiment']['log_path'], config['experiment']['name'], "run_log.txt")
+    os.makedirs(os.path.join(config['experiment']['log_path'], config['experiment']['name']), exist_ok=True)
     with open(config_path, "w") as f:
         yaml.dump(config, f)    
     try:
-        run_process = subprocess.Popen(f"python run.py {config_path}", shell=True)
+        run_process = subprocess.Popen(f"python run.py {config_path} | tee {log_file_path}", shell=True)
         run_process.wait()
 
     except KeyboardInterrupt:

@@ -17,11 +17,17 @@ experiment_dir = args.experiment_dir
 
 per_client_metrics = {}
 held_out_metrics = {}
+fit_metrics = {}
 
 config = yaml.safe_load(open(f"{experiment_dir}/config.yaml", "r"))
 
 csv_dict = {}
-center_names = ['Barts', 'Birmingham', 'Bristol', 'Bury', 'Cardiff', 'Croydon', 'Edinburgh', 'Glasgow', 'Hounslow', 'Leeds', 'Liverpool', 'Manchester', 'Middlesborough', 'Newcastle', 'Nottingham', 'Oxford', 'Reading', 'Sheffield', 'Stockport (pilot)', 'Stoke', 'Swansea', 'Wrexham']
+if config['dataset'] == 'ukbb_cvd':
+    center_names = ['Barts', 'Birmingham', 'Bristol', 'Bury', 'Cardiff', 'Croydon', 'Edinburgh', 'Glasgow', 'Hounslow', 'Leeds', 'Liverpool', 'Manchester', 'Middlesborough', 'Newcastle', 'Nottingham', 'Oxford', 'Reading', 'Sheffield', 'Stockport (pilot)', 'Stoke', 'Swansea', 'Wrexham']
+    center_names[19], center_names[21] = center_names[21], center_names[19]
+
+elif config['dataset'] == 'kaggle_hf':
+    center_names = ['Switzerland',  'Hungary', 'VA', 'Cleveland']
 
 writer = open(f"{experiment_dir}/metrics.txt", "w")
 
@@ -49,7 +55,7 @@ for directory in os.listdir(experiment_dir):
                 for metric in history[logs]:
                     values_history = history[logs][metric]
                     if isinstance(values_history[0], list):
-                        if 'fit' in logs and 'local' not in metric:
+                        if 'fit' in logs and not ('local' in metric or 'personalized' in metric):
                             continue
                         if 'local' in metric:
                             values = values_history[0]
@@ -65,16 +71,40 @@ for directory in os.listdir(experiment_dir):
                             per_client_metrics[metric] = np.vstack((per_client_metrics[metric], values))
                         
                     elif 'centralized' in logs:
-                        if metric not in held_out_metrics:
-                            held_out_metrics[metric] = [values_history[best_round]]
+                        if len(values_history) == 1:
+                            if metric not in held_out_metrics:
+                                held_out_metrics[metric] = [values_history[0]]
+                            else:
+                                held_out_metrics[metric].append(values_history[0])
                         else:
-                            held_out_metrics[metric].append(values_history[best_round])
+                            if metric not in held_out_metrics:
+                                held_out_metrics[metric] = [values_history[best_round]]
+                            else:
+                                held_out_metrics[metric].append(values_history[best_round])
                     
-execution_stats = ['client_id', 'round_time [s]', 'n samples']
+                    elif 'fit' in logs:
+                        if 'local' in metric or 'running_time' in metric:
+                            continue
+                        if 'training_time' in metric:
+                            if metric not in fit_metrics:
+                                fit_metrics[metric] = np.array(values_history[-1])
+                            else:
+                                fit_metrics[metric] = np.vstack((fit_metrics[metric], values_history[-1]))
+                        else:
+                            if metric not in fit_metrics:
+                                fit_metrics[metric] = np.array(values_history[best_round])
+                            else:
+                                fit_metrics[metric] = np.vstack((fit_metrics[metric], values_history[best_round]))
+                    
+                    
+execution_stats = ['client_id', 'round_time [s]', 'n samples', 'training_time [s]']
 # Calculate mean and std for per client metrics
 writer.write(f"{'Evaluation':.^100} \n\n")
+writer.write(f"\n{'Test set:'} \n")
+
 val_section = False
 local_section = False
+personalized_section = False
 for metric in per_client_metrics:
     # if metric in execution_stats:
     #     continue
@@ -85,16 +115,22 @@ for metric in per_client_metrics:
    
     if 'local' in metric:
         if not local_section:
-            writer.write(f"\n{'Local evaluation:'} \n")
+            writer.write(f"\n{'Non federated:'} \n")
             local_section = True
+    
+    if 'personalized' in metric:
+        if not personalized_section:
+            writer.write(f"\n{'Federated finetuned locally:'} \n")
+            personalized_section = True
 
     # Calculate general mean and std
     mean = np.average(per_client_metrics[metric])
-    std = np.std(per_client_metrics[metric])
+    # Calculate std of the average metric between experiment runs
+    std = np.std(np.mean(per_client_metrics[metric], axis=1))
     per_client_mean = np.around(np.mean(per_client_metrics[metric], axis=0), 3)
     per_client_std = np.around(np.std(per_client_metrics[metric], axis=0), 3)
     if metric not in execution_stats:
-        writer.write(f"{metric:<22}: {mean:<6.3f}  ±{std:<6.3f}  \t\t\t|| Per client {metric} {per_client_mean}  ({per_client_std})\n")
+        writer.write(f"{metric:<30}: {mean:<6.3f}  ±{std:<6.3f}  \t\t\t|| Per client {metric} {per_client_mean}  ({per_client_std})\n".replace("\n", "")+"\n")
     for i, _ in enumerate(per_client_mean):
         center = int(per_client_metrics['client_id'][0, i])
         center = center_names[center]
@@ -106,15 +142,24 @@ for metric in per_client_metrics:
 
 # print execution stats
 writer.write(f"\n{'Execution stats:'} \n")
+per_client_metrics.update(fit_metrics)
 for metric in execution_stats:
     mean = np.average(per_client_metrics[metric])
-    std = np.std(per_client_metrics[metric])
-    per_client_mean = np.around(np.mean(per_client_metrics[metric], axis=0), 5)
+    std = np.std(np.mean(per_client_metrics[metric], axis=1))
+    per_client_mean = np.around(np.mean(per_client_metrics[metric], axis=0), 3)
     per_client_std = np.around(np.std(per_client_metrics[metric], axis=0), 3)
-    writer.write(f"{metric:<20}: {mean:<6.5f}  ±{std:<6.5f}  \t\t\t|| Per client {metric} {per_client_mean}  ({per_client_std})\n")
+    writer.write(f"{metric:<30}: {mean:<6.3f}  ±{std:<6.3f}  \t\t\t|| Per client {metric} {per_client_mean}  ({per_client_std})\n".replace("\n", "")+"\n")
     
 
 # Calculate mean and std for held out metrics
+#Extract centralized metrics from the held out dictionary 
+centralized_metrics = {}
+metrics = held_out_metrics.copy()
+for metric in metrics:
+    if 'centralized' in metric:
+        centralized_metrics[metric] = held_out_metrics[metric]
+        held_out_metrics.pop(metric, None)
+
 writer.write(f"\n{'Held out set evaluation':.^100} \n\n")
 for metric in held_out_metrics:
     center = int(held_out_metrics['client_id'][0])
@@ -122,11 +167,18 @@ for metric in held_out_metrics:
     mean = np.average(held_out_metrics[metric])
     std = np.std(held_out_metrics[metric])
 
-    writer.write(f"{metric:<20}: {mean:<6.3f}  ±{std:<6.3f}\n")
+    writer.write(f"{metric:<30}: {mean:<6.3f}  ±{std:<6.3f}\n")
     if center not in csv_dict:
         csv_dict[center] = {}
     csv_dict[center][metric] = mean
     csv_dict[center][metric+'_std'] = std
+
+# Calculate mean and std for centralized metrics
+writer.write(f"\n{'Centralized evaluation':.^100} \n\n")
+for metric in centralized_metrics:
+    mean = np.average(centralized_metrics[metric])
+    std = np.std(centralized_metrics[metric])
+    writer.write(f"{metric:<30}: {mean:<6.3f}  ±{std:<6.3f}\n")
 
 writer.close()
 

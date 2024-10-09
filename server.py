@@ -98,12 +98,19 @@ if __name__ == "__main__":
         f.write(f"Model: {config['model']}\n")
         f.write(f"Data: {config['dataset']}\n")
         f.write(f"Number of clients: {config['num_clients']}\n")
+
+        # selection_metric = 'val ' + config['checkpoint_selection_metric']
+        selection_metric = config['checkpoint_selection_metric']
+        # Get index of tuple of the best round
+        best_round = int(numpy.argmax([round[1] for round in history.metrics_distributed[selection_metric]]))
+        training_time = history.metrics_distributed_fit['training_time [s]'][-1][1]
+        f.write(f"Total training time: {training_time:.2f} [s] \n")
+        f.write(f"Best checkpoint based on {selection_metric} after round: {best_round}\n\n")
+        print(f"Best checkpoint based on {selection_metric} after round: {best_round}\n\n")
+
         f.write(f"\nAggregated results:\n\n")
 
-        selection_metric = config['checkpoint_selection_metric']
-        best_round, _ = max(history.metrics_distributed[selection_metric], key=lambda x: x[1])
-        f.write(f"Best checkpoint based on {selection_metric} after round: {best_round}\n\n")
-        best_round = best_round - 1
+        # best_round = best_round - 1
         per_client_values = {}
         for metric in history.metrics_distributed:
             metric_value = history.metrics_distributed[metric][best_round][1]
@@ -122,7 +129,11 @@ if __name__ == "__main__":
         
         f.write(f"\n\nHeld out set evaluation:\n\n")
         for metric in history.metrics_centralized:
-            metric_value = history.metrics_centralized[metric][best_round][1]
+            # print(f"Len of centralized metric {metric} ", len(history.metrics_centralized[metric]))
+            if len(history.metrics_centralized[metric]) == 1:
+                metric_value = history.metrics_centralized[metric][0][1]
+            else:
+                metric_value = history.metrics_centralized[metric][best_round][1]
             if type(metric_value) in [int, float, numpy.float64]:
                 f.write(f"{metric} {metric_value:.4f} \n")
 
