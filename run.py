@@ -27,6 +27,7 @@ try:
 
     client_processes = []
     for i in range(0, config["num_clients"]):
+        # i = i + 10
         print("Starting client " + str(i))
         client_processes.append(
             subprocess.Popen(f"python client.py {i} {config_path}", shell=True)

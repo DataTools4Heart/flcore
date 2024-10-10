@@ -62,7 +62,7 @@ def evaluate_held_out(
     
     """Evaluate the current model on the held-out validation set."""
     # Load held-out validation data
-    client_id = 21
+    client_id = config['held_out_center_id']
     # client_id = -1 # kaggle hf
     model = get_model(config['model'])
     utils.set_model_params(model, parameters)
@@ -108,7 +108,8 @@ def evaluate_held_out(
 
         per_center_metrics = []
         for i in range(0, config['num_clients']):
-            client_id = 10 + i
+            # client_id = 10 + i
+            client_id = i
             (X_train, y_train), (X_test, y_test) = load_dataset(config, client_id)
             y_pred = centralized_model.predict(X_test)
             center_metrics = calculate_metrics(y_test, y_pred)

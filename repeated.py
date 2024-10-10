@@ -7,7 +7,7 @@ import yaml
 with open("config.yaml", "r") as f:
     config = yaml.safe_load(f)
 
-repetitions = 8
+repetitions = 4
 experiment_name = config['experiment']['name']
 
 config['experiment']['log_path'] = os.path.join(config['experiment']['log_path'], config['experiment']['name'])

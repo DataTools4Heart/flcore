@@ -8,6 +8,7 @@ import numpy
 import yaml
 import flcore.datasets as datasets
 from flcore.server_selector import get_model_server_and_strategy
+from flcore.compile_results import compile_results
 
 warnings.filterwarnings("ignore")
 
@@ -155,3 +156,6 @@ for logs in history.keys():
 
 with open(experiment_dir / "history.yaml", "w") as f:
     yaml.dump(history, f)
+
+# Compile the results
+compile_results(experiment_dir)
