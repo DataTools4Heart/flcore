@@ -1,28 +1,32 @@
 data_path: dataset/
-dataset: ukbb_cvd # cvd, kaggle_hf
-# dataset: kaggle_hf # cvd, kaggle_hf
+# dataset: ukbb_cvd # cvd, kaggle_hf
+dataset: kaggle_hf # cvd, kaggle_hf
+model: logistic_regression
+# model: random_forest
+num_clients: 3
+# num_clients: 3 # kaggle_hf
+num_rounds: 100
+
+experiment:
+  debug: true
+  log_path: logs
+  name: HF_diagnosis
+
 dropout:
   percentage_drop: 50
 dropout_method: None
 # dropout_method: random_dropout
 # dropout_method: Fast_at_odd_rounds
 # dropout_method: LessParticipants
-experiment:
-  debug: true
-  log_path: logs
-  name: all_40_random_dropout
+
   # name: kaggle_SlowerQuartile
   # name: test_best_round
 linear_models:
-  n_features: 40
-  # n_features: 9 # kaggle_hf
+  # n_features: 40
+  n_features: 9 # kaggle_hf
 local_port: 8081
 # model: xgb # logistic_regression, random_forest
-model: logistic_regression
-# model: random_forest
-num_clients: 3
-# num_clients: 3 # kaggle_hf
-num_rounds: 20
+
 production_mode: false
 random_forest:
   balanced_rf: true
@@ -40,18 +44,12 @@ xgb:
   task_type: BINARY
   tree_num: 500
 
-linear_models:
-  n_features: 9 
+held_out_center_id: -1
 
-dropout: 
-  percentage_drop: 25
-  
-smoothWeights: 
-  smoothing_strenght: 0.5 #Value between 0 and 1
 
 checkpoint_selection_metric: balanced_accuracy
 seed: 42
 
 local_port: 8081
 
-production_mode: True # Turn on to use environment variables such as data path, server address, certificates etc.
+production_mode: False # Turn on to use environment variables such as data path, server address, certificates etc.

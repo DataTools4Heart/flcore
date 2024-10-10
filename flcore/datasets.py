@@ -281,6 +281,11 @@ def load_kaggle_hf(data_path, center_id, config) -> Dataset:
         id = 'va'
     elif id == 0:
         id = 'cleveland'
+    elif id == None:
+        pass
+    else:
+        raise ValueError(f"Invalid center id: {id}")
+
     # elif id == 5:
         # id = 'cleveland'
 
