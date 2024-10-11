@@ -10,7 +10,7 @@ num_rounds: 100
 experiment:
   debug: true
   log_path: logs
-  name: HF_diagnosis
+  name: experiment_1
 
 dropout:
   percentage_drop: 50
@@ -27,7 +27,6 @@ linear_models:
 local_port: 8081
 # model: xgb # logistic_regression, random_forest
 
-production_mode: false
 random_forest:
   balanced_rf: true
 smoothWeights:
@@ -52,4 +51,4 @@ seed: 42
 
 local_port: 8081
 
-production_mode: False # Turn on to use environment variables such as data path, server address, certificates etc.
+production_mode: True # Turn on to use environment variables such as data path, server address, certificates etc.
