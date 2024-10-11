@@ -20,7 +20,7 @@ def generate_report(experiment_path: str):
     os.makedirs(fig_dir, exist_ok=True)
 
     # Copy images dir to the experiment dir
-    os.system(f'cp -r flcore/report/images/ {fig_dir}')
+    os.system(f'cp -r flcore/report/images/* {fig_dir}')
 
     # Read the CSV file
     df = pd.read_csv(results_file)
