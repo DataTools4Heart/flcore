@@ -8,6 +8,7 @@ import numpy
 import yaml
 import flcore.datasets as datasets
 from flcore.server_selector import get_model_server_and_strategy
+from flcore.compile_results import compile_results
 
 warnings.filterwarnings("ignore")
 
@@ -60,15 +61,19 @@ if __name__ == "__main__":
         certificates = None
 
     # Create experiment directory
-    experiment_dir = Path("results") / config["experiment"]["name"]
+    experiment_dir = Path(os.path.join(config["experiment"]["log_path"], config["experiment"]["name"]))
     experiment_dir.mkdir(parents=True, exist_ok=True)
+    config["experiment_dir"] = experiment_dir
 
     # Checkpoint directory for saving the model
     checkpoint_dir = experiment_dir / "checkpoints"
     checkpoint_dir.mkdir(parents=True, exist_ok=True)
-    # History directory for saving the history
-    history_dir = experiment_dir / "history"
-    history_dir.mkdir(parents=True, exist_ok=True)
+    # # History directory for saving the history
+    # history_dir = experiment_dir / "history"
+    # history_dir.mkdir(parents=True, exist_ok=True)
+
+    # Copy the config file to the experiment directory
+    os.system(f"cp {config_path} {experiment_dir}")
 
     (X_train, y_train), (X_test, y_test) = datasets.load_dataset(config)
 
@@ -89,21 +94,68 @@ if __name__ == "__main__":
     # joblib.dump(model, filename)
     # Save the history as a yaml file
     print(history)
-    with open(history_dir / "results.txt", "w") as f:
+    with open(experiment_dir / "metrics.txt", "w") as f:
+        f.write(f"Results of the experiment {config['experiment']['name']}\n")
+        f.write(f"Model: {config['model']}\n")
+        f.write(f"Data: {config['dataset']}\n")
+        f.write(f"Number of clients: {config['num_clients']}\n")
+
+        # selection_metric = 'val ' + config['checkpoint_selection_metric']
+        selection_metric = config['checkpoint_selection_metric']
+        # Get index of tuple of the best round
+        best_round = int(numpy.argmax([round[1] for round in history.metrics_distributed[selection_metric]]))
+        training_time = history.metrics_distributed_fit['training_time [s]'][-1][1]
+        f.write(f"Total training time: {training_time:.2f} [s] \n")
+        f.write(f"Best checkpoint based on {selection_metric} after round: {best_round}\n\n")
+        print(f"Best checkpoint based on {selection_metric} after round: {best_round}\n\n")
+
+        f.write(f"\nAggregated results:\n\n")
+
+        # best_round = best_round - 1
         per_client_values = {}
         for metric in history.metrics_distributed:
-            metric_value = history.metrics_distributed[metric][-1][1]
+            metric_value = history.metrics_distributed[metric][best_round][1]
             if type(metric_value) in [int, float, numpy.float64]:
                 f.write(f"{metric} {metric_value:.4f} \n")
             else:
-                for metric in metric_value:
+                for per_client_metric_value in metric_value:
+                    metric = metric.replace("per client ", "")
                     if metric not in per_client_values:
                         per_client_values[metric] = []
-                    per_client_values[metric].append(round(metric_value[metric], 3))
+                    per_client_values[metric].append(round(per_client_metric_value, 3))
         
-        f.write(f"\nPer client results:\n")
+        f.write(f"\n\nPer client results:\n\n")
         for metric in per_client_values:
             f.write(f"{metric} {per_client_values[metric]} \n")
+        
+        f.write(f"\n\nHeld out set evaluation:\n\n")
+        for metric in history.metrics_centralized:
+            # print(f"Len of centralized metric {metric} ", len(history.metrics_centralized[metric]))
+            if len(history.metrics_centralized[metric]) == 1:
+                metric_value = history.metrics_centralized[metric][0][1]
+            else:
+                metric_value = history.metrics_centralized[metric][best_round][1]
+            if type(metric_value) in [int, float, numpy.float64]:
+                f.write(f"{metric} {metric_value:.4f} \n")
 
-    with open(history_dir / "history.yaml", "w") as f:
-        yaml.dump(history, f)
+dict_history = {}
+history = history.__dict__
+for logs in history.keys():
+    if isinstance(history[logs], list):
+        history[logs] = [float(loss) for (round, loss) in history[logs]]
+    if isinstance(history[logs], dict):
+        for metric in history[logs]:
+            extracted_values = [value for (round, value) in history[logs][metric]]
+            if isinstance(extracted_values[0], list):
+                # Convert list elements to float
+                extracted_values = [[float(value) for value in sublist] for sublist in extracted_values]
+            else:
+                extracted_values = [float(value) for value in extracted_values]
+            history[logs][metric] = extracted_values
+
+
+with open(experiment_dir / "history.yaml", "w") as f:
+    yaml.dump(history, f)
+
+# Compile the results
+compile_results(experiment_dir)

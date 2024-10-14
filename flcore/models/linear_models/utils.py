@@ -1,11 +1,6 @@
 from typing import Tuple, Union, List
 import numpy as np
 from sklearn.linear_model import LogisticRegression,SGDClassifier
-import openml
-import pandas as pd
-from sklearn.model_selection import KFold, StratifiedKFold,StratifiedShuffleSplit
-from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import confusion_matrix
 
 XY = Tuple[np.ndarray, np.ndarray]
 Dataset = Tuple[XY, XY]
@@ -14,18 +9,25 @@ LinearClassifier = Union[LogisticRegression, SGDClassifier]
 XYList = List[XY]
 
 
-def get_model(model_name):
+def get_model(model_name, local=False):
+
+    if local:
+        max_iter = 100000
+    else:
+        max_iter = 1
+    
     match model_name:
         case "lsvc":
             #Linear classifiers (SVM, logistic regression, etc.) with SGD training.
             #If we use hinge, it implements SVM
-            model = SGDClassifier( max_iter= 100000,n_iter_no_change=1000,average=True,random_state=42,class_weight= "balanced",warm_start=True,fit_intercept=True,loss="hinge", learning_rate='optimal')
+            model = SGDClassifier(max_iter=max_iter,n_iter_no_change=1000,average=True,random_state=42,class_weight= "balanced",warm_start=True,fit_intercept=True,loss="hinge", learning_rate='optimal')
         case "logistic_regression":
             model = LogisticRegression(
             penalty="l2",
             #max_iter=1,  # local epoch ==>> it doesn't work
-            max_iter=100000,  # local epoch
+            max_iter=max_iter,  # local epoch
             warm_start=True,  # prevent refreshing weights when fitting
+            random_state=42,
             class_weight= "balanced" #For unbalanced
         )
         case "elastic_net":
@@ -34,8 +36,9 @@ def get_model(model_name):
             penalty="elasticnet",
             solver='saga', #necessary param for elasticnet otherwise error
             #max_iter=1,  # local epoch ==>> it doesn't work
-            max_iter=100000,  # local epoch
+            max_iter=max_iter,  # local epoch
             warm_start=True,  # prevent refreshing weights when fitting
+            random_state=42,
             class_weight= "balanced" #For unbalanced
         )
 
@@ -49,7 +52,7 @@ def get_model_parameters(model: LinearClassifier) -> LinearMLParams:
             model.coef_,
             model.intercept_,
             #For feature selection
-            model.features.astype(bool)
+            # model.features.astype(bool)
         ]
     else:
         params = [
@@ -66,7 +69,7 @@ def set_model_params(
     if model.fit_intercept:
         model.intercept_ = params[1]
     #For feature selection
-    model.features = params[2].astype(bool)  
+    # model.features = params[2].astype(bool)  
     return model
 
 
@@ -106,14 +109,14 @@ def evaluate_metrics_aggregation_fn(eval_metrics):
         metrics[kn] = np.mean(results)
         #print(f"Metric {kn} in aggregation evaluate: {metrics[kn]}\n")
 
-    filename = 'server_results.txt'
-    with open(
-    filename,
-    "a",
-    ) as f:
-        f.write(f"Accuracy: {metrics['accuracy']} \n")
-        f.write(f"Sensitivity: {metrics['sensitivity']} \n")
-        f.write(f"Specificity: {metrics['specificity']} \n")
+    # filename = 'server_results.txt'
+    # with open(
+    # filename,
+    # "a",
+    # ) as f:
+    #     f.write(f"Accuracy: {metrics['accuracy']} \n")
+    #     f.write(f"Sensitivity: {metrics['sensitivity']} \n")
+    #     f.write(f"Specificity: {metrics['specificity']} \n")
 
     return metrics
         

@@ -1,38 +1,55 @@
-num_clients: 5
-num_rounds: 10
-model: xgb #weighted_random_forest, linear_models, xgb, random_forest, logistic_regression (old version)
-dataset: kaggle_hf # mnist, cvd, libsvm
 data_path: dataset/
-dropout_method: None #None, Fast_at_odd_rounds, Fast_every_three, random_dropout,Less_participants_at_odd_rounds
-smooth_method: None #None,EqualVoting,SlowerQuartile, SsupperQuartile
+# dataset: ukbb_cvd # cvd, kaggle_hf
+dataset: kaggle_hf # cvd, kaggle_hf
+model: logistic_regression
+# model: random_forest
+num_clients: 3
+# num_clients: 3 # kaggle_hf
+num_rounds: 100
 
 experiment:
-  name: "test_run_1"
-  results_path: "results"
-  debug: True
+  debug: true
+  log_path: logs
+  name: HF_diagnosis
 
+dropout:
+  percentage_drop: 50
+dropout_method: None
+# dropout_method: random_dropout
+# dropout_method: Fast_at_odd_rounds
+# dropout_method: LessParticipants
+
+  # name: kaggle_SlowerQuartile
+  # name: test_best_round
+linear_models:
+  # n_features: 40
+  n_features: 9 # kaggle_hf
+local_port: 8081
+# model: xgb # logistic_regression, random_forest
+
+production_mode: false
 random_forest:
-  balanced_rf: True  
-
-weighted_random_forest:  
-  balanced_rf: True
-  levelOfDetail: 'DecisionTree' #DecisionTree, RandomForest
-
+  balanced_rf: true
+smoothWeights:
+  smoothing_strenght: 0.5
+smooth_method: None
+# smooth_method: SlowerQuartile
+# smooth_method: EqualVoting
+weighted_random_forest:
+  balanced_rf: true
+  levelOfDetail: DecisionTree
 xgb:
-  task_type: BINARY
   batch_size: 32
   num_iterations: 100
+  task_type: BINARY
   tree_num: 500
 
-linear_models:
-  n_features: 9 
+held_out_center_id: -1
 
-dropout: 
-  percentage_drop: 25
-  
-smoothWeights: 
-  smoothing_strenght: 0.5 #Value between 0 and 1
+
+checkpoint_selection_metric: balanced_accuracy
+seed: 42
 
 local_port: 8081
 
-production_mode: True # Turn on to use environment variables such as data path, server address, certificates etc.
+production_mode: False # Turn on to use environment variables such as data path, server address, certificates etc.

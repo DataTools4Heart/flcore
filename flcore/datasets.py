@@ -10,9 +10,11 @@ import openml
 import pandas as pd
 
 from sklearn.datasets import load_svmlight_file
-from sklearn.preprocessing import LabelEncoder, MinMaxScaler,StandardScaler
+from sklearn.preprocessing import OrdinalEncoder, MinMaxScaler,StandardScaler
 from sklearn.model_selection import KFold, StratifiedShuffleSplit, train_test_split
 from sklearn.utils import shuffle
+from sklearn.feature_selection import SelectKBest, f_classif
+
 
 from flcore.models.xgb.utils import TreeDataset, do_fl_partitioning, get_dataloader
 
@@ -66,16 +68,15 @@ def load_mnist(center_id=None, num_splits=5):
 
 def load_cvd(data_path, center_id=None) -> Dataset:
     id = center_id
-    # match num_center:
-    #     case -1:
-    #         file_name = data_path+'data_centerAll.csv'
-    #     case 1:
-    #         file_name = data_path+'data_center1.csv'
-    #     case 2:
-    #         file_name = data_path+'data_center2.csv'
-    #     case _:
-    #         file_name = data_path+'data_center3.csv'
-    #
+    if center_id == 1:
+        file_name = data_path+'data_center1.csv'
+    elif center_id == 2:
+        file_name = data_path+'data_center2.csv'
+    elif center_id == 3:
+        file_name = data_path+'data_center3.csv'
+    else:
+        file_name = data_path+'data_center3.csv'
+    
     if id == None:
         # id = 'All'
         data_centers = ['All']
@@ -88,7 +89,8 @@ def load_cvd(data_path, center_id=None) -> Dataset:
     train_index_list = []
 
     for id in data_centers:
-        file_name = os.path.join(data_path, f"data_center{id}.csv")
+        # file_name = os.path.join(data_path, f"data_center{id}.csv")
+        # file_name = os.path.join(data_path, file_name)
 
         code_id = "f_eid"
         code_outcome = "Eval"
@@ -99,7 +101,7 @@ def load_cvd(data_path, center_id=None) -> Dataset:
         f_eid = data[code_id]
 
         # Split the data
-        sss = StratifiedShuffleSplit(n_splits=1, test_size=0.2, random_state=42)
+        sss = StratifiedShuffleSplit(n_splits=1, test_size=0.2, random_state=None)
         train_index, test_index = next(sss.split(X_data, y_data))
         X_test = X_data.iloc[test_index, :]
         X_train = X_data.iloc[train_index, :]
@@ -143,84 +145,230 @@ def load_cvd(data_path, center_id=None) -> Dataset:
 
     return (X_train, y_train), (X_test, y_test)
 
+def load_ukbb_cvd(data_path, center_id, config) -> Dataset:
 
-def load_kaggle_hf(data_path, center_id=None) -> Dataset:
-    id = center_id
+    seed = config["seed"]
+    data_path = os.path.join(data_path, "CVDMortalityData.csv")
+    data = pd.read_csv(data_path)
+
+    # print(len(data))
+
+    center_key = 'f.54.0.0'
+    patient_key = 'f.eid'
+    label_key = 'label'
+
+    # center_id = None
+    # center_id = 1
+    preprocessing_data = data.loc[(data[center_key] == 1)]
+    # center_id = None
+    if center_id is not None:
+        center_id = center_id
+        if center_id == 19:
+            center_id = 21
+        elif center_id == 21:
+            center_id = 19
+        data = data.loc[(data[center_key] == center_id)]
+
+    # center_names = ['Bristol', 'Newcastle', 'Oxford', 'Stockport (pilot)', 'Reading',
+    #                 'Middlesborough', 'Leeds', 'Liverpool', 'Nottingham', 'Glasgow', 'Croydon',
+    #                 'Hounslow', 'Barts', 'Edinburgh', 'Birmingham', 'Manchester', 'Cardiff',
+    #                 'Stoke', 'Bury', 'Sheffield', 'Swansea', 'Wrexham']
+    # center_keys = [2, 13, 15, 18, 16, 12, 9, 10, 14, 7, 5, 8, 0, 6, 1, 11, 4, 19, 3, 17, 20, 21]
+    # center_dict = dict(zip(center_keys, center_names))
+    # # sort dictionary and convert to list
+    # center_dict = dict(sorted(center_dict.items()))
+    # center_dict = list(center_dict.values())
+    # print(center_dict)
+
+    # xx
+
+    # for i in range(0, 23):
+    #     center_data = data.loc[(data[center_key] == i)]
+    #     print(f'Center ID: {i} {center_dict[i]} with {len(center_data)} samples of which positive samples are {len(center_data.loc[center_data[label_key] == 1])})')
+    # xx
+    # features = data.drop([label_key, center_key, patient_key], axis=1)
+    # target = data[label_key]
+
+    # print(len(data))
+    # print(features.head())
+    # print(f'Center ID: {center_id} with {len(data)} samples of which positive samples are {len(data.loc[data[label_key] == 1])})')
+    # print(target.head())
+
+    def get_preprocessing_params(preprocessing_data):
+
+        data = preprocessing_data
+        features = data.drop([label_key, center_key, patient_key], axis=1)
+        target = data[label_key]
+        X_train, X_test, y_train, y_test = train_test_split(features, target, test_size = 0.20, random_state = seed, stratify=target)
+
+        n_features = 40
+        fs = SelectKBest(f_classif, k=n_features).fit(X_train, y_train)
+        index_features = fs.get_support()
+        X_train = X_train.iloc[:, index_features]
+
+        # print(X_train.head())
+
+        # Get the unique values of the categorical features
+        col = list(X_train.columns)
+        categorical_features = []
+        numerical_features = []
+        for i in col:
+            if len(X_train[i].unique()) > 24:
+                numerical_features.append(i)
+            # else:
+                # categorical_features.append(i)
+
+        transformers_dict = {}
+
+        for i in categorical_features:
+            transformers_dict[i] = OrdinalEncoder()
+        for i in numerical_features:
+            transformers_dict[i] = StandardScaler()
+        
+        # df1 = data.copy(deep = True)
+
+        for feature in transformers_dict:
+            transformers_dict[feature].fit(X_train[feature].values.reshape(-1, 1))
+
+        return index_features, transformers_dict
+
     
-    if id == 1:
+    index_features, transformers_dict = get_preprocessing_params(preprocessing_data)
+
+    def preprocess_data(data, index_features, column_transformer):
+        # Scale the data using the precomputed parameters
+        data = data.copy(deep = True)
+        features = data.drop([label_key, center_key, patient_key], axis=1)
+        features = features.iloc[:, index_features]
+        target = data[label_key]
+
+        for feature in column_transformer:
+            features[feature] = column_transformer[feature].transform(features[feature].values.reshape(-1, 1))
+
+        X_train, X_test, y_train, y_test = train_test_split(features, target, test_size = 0.20, random_state = seed, stratify=target)
+
+        return X_train, X_test, y_train, y_test
+    
+    X_train, X_test, y_train, y_test = preprocess_data(data, index_features, transformers_dict)
+
+    # print shapes of the data
+    # print(X_train.shape)
+    # print(X_test.shape)
+    # print(y_train.shape)
+    # print(y_test.shape)
+
+    # features = features.iloc[:, index_features]
+
+    # X_train, X_test, y_train, y_test = train_test_split(features, target, test_size = 0.20, random_state = None, stratify=target)
+
+    # print(features.head())
+
+    print(f'Center ID: {center_id} with {len(data)} samples of which positive samples are {len(data.loc[data[label_key] == 1])})')
+    
+
+    return (X_train, y_train), (X_test, y_test)
+
+
+def load_kaggle_hf(data_path, center_id, config) -> Dataset:
+    id = center_id
+    seed = config["seed"]
+    
+    if id == -1:
         id = 'switzerland'
-    elif id == 2:
+    elif id == 1:
         id = 'hungarian'
-    elif id == 3:
+    elif id == 2:
         id = 'va'
-    elif id == 4:
+    elif id == 0:
         id = 'cleveland'
-    elif id == 5:
-        id = 'cleveland'
+    elif id == None:
+        pass
+    else:
+        raise ValueError(f"Invalid center id: {id}")
+
+    # elif id == 5:
+        # id = 'cleveland'
 
     file_name = os.path.join(data_path, "kaggle_hf.csv")
     data = pd.read_csv(file_name)
+
+    scaling_data = data.loc[(data['data_center'] == 'hungarian')]
+    # scaling_data = data
+
     if id is not None:
         data = data.loc[(data['data_center'] == id)]
-
-    col = list(data.columns)
-    categorical_features = []
-    numerical_features = []
-    for i in col:
-        if len(data[i].unique()) > 6:
-            numerical_features.append(i)
-        else:
-            categorical_features.append(i)
+    
 
     # print('Categorical Features :',*categorical_features)
     # print('Numerical Features :',*numerical_features)
 
-    le = LabelEncoder()
-    df1 = data.copy(deep = True)
+    def get_preprocessing_params(data):
 
-    df1['Sex'] = le.fit_transform(df1['Sex'])
-    df1['ChestPainType'] = le.fit_transform(df1['ChestPainType'])
-    df1['RestingECG'] = le.fit_transform(df1['RestingECG'])
-    df1['ExerciseAngina'] = le.fit_transform(df1['ExerciseAngina'])
-    df1['ST_Slope'] = le.fit_transform(df1['ST_Slope'])
+        # Get the unique values of the categorical features
+        col = list(data.columns)
+        categorical_features = []
+        numerical_features = []
+        for i in col:
+            if len(data[i].unique()) > 6:
+                numerical_features.append(i)
+            else:
+                categorical_features.append(i)
 
+        transformers_dict = {}
+
+        categorical_features.pop(categorical_features.index('HeartDisease'))
+        if 'RestingBP' in numerical_features:
+            numerical_features.pop(numerical_features.index('RestingBP'))
+        elif 'RestingBP' in categorical_features:
+            categorical_features.pop(categorical_features.index('RestingBP'))
+        categorical_features.pop(categorical_features.index('RestingECG'))
+        categorical_features.pop(categorical_features.index('data_center'))
+        numerical_features.pop(numerical_features.index('Oldpeak'))
+        min_max_scaling_features = ['Oldpeak']
+
+        for i in categorical_features:
+            transformers_dict[i] = OrdinalEncoder()
+        for i in numerical_features:
+            transformers_dict[i] = StandardScaler()
+        for i in min_max_scaling_features:
+            transformers_dict[i] = MinMaxScaler()
+        
+        df1 = data.copy(deep = True)
+
+        target = df1['HeartDisease']
+        X_train, X_test, y_train, y_test = train_test_split(df1, target, test_size = 0.20, random_state = seed)
+
+        for feature in transformers_dict:
+            if feature == 'ST_Slope':
+                # Change value of last row to 'Down' to avoid error as it is missing in some splits
+                X_train[feature].iloc[-1] = 'Down'
+                transformers_dict[feature].fit(X_train[feature].values.reshape(-1, 1))
+            else:
+                transformers_dict[feature].fit(X_train[feature].values.reshape(-1, 1))
+
+        return transformers_dict
+        
     
-    # mms = MinMaxScaler() # Normalization
-    # ss = StandardScaler() # Standardization
-    # df1['Oldpeak'] = mms.fit_transform(df1[['Oldpeak']])
-    # df1['Age'] = ss.fit_transform(df1[['Age']])
-    # df1['RestingBP'] = ss.fit_transform(df1[['RestingBP']])
-    # df1['Cholesterol'] = ss.fit_transform(df1[['Cholesterol']])
-    # df1['MaxHR'] = ss.fit_transform(df1[['MaxHR']])
+    def preprocess_data(data, column_transformer):
+        # Scale the data using the precomputed parameters
+        df1 = data.copy(deep = True)
+        features = df1[df1.columns.drop(['HeartDisease','RestingBP','RestingECG', 'data_center'])]
+        target = df1['HeartDisease']
 
-    # features = df1[df1.columns.drop(['HeartDisease','RestingBP','RestingECG', 'data_center'])].values
-    # target = df1['HeartDisease'].values
-    features = df1[df1.columns.drop(['HeartDisease','RestingBP','RestingECG', 'data_center'])]
-    target = df1['HeartDisease']
-    X_train, X_test, y_train, y_test = train_test_split(features, target, test_size = 0.20, random_state = 2)
+        for feature in column_transformer:
+            features[feature] = column_transformer[feature].transform(features[feature].values.reshape(-1, 1))
 
-    mms = MinMaxScaler() # Normalization
-    ss = StandardScaler() # Standardization
+        X_train, X_test, y_train, y_test = train_test_split(features, target, test_size = 0.20, random_state = seed, stratify=target)
 
-    X_train['Oldpeak'] = mms.fit_transform(X_train[['Oldpeak']])
-    X_test['Oldpeak'] = mms.transform(X_test[['Oldpeak']])
-
-    X_train['Age'] = ss.fit_transform(X_train[['Age']])
-    X_test['Age'] = ss.transform(X_test[['Age']])
-
-    # X_train['RestingBP'] = ss.fit_transform(X_train[['RestingBP']])
-    # X_test['RestingBP'] = ss.transform(X_test[['RestingBP']])
-
-    X_train['Cholesterol'] = ss.fit_transform(X_train[['Cholesterol']])
-    X_test['Cholesterol'] = ss.transform(X_test[['Cholesterol']])
-
-    X_train['MaxHR'] = ss.fit_transform(X_train[['MaxHR']])
-    X_test['MaxHR'] = ss.transform(X_test[['MaxHR']])
+        return (X_train, y_train), (X_test, y_test)
     
-    # print(X_train.shape)
-    # print(y_train.shape)
-    # print(X_test.shape)
-    # print(y_test.shape)
+
+    preprocessing_params = get_preprocessing_params(scaling_data)
+
+    (X_train, y_train), (X_test, y_test) = preprocess_data(data, preprocessing_params)
+    # print(f'Center ID: {id} with {len(data)} total samples of which positive samples are {len(data[data["HeartDisease"] == 1])})')
+    # print(f'Center ID: {id} with {len(y_test)} test samples of which positive samples are {len(y_test[y_test == 1])})')
+    
     return (X_train, y_train), (X_test, y_test)
 
 
@@ -440,8 +588,10 @@ def load_dataset(config, id=None):
         return load_mnist(id, config["num_clients"])
     elif config["dataset"] == "cvd":
         return load_cvd(config["data_path"], id)
+    elif config["dataset"] == "ukbb_cvd":
+        return load_ukbb_cvd(config["data_path"], id, config)
     elif config["dataset"] == "kaggle_hf":
-        return load_kaggle_hf(config["data_path"], id)
+        return load_kaggle_hf(config["data_path"], id, config)
     elif config["dataset"] == "libsvm":
         return load_libsvm(config, id)
     elif config["dataset"] == "custom":

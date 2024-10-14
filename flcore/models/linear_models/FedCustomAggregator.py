@@ -23,6 +23,7 @@ import flwr.server.strategy.fedavg as fedav
 import time
 from flcore.dropout import select_clients
 from flcore.smoothWeights import smooth_aggregate
+import joblib
 
 
 WARNING_MIN_AVAILABLE_CLIENTS_TOO_LOW = """
@@ -34,17 +35,46 @@ than or equal to the values of `min_fit_clients` and `min_evaluate_clients`.
 
 class FedCustom(fl.server.strategy.FedAvg):
     """Configurable FedAvg strategy implementation."""
-    #DropOut center variable to get the initial execution time of the first round
-    clients_first_round_time = {}
-    time_server_round = time.time()
-    clients_num_examples = {}
-    dropout_method = None
-    percentage_drop = 0
-    smoothing_method = None
-    smoothing_strenght = 0
-    accum_time = 0
+    
     # pylint: disable=too-many-arguments,too-many-instance-attributes,line-too-long
    
+    def __init__(
+        self,
+        min_available_clients: int,
+        min_fit_clients: int,
+        min_evaluate_clients: int,
+        evaluate_fn: Optional[
+            Callable[
+                [int, NDArrays, Dict[str, Scalar]],
+                Optional[Tuple[float, Dict[str, Scalar]]],
+            ]
+        ] = None,
+        fit_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
+        evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
+        on_fit_config_fn: Optional[Callable[[int], Dict[str, fl.common.Scalar]]] = None,
+        accept_failures: bool = False,
+        dropout_method = None,
+        percentage_drop = 0.0,
+        smoothing_method = None,
+        smoothing_strenght = 0.0,
+        checkpoint_dir: Optional[str] = None,
+    ) -> None:
+        
+        super().__init__(min_available_clients=min_available_clients, min_fit_clients=min_fit_clients, min_evaluate_clients=min_evaluate_clients, evaluate_fn=evaluate_fn, fit_metrics_aggregation_fn=fit_metrics_aggregation_fn, evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn, on_fit_config_fn=on_fit_config_fn, accept_failures=accept_failures)
+        
+        #DropOut center variable to get the initial execution time of the first round
+        self.clients_first_round_time = {}
+        self.time_server_round = time.time()
+        self.clients_num_examples = {}
+        self.accum_time = 0
+
+        self.dropout_method = dropout_method
+        self.percentage_drop = percentage_drop
+        self.smoothing_method = smoothing_method
+        self.smoothing_strenght = smoothing_strenght
+        self.checkpoint_dir = checkpoint_dir
+
+
     def configure_fit(
         self, server_round: int, parameters: Parameters, client_manager: ClientManager
     ) -> List[Tuple[ClientProxy, FitIns]]:
@@ -99,21 +129,25 @@ class FedCustom(fl.server.strategy.FedAvg):
             for _, fit_res in results
         ]
 
-        if(self.smoothing_method=='None' ): #(smoothing==0 | self.fast_round == True):
-            parameters_aggregated = ndarrays_to_parameters(aggregate(weights_results))
+        if self.smoothing_method == 'None': #(smoothing==0 | self.fast_round == True):
+            weights_aggregated = aggregate(weights_results)
         else:
-            parameters_aggregated = ndarrays_to_parameters(smooth_aggregate(weights_results,self.smoothing_method,self.smoothing_strenght))
+            weights_aggregated = smooth_aggregate(weights_results,self.smoothing_method,self.smoothing_strenght)
+
+        # Save the aggregated weights
+        joblib.dump(weights_aggregated, f"{self.checkpoint_dir}/round_{server_round}_weights.joblib")
+
+        parameters_aggregated = ndarrays_to_parameters(weights_aggregated)
 
         #DropOut Center: initially aggregate all execution times of all clients
         #ONLY THE FIRST ROUND is tracked the execution time to start further
         #rounds with dropout center if wanted
-        if(self.dropout_method != 'None'):
-            if(server_round == 1):
+        if self.dropout_method != 'None':
+            if server_round == 1:
                 for client, res in results:
+                    # print(res.metrics)
                     self.clients_first_round_time[client.cid] = res.metrics['running_time']
                     self.clients_num_examples[client.cid] = res.num_examples
-                
-
 
         # Aggregate custom metrics if aggregation fn was provided
         metrics_aggregated = {}
@@ -127,6 +161,7 @@ class FedCustom(fl.server.strategy.FedAvg):
         self.accum_time = self.accum_time+ elapsed_time
         self.time_server_round = time.time()
         print(f"Elapsed time: {elapsed_time} for round {server_round}")
+        metrics_aggregated['training_time [s]'] = self.accum_time
 
         filename = 'server_results.txt'
         with open(
