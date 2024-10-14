@@ -6,7 +6,7 @@ from typing import Tuple
 
 import numpy as np
 import openml
-import torch
+#import torch
 import pandas as pd
 
 from sklearn.datasets import load_svmlight_file
@@ -397,6 +397,7 @@ def kaggle_to_torch(config):
 def libsvm_to_torch(config):
     pass
 
+"""
 def custom_to_torch(config):
     data_file = config["data_file"]
     # Base function, modify according with konstantinos especifications:
@@ -432,6 +433,7 @@ def convert_dataset(config):
         custom_to_torch(config)
     else:
         raise ValueError("Invalid dataset name")
+"""
 
 def load_dataset(config, id=None):
     if config["dataset"] == "mnist":
