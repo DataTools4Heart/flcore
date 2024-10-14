@@ -520,7 +520,23 @@ def load_custom(config):
         dat = pd.read_csv(data_file)
     dat_len = len(dat)
 
-    dat_shuffled = dat.sample(frac=1).reset_index(drop=True)
+    # Print statistics
+    for i in dat.keys():
+        maxim = dat[i].max()
+        minim = dat[i].min()
+        mean = dat[i].mean()
+        estd = dat[i].std()
+        print(f"Column: {i}")
+        print(f"  Maximum:          {maxim:10.2f}")
+        print(f"  Minimum:          {minim:10.2f}")
+        print(f"  Mean:             {mean:10.2f}")
+        print(f"  Std dev:          {estd:10.2f}")
+        print("-" * 40)
+
+    # Z-score    
+    dat_norm = (dat - dat.mean()) / dat.std()
+
+    dat_shuffled = dat_norm.sample(frac=1).reset_index(drop=True)
 
     target_labels = config["target_label"]
     train_labels = config["train_labels"]
