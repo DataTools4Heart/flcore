@@ -56,9 +56,9 @@ def generate_report(experiment_path: str):
     general_results['table'] = df[['center'] + metrics].to_html(classes='table table-striped', index=False, border=0, justify='center')
     general_results['plot'] = {}
 
-    df_general = df[['center', 'balanced_accuracy', 'n samples']]
+    df_general = df[['center', 'balanced_accuracy', 'train n samples']]
 
-    ax = df_general.plot.scatter(x='n samples', y='balanced_accuracy', c=colors[:len(df['center'].unique())], title='Center size vs balanced accuracy', figsize=(4, 3))
+    ax = df_general.plot.scatter(x='train n samples', y='balanced_accuracy', c=colors[:len(df['center'].unique())], title='Center size vs balanced accuracy', figsize=(4, 3))
     # Add legend
     # ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
     fig = ax.get_figure()
@@ -70,9 +70,9 @@ def generate_report(experiment_path: str):
     df_general = df_general.set_index('center')
     # Display value counts for each center
     def absolute_value(val):
-        a  = int(val/100.*df['n samples'].sum())
+        a  = int(val/100.*df['train n samples'].sum())
         return a
-    ax = df_general['n samples'].plot.pie(title='Distribution of samples',
+    ax = df_general['train n samples'].plot.pie(title='Distribution of samples',
                                         colors=colors[:len(df['center'].unique())],
                                         figsize=(4, 4), autopct=absolute_value, ylabel='')
     fig = ax.get_figure()

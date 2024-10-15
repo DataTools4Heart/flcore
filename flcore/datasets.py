@@ -366,9 +366,41 @@ def load_kaggle_hf(data_path, center_id, config) -> Dataset:
     preprocessing_params = get_preprocessing_params(scaling_data)
 
     (X_train, y_train), (X_test, y_test) = preprocess_data(data, preprocessing_params)
-    # print(f'Center ID: {id} with {len(data)} total samples of which positive samples are {len(data[data["HeartDisease"] == 1])})')
-    # print(f'Center ID: {id} with {len(y_test)} test samples of which positive samples are {len(y_test[y_test == 1])})')
+
+    # n_females = len(X_train[X_train['Sex'] == 0])
+    # print(f'n_females{n_females}')
+    # n_males = len(X_train[X_train['Sex'] == 1])
+    # print(f'n_males{n_males}')
+    # print(len(X_train))
+    # Get indexes of rows with men (Sex == 0)
+    n_females = len(X_train[X_train['Sex'] == 0])
+    n_males = len(X_train[X_train['Sex'] == 1])
+    print(f'Center {center_id} of size {len(X_train)} with n_females {n_females} and n_males {n_males} in training set')
+
+    if center_id == 0:
+        men_indexes = X_train.index[X_train['Sex'] == 1]
+        female_indexes = X_train.index[X_train['Sex'] == 0]
+        # print(len(female_indexes))
+        n_females_to_drop = int(len(female_indexes)*0.9)
+        female_indexes = female_indexes[:n_females_to_drop]
+        copy_male_indexes = men_indexes[:n_females_to_drop]
+        # print(len(female_indexes))
+        X_train = X_train.drop(index=female_indexes)
+        y_train = y_train.drop(index=female_indexes)
+        # print(len(X_train))
+        # print(f'Adding males {len(copy_male_indexes)}')
+        X_train = pd.concat([X_train, X_train.loc[copy_male_indexes]])
+        y_train = pd.concat([y_train, y_train.loc[copy_male_indexes]])
+
+    if center_id == 2 or center_id == -1:
+        X_train = pd.concat([X_train, X_train, X_train, X_train])
+        y_train = pd.concat([y_train, y_train, y_train, y_train])
     
+    n_females = len(X_train[X_train['Sex'] == 0])
+    n_males = len(X_train[X_train['Sex'] == 1])
+    print(f'Center {center_id} of size {len(X_train)} with n_females {n_females} and n_males {n_males} in training set')
+    # xx
+
     return (X_train, y_train), (X_test, y_test)
 
 
