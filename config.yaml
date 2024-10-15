@@ -3,17 +3,22 @@
 # Flcore configuration file
 
 ################################################################################
+
+
+################################################################################
 # Experiment parameters
+################################################################################
 
 ##############  Dataset type to use
 # Possible values: , kaggle_hf, mnist, dt4h_format
 dataset: kaggle_hf
 
-##############  Number of clients (data centers) to use for the training
+##############  Number of clients (data centers) to use for training
 num_clients: 3
 
 ############## Model type
 # Possible values: logistic_regression, lsvc, elastic_net, random_forest, weighted_random_forest, xgb
+# See README.md for a full list of supported models
 model: logistic_regression
 
 ############## Training length
@@ -32,6 +37,7 @@ experiment:
 
 ################################################################################
 # Aggregation methods
+################################################################################
 
 ############## Centre-dropout
 # Possible values: None, random_dropout, Fast_at_odd_rounds, LessParticipants
@@ -47,6 +53,7 @@ smoothWeights:
 
 ################################################################################
 # Model specific parameters
+################################################################################
 
 # Number of features to select for model input
 
