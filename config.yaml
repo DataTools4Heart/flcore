@@ -30,7 +30,7 @@ checkpoint_selection_metric: balanced_accuracy
 
 ############## Experiment logging
 experiment:
-  name: imbalance_1_repeat_equal_voting
+  name: experiment_1
   log_path: logs
   debug: true
 
@@ -47,7 +47,7 @@ dropout:
 
 ############## Weight smoothing
 # Possible values: None, SlowerQuartile, EqualVoting
-smooth_method: EqualVoting
+smooth_method: None
 smoothWeights:
   smoothing_strenght: 0.5
 
@@ -93,4 +93,4 @@ local_port: 8081
 
 data_path: dataset/
 
-production_mode: True # Turn on to use environment variables such as data path, server address, certificates etc.
+production_mode: False # Turn on to use environment variables such as data path, server address, certificates etc.

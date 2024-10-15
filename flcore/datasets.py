@@ -6,7 +6,7 @@ from typing import Tuple
 
 import numpy as np
 import openml
-import torch
+#import torch
 import pandas as pd
 
 from sklearn.datasets import load_svmlight_file
@@ -552,7 +552,23 @@ def load_custom(config):
         dat = pd.read_csv(data_file)
     dat_len = len(dat)
 
-    dat_shuffled = dat.sample(frac=1).reset_index(drop=True)
+    # Print statistics
+    for i in dat.keys():
+        maxim = dat[i].max()
+        minim = dat[i].min()
+        mean = dat[i].mean()
+        estd = dat[i].std()
+        print(f"Column: {i}")
+        print(f"  Maximum:          {maxim:10.2f}")
+        print(f"  Minimum:          {minim:10.2f}")
+        print(f"  Mean:             {mean:10.2f}")
+        print(f"  Std dev:          {estd:10.2f}")
+        print("-" * 40)
+
+    # Z-score    
+    dat_norm = (dat - dat.mean()) / dat.std()
+
+    dat_shuffled = dat_norm.sample(frac=1).reset_index(drop=True)
 
     target_labels = config["target_label"]
     train_labels = config["train_labels"]
@@ -577,6 +593,7 @@ def kaggle_to_torch(config):
 def libsvm_to_torch(config):
     pass
 
+"""
 def custom_to_torch(config):
     data_file = config["data_file"]
     # Base function, modify according with konstantinos especifications:
@@ -612,6 +629,7 @@ def convert_dataset(config):
         custom_to_torch(config)
     else:
         raise ValueError("Invalid dataset name")
+"""
 
 def load_dataset(config, id=None):
     if config["dataset"] == "mnist":
