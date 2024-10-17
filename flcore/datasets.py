@@ -3,6 +3,7 @@ import os
 import shutil
 import urllib.request
 from typing import Tuple
+import json
 
 import numpy as np
 import openml
@@ -512,6 +513,9 @@ def load_libsvm(config, center_id=None, task_type="BINARY"):
     return (X_train, y_train), (X_test, y_test)
 
 def load_custom(config):
+    with open(config['metadata_file'], 'r') as file:
+        metadata = json.load(file)
+
     data_file = config["data_file"]
     ext = data_file.split(".")[-1]
     if ext == "pqt" or ext == "parquet":
