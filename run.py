@@ -14,6 +14,7 @@ with open(config_path, "r") as f:
     config = yaml.safe_load(f)
 
 try:
+    print("\nFlcore running in simulation mode\n")
     print("Starting server")
     server_process = subprocess.Popen(f"python server.py {config_path}", shell=True, stderr=subprocess.PIPE, text=True)
     # server_process = subprocess.Popen(f"python server.py {config_path}", stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)

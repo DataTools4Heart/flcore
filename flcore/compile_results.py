@@ -20,7 +20,7 @@ def compile_results(experiment_dir: str):
         center_names[19], center_names[21] = center_names[21], center_names[19]
 
     elif config['dataset'] == 'kaggle_hf':
-        center_names = ['Switzerland',  'Hungary', 'VA', 'Cleveland']
+        center_names = ['Cleveland',  'Hungary', 'VA', 'Switzerland']
 
     writer = open(f"{experiment_dir}/metrics.txt", "w")
 
@@ -41,7 +41,8 @@ def compile_results(experiment_dir: str):
         os.system(f"cp {experiment_dir}/* {os.path.join(experiment_dir, 'run_00')} 2>>/dev/null")
 
     for directory in os.listdir(experiment_dir):
-        if directory.startswith("fold_") or directory.startswith("run_"):
+
+        if directory.startswith("fold_") or directory.startswith("run_") and os.path.isdir(os.path.join(experiment_dir, directory)):
             fold_dir = os.path.join(experiment_dir, directory)
             # Read history.yaml
             history = yaml.safe_load(open(os.path.join(fold_dir, "history.yaml"), "r"))
@@ -187,6 +188,8 @@ def compile_results(experiment_dir: str):
     df = pd.DataFrame(csv_dict)
     df = df.T
     df = df.rename(columns={"index": "center"})
+    # Add column with train size
+    df['train n samples'] = 5 * df['n samples'] - 1
 
     # Write to csv
     df.to_csv(f"{experiment_dir}/per_center_results.csv", index=True)

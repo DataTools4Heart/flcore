@@ -12,3 +12,4 @@ torch==2.0.1
 torchmetrics==0.11.4
 tqdm==4.65.0
 xgboost==1.7.5
+pdfkit==1.0.0

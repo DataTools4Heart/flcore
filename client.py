@@ -10,31 +10,33 @@ from flcore.client_selector import get_model_client
 # Start Flower client but after the server or error
 
 if __name__ == "__main__":
-    if len(sys.argv) == 1:
-        print("Usage is wrong. Usage: python main.py <number of client>")
-        sys.exit
-    elif len(sys.argv) == 3:
+    if len(sys.argv) == 3:
         config_path = sys.argv[2]
     else:
         config_path = "config.yaml"
-
-    num_client = int(sys.argv[1])
 
     with open(config_path, "r") as f:
         config = yaml.safe_load(f)
     model = config["model"]
 
     if config["production_mode"]:
+        node_name = os.getenv("NODE_NAME")
+        num_client = int(node_name.split("_")[-1])
         data_path = os.getenv("DATA_PATH")
         flower_ssl_cacert = os.getenv("FLOWER_SSL_CACERT")
         root_certificate = Path(f"{flower_ssl_cacert}").read_bytes()
         central_ip = os.getenv("FLOWER_CENTRAL_SERVER_IP")
         central_port = os.getenv("FLOWER_CENTRAL_SERVER_PORT")
+        
     else:
         data_path = config["data_path"]
         root_certificate = None
         central_ip = "LOCALHOST"
         central_port = config["local_port"]
+        if len(sys.argv) == 1:
+            raise ValueError("Please provide the client id when running in simulation mode")
+        num_client = int(sys.argv[1])
+
 
     print("Client id:" + str(num_client))
 
