@@ -544,6 +544,15 @@ def load_libsvm(config, center_id=None, task_type="BINARY"):
 
     return (X_train, y_train), (X_test, y_test)
 
+def std_normalize(col, mean, std):
+    return (col - mean) / std
+
+def iqr_normalize(col, Q1, Q2, Q3):
+    return (col - Q2) / (Q3 - Q1)
+
+def min_max_normalize(col, min_val, max_val):
+    return (col - min_val) / (max_val - min_val)
+
 def load_custom(config):
     with open(config['metadata_file'], 'r') as file:
         metadata = json.load(file)
@@ -556,7 +565,31 @@ def load_custom(config):
         dat = pd.read_csv(data_file)
     dat_len = len(dat)
 
-    # Print statistics
+    numeric_columns_non_zero = {}
+
+    for feat in metadata["entries"][0]["featureSet"]["features"]:
+        if feat["dataType"] == "NUMERIC" and feat["statistics"]["numOfNotNull"] != 0:
+            # statistic keys = ['Q1', 'avg', 'min', 'Q2', 'max', 'Q3', 'numOfNotNull']
+            numeric_columns_non_zero[feat["name"]] = (
+                feat["statistics"]["Q1"],
+                feat["statistics"]["avg"],
+                feat["statistics"]["min"],
+                feat["statistics"]["Q2"],
+                feat["statistics"]["max"],
+                feat["statistics"]["Q3"],
+                feat["statistics"]["numOfNotNull"],
+            )
+
+    for col, (q1,avg,mini,q2,maxi,q3,numOfNotNull) in numeric_columns_non_zero .items():
+        if col in dat.columns:
+            if config["normalization_method"] == "IQR":
+               dat[col] = iqr_normalize(dat[col], q1,q2,q3 )
+            elif config["normalization_method"] == "STD":
+                pass # no std found in data set
+            elif config["normalization_method"] == "MIN_MAX":
+               dat[col] = min_max_normalize(col, mini, maxi)
+
+    """    # Print statistics
     for i in dat.keys():
         maxim = dat[i].max()
         minim = dat[i].min()
@@ -568,11 +601,9 @@ def load_custom(config):
         print(f"  Mean:             {mean:10.2f}")
         print(f"  Std dev:          {estd:10.2f}")
         print("-" * 40)
-
-    # Z-score    
-    dat_norm = (dat - dat.mean()) / dat.std()
-
-    dat_shuffled = dat_norm.sample(frac=1).reset_index(drop=True)
+    """
+    
+    dat_shuffled = dat.sample(frac=1).reset_index(drop=True)
 
     target_labels = config["target_label"]
     train_labels = config["train_labels"]
