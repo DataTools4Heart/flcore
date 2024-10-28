@@ -563,6 +563,7 @@ def load_custom(config):
         dat = pd.read_parquet(data_file)
     elif ext == "csv":
         dat = pd.read_csv(data_file)
+        
     dat_len = len(dat)
 
     numeric_columns_non_zero = {}
