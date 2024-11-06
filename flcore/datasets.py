@@ -566,8 +566,9 @@ def load_custom(config):
         
     dat_len = len(dat)
 
+    # =================================================== 
+    # Numerical variables
     numeric_columns_non_zero = {}
-
     for feat in metadata["entries"][0]["featureSet"]["features"]:
         if feat["dataType"] == "NUMERIC" and feat["statistics"]["numOfNotNull"] != 0:
             # statistic keys = ['Q1', 'avg', 'min', 'Q2', 'max', 'Q3', 'numOfNotNull']
@@ -589,6 +590,31 @@ def load_custom(config):
                 pass # no std found in data set
             elif config["normalization_method"] == "MIN_MAX":
                dat[col] = min_max_normalize(col, mini, maxi)
+
+    # =================================================== 
+    # Categorical variables
+    categorical_columns_non_zero = {}
+    for i in range(len(feat)):
+        if feat[i]["dataType"] == "NOMINAL" and feat[i]["statistics"]["numOfNotNull"] != 0:
+            map_cat = {}
+            for ind, cat in enumerate(feat[i]["statistics"]["valueset"]):
+                map_cat[cat] = ind
+            categorical_columns_non_zero[feat[i]["name"]] = map_cat
+
+    for col, mapa in categorical_columns_non_zero:
+        dat[col] = dat[col].map(mapa)
+
+    # =================================================== 
+    # Boolean variables
+    boolean_columns_non_zero = []
+    boolean_map = {"False":0,"True":1}
+    for i in range(len(feat)):
+        if feat[i]["dataType"] == "BOOLEAN" and feat[i]["statistics"]["numOfNotNull"] != 0:
+            boolean_columns_non_zero.append([feat[i]["name"]])
+    
+    for col in boolean_columns_non_zero:
+        dat[col] = dat[col].map(boolean_map)
+    # =================================================== 
 
     """    # Print statistics
     for i in dat.keys():
