@@ -275,6 +275,8 @@ def load_kaggle_hf(data_path, center_id, config) -> Dataset:
     
     if id == -1:
         id = 'switzerland'
+    elif id == 0:
+        id = 'hungarian'
     elif id == 1:
         id = 'hungarian'
     elif id == 2:
