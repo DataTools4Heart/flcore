@@ -553,7 +553,7 @@ def iqr_normalize(col, Q1, Q2, Q3):
 def min_max_normalize(col, min_val, max_val):
     return (col - min_val) / (max_val - min_val)
 
-def load_custom(config):
+def load_custom(config,id):
     with open(config['metadata_file'], 'r') as file:
         metadata = json.load(file)
 
