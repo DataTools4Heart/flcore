@@ -563,10 +563,10 @@ def load_custom(config,id):
         dat = pd.read_parquet(data_file)
     elif ext == "csv":
         dat = pd.read_csv(data_file)
-        
+
     dat_len = len(dat)
 
-    # =================================================== 
+    # ===================================================
     # Numerical variables
     numeric_columns_non_zero = {}
     for feat in metadata["entries"][0]["featureSet"]["features"]:
@@ -590,40 +590,52 @@ def load_custom(config,id):
                 pass # no std found in data set
             elif config["normalization_method"] == "MIN_MAX":
                dat[col] = min_max_normalize(col, mini, maxi)
-    print("===================================================")
-    # =================================================== 
-    # Categorical variables
-    categorical_columns_non_zero = {}
+#    print("===================================================")
+    # ===================================================
+    tipos=[]
+    map_variables = {}
     for feat in metadata["entries"][0]["featureSet"]["features"]:
+        tipos.append(feat["dataType"])
         if feat["dataType"] == "NOMINAL" and feat["statistics"]["numOfNotNull"] != 0:
+#            print("=============")
+#            print("NAME", feat["name"])
+#            print( feat["statistics"]["valueset"])
+            num_cat = len(feat["statistics"]["valueset"])
             map_cat = {}
             for ind, cat in enumerate(feat["statistics"]["valueset"]):
                 map_cat[cat] = ind
-            categorical_columns_non_zero[feat["name"]] = map_cat
-    print("===================================================")
-
-    """for i in range(len(feat)):
-        if feat[i]["dataType"] == "NOMINAL" and feat[i]["statistics"]["numOfNotNull"] != 0:
-            map_cat = {}
-            for ind, cat in enumerate(feat[i]["statistics"]["valueset"]):
-                map_cat[cat] = ind
-            categorical_columns_non_zero[feat[i]["name"]] = map_cat"""
-    print("CHECKPOINT::categorical columns::HASTA AQUI TODO BIEN", categorical_columns_non_zero)
-
-    for col, mapa in categorical_columns_non_zero:
+#            print(feat)
+#            print("MAPA ", map_cat)
+            map_variables[feat["name"]] = map_cat
+    for col,mapa in map_variables.items():
+#        print("COL",col)
+#        print("MAPA",mapa)
         dat[col] = dat[col].map(mapa)
 
-    # =================================================== 
-    # Boolean variables
-    boolean_columns_non_zero = []
+    dat[map_variables.keys()].dropna()
+#    print("=================================================== NOMINAL")
+
+    # ===================================================
+    tipos=[]
+    map_variables = {}
     boolean_map = {"False":0,"True":1}
-    for i in range(len(feat)):
-        if feat[i]["dataType"] == "BOOLEAN" and feat[i]["statistics"]["numOfNotNull"] != 0:
-            boolean_columns_non_zero.append([feat[i]["name"]])
-    
-    for col in boolean_columns_non_zero:
+    for feat in metadata["entries"][0]["featureSet"]["features"]:
+        tipos.append(feat["dataType"])
+        if feat["dataType"] == "BOOLEAN" and feat["statistics"]["numOfNotNull"] != 0:
+#            print("=============")
+#            print( feat) #["statistics"]["valueset"])
+            map_variables[feat["name"]] = boolean_map
+
+    for col,mapa in map_variables.items():
+#        print("COL",col)
+#        print("MAPA",mapa)
         dat[col] = dat[col].map(boolean_map)
-    # =================================================== 
+
+    dat[map_variables.keys()].dropna()
+
+    # ===================================================
+
+    # ===================================================
 
     """    # Print statistics
     for i in dat.keys():
@@ -638,7 +650,7 @@ def load_custom(config,id):
         print(f"  Std dev:          {estd:10.2f}")
         print("-" * 40)
     """
-    
+
     dat_shuffled = dat.sample(frac=1).reset_index(drop=True)
 
     target_labels = config["target_label"]
@@ -646,7 +658,7 @@ def load_custom(config,id):
 
     data_train = dat_shuffled[train_labels].to_numpy()
     data_target = dat_shuffled[target_labels].to_numpy()
-    
+
     X_train = data_train[:int(dat_len*config["train_size"])]
     y_train = data_target[:int(dat_len*config["train_size"])]
 
