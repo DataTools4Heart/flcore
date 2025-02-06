@@ -554,10 +554,10 @@ def min_max_normalize(col, min_val, max_val):
     return (col - min_val) / (max_val - min_val)
 
 def load_custom(config,id):
-    with open(config['metadata_file'], 'r') as file:
+    with open(config["data_path"]+config['metadata_file'], 'r') as file:
         metadata = json.load(file)
 
-    data_file = config["data_file"]
+    data_file = config["data_path"] + config["data_file"]
     ext = data_file.split(".")[-1]
     if ext == "pqt" or ext == "parquet":
         dat = pd.read_parquet(data_file)
