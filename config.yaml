@@ -11,7 +11,17 @@
 
 ##############  Dataset type to use
 # Possible values: , kaggle_hf, mnist, dt4h_format
-dataset: kaggle_hf
+dataset: custom
+
+# ****** * * * * * * *  *  *   *    *    *  *  * * * * * * * *******************
+# New variables
+# ****** * * * * * * *  *  *   *    *    *  *  * * * * * * * *******************
+metadata_file: metadata.json
+data_file : dataset.parquet
+# Options: IQR STD MIN_MAX
+normalization_method : IQR
+# ****** * * * * * * *  *  *   *    *    *  *  * * * * * * * *******************
+
 
 ##############  Number of clients (data centers) to use for training
 num_clients: 3
