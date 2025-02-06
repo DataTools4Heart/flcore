@@ -590,16 +590,25 @@ def load_custom(config,id):
                 pass # no std found in data set
             elif config["normalization_method"] == "MIN_MAX":
                dat[col] = min_max_normalize(col, mini, maxi)
-
+    print("===================================================")
     # =================================================== 
     # Categorical variables
     categorical_columns_non_zero = {}
-    for i in range(len(feat)):
+    for feat in metadata["entries"][0]["featureSet"]["features"]:
+        if feat["dataType"] == "NOMINAL" and feat["statistics"]["numOfNotNull"] != 0:
+            map_cat = {}
+            for ind, cat in enumerate(feat["statistics"]["valueset"]):
+                map_cat[cat] = ind
+            categorical_columns_non_zero[feat["name"]] = map_cat
+    print("===================================================")
+
+    """for i in range(len(feat)):
         if feat[i]["dataType"] == "NOMINAL" and feat[i]["statistics"]["numOfNotNull"] != 0:
             map_cat = {}
             for ind, cat in enumerate(feat[i]["statistics"]["valueset"]):
                 map_cat[cat] = ind
-            categorical_columns_non_zero[feat[i]["name"]] = map_cat
+            categorical_columns_non_zero[feat[i]["name"]] = map_cat"""
+    print("CHECKPOINT::categorical columns::HASTA AQUI TODO BIEN", categorical_columns_non_zero)
 
     for col, mapa in categorical_columns_non_zero:
         dat[col] = dat[col].map(mapa)
