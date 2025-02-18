@@ -553,20 +553,20 @@ def iqr_normalize(col, Q1, Q2, Q3):
 def min_max_normalize(col, min_val, max_val):
     return (col - min_val) / (max_val - min_val)
 
-def load_custom(config):
-    with open(config['metadata_file'], 'r') as file:
+def load_custom(config,id):
+    with open(config["data_path"]+config['metadata_file'], 'r') as file:
         metadata = json.load(file)
 
-    data_file = config["data_file"]
+    data_file = config["data_path"] + config["data_file"]
     ext = data_file.split(".")[-1]
     if ext == "pqt" or ext == "parquet":
         dat = pd.read_parquet(data_file)
     elif ext == "csv":
         dat = pd.read_csv(data_file)
-        
+
     dat_len = len(dat)
 
-    # =================================================== 
+    # ===================================================
     # Numerical variables
     numeric_columns_non_zero = {}
     for feat in metadata["entries"][0]["featureSet"]["features"]:
@@ -582,7 +582,7 @@ def load_custom(config):
                 feat["statistics"]["numOfNotNull"],
             )
 
-    for col, (q1,avg,mini,q2,maxi,q3,numOfNotNull) in numeric_columns_non_zero .items():
+    for col, (q1,avg,mini,q2,maxi,q3,numOfNotNull) in numeric_columns_non_zero.items():
         if col in dat.columns:
             if config["normalization_method"] == "IQR":
                dat[col] = iqr_normalize(dat[col], q1,q2,q3 )
@@ -590,31 +590,66 @@ def load_custom(config):
                 pass # no std found in data set
             elif config["normalization_method"] == "MIN_MAX":
                dat[col] = min_max_normalize(col, mini, maxi)
-
-    # =================================================== 
-    # Categorical variables
-    categorical_columns_non_zero = {}
-    for i in range(len(feat)):
-        if feat[i]["dataType"] == "NOMINAL" and feat[i]["statistics"]["numOfNotNull"] != 0:
+    print("===================================================")
+    # ===================================================
+    tipos=[]
+    map_variables = {}
+    for feat in metadata["entries"][0]["featureSet"]["features"]:
+        tipos.append(feat["dataType"])
+        if feat["dataType"] == "NOMINAL" and feat["statistics"]["numOfNotNull"] != 0:
+            print("=============")
+            print("NAME", feat["name"])
+            print( feat["statistics"]["valueset"])
+            num_cat = len(feat["statistics"]["valueset"])
             map_cat = {}
-            for ind, cat in enumerate(feat[i]["statistics"]["valueset"]):
+            for ind, cat in enumerate(feat["statistics"]["valueset"]):
                 map_cat[cat] = ind
-            categorical_columns_non_zero[feat[i]["name"]] = map_cat
-
-    for col, mapa in categorical_columns_non_zero:
+            print(feat)
+            print("MAPA ", map_cat)
+            map_variables[feat["name"]] = map_cat
+    for col,mapa in map_variables.items():
+        print("COL",col)
+        print("MAPA",mapa)
+        print("data col sin mapear","==============", dat[col][0],"==============")
         dat[col] = dat[col].map(mapa)
+        print("data col mapeado","==============", dat[col][0],"==============")
 
-    # =================================================== 
-    # Boolean variables
-    boolean_columns_non_zero = []
-    boolean_map = {"False":0,"True":1}
-    for i in range(len(feat)):
-        if feat[i]["dataType"] == "BOOLEAN" and feat[i]["statistics"]["numOfNotNull"] != 0:
-            boolean_columns_non_zero.append([feat[i]["name"]])
-    
-    for col in boolean_columns_non_zero:
+    dat[map_variables.keys()].dropna()
+    print("=================================================== NOMINAL")
+
+    # ===================================================
+    tipos=[]
+    map_variables = {}
+    boolean_map = {np.bool_(False) :0, np.bool_(True):1, "False":0,"True":1}
+#    boolean_map = {0:0,1:1}
+    for feat in metadata["entries"][0]["featureSet"]["features"]:
+        tipos.append(feat["dataType"])
+        if feat["dataType"] == "BOOLEAN" and feat["statistics"]["numOfNotNull"] != 0:
+#        if feat["dataType"] == "BOOLEAN":
+            print("=============")
+#            print( feat) #["statistics"]["valueset"])
+            map_variables[feat["name"]] = boolean_map
+#        else:
+#            print("*************************************************NUM OF NOT NULL ==0", feat) #["statistics"]["valueset"])
+#            print("NOT  NULL",)
+    print(" MAP VARIABLES BOOLEAN", map_variables)
+    print(" DATASETS:: BOOLEAN :::::::::::::::::::::::::::::::::::::::::::::")
+    for col,mapa in map_variables.items():
+        print("COL",col)
+        print("MAPA",mapa)
+        print("data col sin mapear=====", dat[col][0],"==============")
+        print("data col sin mapear=====", type(dat[col][0]),"==============")
+
         dat[col] = dat[col].map(boolean_map)
-    # =================================================== 
+#        dat[col] = boolean_map[dat[col]]
+        print("data col mapeado==========", dat[col][0],"====================")
+#        print("data col",dat[col])
+
+#    dat[map_variables.keys()].dropna()
+
+    # ===================================================
+
+    # ===================================================
 
     """    # Print statistics
     for i in dat.keys():
@@ -629,22 +664,33 @@ def load_custom(config):
         print(f"  Std dev:          {estd:10.2f}")
         print("-" * 40)
     """
-    
+
     dat_shuffled = dat.sample(frac=1).reset_index(drop=True)
 
     target_labels = config["target_label"]
     train_labels = config["train_labels"]
-
+    print("LABELS",config["target_label"],config["train_labels"])
     data_train = dat_shuffled[train_labels].to_numpy()
     data_target = dat_shuffled[target_labels].to_numpy()
-    
+
+    print("data_train", data_train.shape)
+    print("data_target", data_target.shape)
+    print("maximo",int(dat_len*config["train_size"]))
     X_train = data_train[:int(dat_len*config["train_size"])]
     y_train = data_target[:int(dat_len*config["train_size"])]
 
+    print("data_train", X_train.shape)
+    print("data_target", y_train.shape)
+
     X_test = data_train[int(dat_len*config["train_size"]):]
     y_test = data_target[int(dat_len*config["train_size"]):]
-
+    print("DEVOLVIENDO DATASETS")
+    print(X_train.mean(),y_train.mean(), X_test.mean(), y_test.mean())
+    print(X_train[:10,:],y_train[:10,:], X_test[:10,:], y_test[:10,:])
+    print(X_train.shape,y_train.shape, X_test.shape, y_test.shape)
+    print("DEVUELTOS")
     return (X_train, y_train), (X_test, y_test)
+
 
 def cvd_to_torch(config):
     pass
