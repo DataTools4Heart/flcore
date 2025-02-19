@@ -11,7 +11,19 @@
 
 ##############  Dataset type to use
 # Possible values: , kaggle_hf, mnist, dt4h_format
-dataset: kaggle_hf
+dataset: custom
+
+# ****** * * * * * * *  *  *   *    *    *  *  * * * * * * * *******************
+# New variables
+# ****** * * * * * * *  *  *   *    *    *  *  * * * * * * * *******************
+metadata_file: metadata.json
+data_file : dataset_new_version_2.parquet
+# Options: IQR STD MIN_MAX
+normalization_method : IQR
+target_label: ["patient_demographics_age", "lab_results_triGly_value_max"]
+train_labels: ["symptoms_Tachycardia_display_any"]
+train_size: 100
+# ****** * * * * * * *  *  *   *    *    *  *  * * * * * * * *******************
 
 ##############  Number of clients (data centers) to use for training
 num_clients: 3
@@ -91,6 +103,6 @@ seed: 42
 
 local_port: 8081
 
-data_path: dataset/
+data_path: dataset/icrc-dataset/
 
 production_mode: False # Turn on to use environment variables such as data path, server address, certificates etc.
