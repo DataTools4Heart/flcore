@@ -12,41 +12,42 @@
 ##############  Dataset type to use
 # Possible values: , kaggle_hf, mnist, dt4h_format
 dataset: custom
+#libsvm
+#kaggle_hf
 
 # ****** * * * * * * *  *  *   *    *    *  *  * * * * * * * *******************
 # New variables
 # ****** * * * * * * *  *  *   *    *    *  *  * * * * * * * *******************
 metadata_file: metadata.json
-<<<<<<< HEAD
-data_file : dataset_new_version_2.parquet
+data_file : dataset_new.parquet
 # Options: IQR STD MIN_MAX
 normalization_method : IQR
-target_label: ["patient_demographics_age", "lab_results_triGly_value_max"]
-train_labels: ["symptoms_Tachycardia_display_any"]
-train_size: 100
-# ****** * * * * * * *  *  *   *    *    *  *  * * * * * * * *******************
-=======
-data_file : dataset.parquet
-# Options: IQR STD MIN_MAX
-normalization_method : IQR
-# ****** * * * * * * *  *  *   *    *    *  *  * * * * * * * *******************
 
->>>>>>> 8b3461940f5201da382d50517f44033e013588c3
+train_labels: ["encounters_encounterClass","encounters_admissionYear","vital_signs_systolicBp_value_last",
+               "patient_demographics_gender","patient_demographics_age","vital_signs_weight_value_last",
+               "vital_signs_height_value_first","lab_results_crpNonHs_value_avg","lab_results_tropIHs_value_min"]
+target_label: ["conditions_stroke_any"] #,"conditions_vd_any"]
+
+train_size: 0.7
+# ****** * * * * * * *  *  *   *    *    *  *  * * * * * * * *******************
 
 ##############  Number of clients (data centers) to use for training
-num_clients: 3
+num_clients: 1
 
 ############## Model type
 # Possible values: logistic_regression, lsvc, elastic_net, random_forest, weighted_random_forest, xgb
 # See README.md for a full list of supported models
-model: logistic_regression
+model: random_forest
+#logistic_regression
+#random_forest
 
 ############## Training length
 num_rounds: 50
 
 ############## Metric to select the best model
 # Possible values: accuracy, balanced_accuracy, f1, precision, recall
-checkpoint_selection_metric: balanced_accuracy
+checkpoint_selection_metric:  precision
+#balanced_accuracy
 
 ############## Experiment logging
 experiment:
@@ -83,7 +84,7 @@ smoothWeights:
 # UKBB dataset has 40 features
 
 linear_models:
-  n_features: 9 
+  n_features: 9
 
 # Random Forest
 random_forest:
