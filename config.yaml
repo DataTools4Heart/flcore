@@ -17,6 +17,7 @@ dataset: custom
 # New variables
 # ****** * * * * * * *  *  *   *    *    *  *  * * * * * * * *******************
 metadata_file: metadata.json
+<<<<<<< HEAD
 data_file : dataset_new_version_2.parquet
 # Options: IQR STD MIN_MAX
 normalization_method : IQR
@@ -24,6 +25,13 @@ target_label: ["patient_demographics_age", "lab_results_triGly_value_max"]
 train_labels: ["symptoms_Tachycardia_display_any"]
 train_size: 100
 # ****** * * * * * * *  *  *   *    *    *  *  * * * * * * * *******************
+=======
+data_file : dataset.parquet
+# Options: IQR STD MIN_MAX
+normalization_method : IQR
+# ****** * * * * * * *  *  *   *    *    *  *  * * * * * * * *******************
+
+>>>>>>> 8b3461940f5201da382d50517f44033e013588c3
 
 ##############  Number of clients (data centers) to use for training
 num_clients: 3

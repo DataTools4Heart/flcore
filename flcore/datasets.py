@@ -573,6 +573,10 @@ def load_custom(config,id):
 
     dat_len = len(dat)
 
+<<<<<<< HEAD
+=======
+    # ===================================================
+>>>>>>> 8b3461940f5201da382d50517f44033e013588c3
     # Numerical variables
     numeric_columns_non_zero = {}
     for feat in metadata["entries"][0]["featureSet"]["features"]:
@@ -596,19 +600,31 @@ def load_custom(config,id):
                 pass # no std found in data set
             elif config["normalization_method"] == "MIN_MAX":
                dat[col] = min_max_normalize(col, mini, maxi)
+<<<<<<< HEAD
     #print("===================================================")
+=======
+#    print("===================================================")
+    # ===================================================
+>>>>>>> 8b3461940f5201da382d50517f44033e013588c3
     tipos=[]
     map_variables = {}
     for feat in metadata["entries"][0]["featureSet"]["features"]:
         tipos.append(feat["dataType"])
         if feat["dataType"] == "NOMINAL" and feat["statistics"]["numOfNotNull"] != 0:
+<<<<<<< HEAD
             #print("=============")
             #print("NAME", feat["name"])
             #print( feat["statistics"]["valueset"])
+=======
+#            print("=============")
+#            print("NAME", feat["name"])
+#            print( feat["statistics"]["valueset"])
+>>>>>>> 8b3461940f5201da382d50517f44033e013588c3
             num_cat = len(feat["statistics"]["valueset"])
             map_cat = {}
             for ind, cat in enumerate(feat["statistics"]["valueset"]):
                 map_cat[cat] = ind
+<<<<<<< HEAD
             #print(feat)
             #print("MAPA ", map_cat)
             map_variables[feat["name"]] = map_cat
@@ -616,6 +632,14 @@ def load_custom(config,id):
         #print("COL",col)
         #print("MAPA",mapa)
         #print("data col sin mapear","==============", dat[col][0],"==============")
+=======
+#            print(feat)
+#            print("MAPA ", map_cat)
+            map_variables[feat["name"]] = map_cat
+    for col,mapa in map_variables.items():
+#        print("COL",col)
+#        print("MAPA",mapa)
+>>>>>>> 8b3461940f5201da382d50517f44033e013588c3
         dat[col] = dat[col].map(mapa)
         #print("data col mapeado","==============", dat[col][0],"==============")
 
@@ -638,12 +662,39 @@ def load_custom(config,id):
         #print("data col sin mapear=====", dat[col][0],"==============")
         #print("data col sin mapear=====", type(dat[col][0]),"==============")
 
+<<<<<<< HEAD
         dat[col] = dat[col].map(boolean_map)
         #dat[col] = boolean_map[dat[col]]
         #print("data col mapeado==========", dat[col][0],"====================")
         #print("data col",dat[col])
 
 #    dat[map_variables.keys()].dropna()
+=======
+    dat[map_variables.keys()].dropna()
+#    print("=================================================== NOMINAL")
+
+    # ===================================================
+    tipos=[]
+    map_variables = {}
+    boolean_map = {"False":0,"True":1}
+    for feat in metadata["entries"][0]["featureSet"]["features"]:
+        tipos.append(feat["dataType"])
+        if feat["dataType"] == "BOOLEAN" and feat["statistics"]["numOfNotNull"] != 0:
+#            print("=============")
+#            print( feat) #["statistics"]["valueset"])
+            map_variables[feat["name"]] = boolean_map
+
+    for col,mapa in map_variables.items():
+#        print("COL",col)
+#        print("MAPA",mapa)
+        dat[col] = dat[col].map(boolean_map)
+
+    dat[map_variables.keys()].dropna()
+
+    # ===================================================
+
+    # ===================================================
+>>>>>>> 8b3461940f5201da382d50517f44033e013588c3
 
     """    # Print statistics
     for i in dat.keys():
@@ -667,9 +718,15 @@ def load_custom(config,id):
     data_train = dat_shuffled[train_labels] #.to_numpy()
     data_target = dat_shuffled[target_labels] #.to_numpy()
 
+<<<<<<< HEAD
     #print("data_train", data_train.shape)
     #print("data_target", data_target.shape)
     #print("maximo",int(dat_len*config["train_size"]),data_train.shape,data_target.shape)
+=======
+    data_train = dat_shuffled[train_labels].to_numpy()
+    data_target = dat_shuffled[target_labels].to_numpy()
+
+>>>>>>> 8b3461940f5201da382d50517f44033e013588c3
     X_train = data_train[:int(dat_len*config["train_size"])]
     y_train = data_target[:int(dat_len*config["train_size"]):].iloc[:, 0]
 
