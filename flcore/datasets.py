@@ -401,11 +401,6 @@ def load_kaggle_hf(data_path, center_id, config) -> Dataset:
     n_males = len(X_train[X_train['Sex'] == 1])
     print(f'Center {center_id} of size {len(X_train)} with n_females {n_females} and n_males {n_males} in training set')
     # xx
-    #print("DATASETS::KAGLE::PRINT SHAPES")
-    #print(X_train.shape, y_train.shape, X_test.shape, y_test.shape)
-    #(734, 9) (734,) (184, 9) (184,)
-    #print(type(X_train), type(y_train), type(X_test),type(y_test))
-    #<class 'pandas.core.frame.DataFrame'> <class 'pandas.core.series.Series'>
     return (X_train, y_train), (X_test, y_test)
 
 
@@ -546,9 +541,7 @@ def load_libsvm(config, center_id=None, task_type="BINARY"):
     # print(train_max_acc)
     # print(test_max_acc)
     print(X_train.shape, y_train.shape, X_test.shape, y_test.shape)
-    #(271617, 8) (271617,) (157413, 8) (157413,)
     print(type(X_train), type(y_train), type(X_test),type(y_test))
-    #<class 'numpy.ndarray'> <class 'numpy.ndarray'> <class 'numpy.ndarray'> <class 'numpy.ndarray'>
     return (X_train, y_train), (X_test, y_test)
 
 def std_normalize(col, mean, std):
@@ -560,7 +553,7 @@ def iqr_normalize(col, Q1, Q2, Q3):
 def min_max_normalize(col, min_val, max_val):
     return (col - min_val) / (max_val - min_val)
 
-def load_custom(config,id):
+def load_dt4h_format(config,id):
     with open(config["data_path"]+config['metadata_file'], 'r') as file:
         metadata = json.load(file)
 
@@ -573,10 +566,6 @@ def load_custom(config,id):
 
     dat_len = len(dat)
 
-<<<<<<< HEAD
-=======
-    # ===================================================
->>>>>>> 8b3461940f5201da382d50517f44033e013588c3
     # Numerical variables
     numeric_columns_non_zero = {}
     for feat in metadata["entries"][0]["featureSet"]["features"]:
@@ -600,51 +589,22 @@ def load_custom(config,id):
                 pass # no std found in data set
             elif config["normalization_method"] == "MIN_MAX":
                dat[col] = min_max_normalize(col, mini, maxi)
-<<<<<<< HEAD
-    #print("===================================================")
-=======
-#    print("===================================================")
-    # ===================================================
->>>>>>> 8b3461940f5201da382d50517f44033e013588c3
     tipos=[]
     map_variables = {}
     for feat in metadata["entries"][0]["featureSet"]["features"]:
         tipos.append(feat["dataType"])
         if feat["dataType"] == "NOMINAL" and feat["statistics"]["numOfNotNull"] != 0:
-<<<<<<< HEAD
-            #print("=============")
-            #print("NAME", feat["name"])
-            #print( feat["statistics"]["valueset"])
-=======
-#            print("=============")
-#            print("NAME", feat["name"])
-#            print( feat["statistics"]["valueset"])
->>>>>>> 8b3461940f5201da382d50517f44033e013588c3
             num_cat = len(feat["statistics"]["valueset"])
             map_cat = {}
             for ind, cat in enumerate(feat["statistics"]["valueset"]):
                 map_cat[cat] = ind
-<<<<<<< HEAD
-            #print(feat)
-            #print("MAPA ", map_cat)
             map_variables[feat["name"]] = map_cat
     for col,mapa in map_variables.items():
-        #print("COL",col)
-        #print("MAPA",mapa)
-        #print("data col sin mapear","==============", dat[col][0],"==============")
-=======
-#            print(feat)
-#            print("MAPA ", map_cat)
             map_variables[feat["name"]] = map_cat
     for col,mapa in map_variables.items():
-#        print("COL",col)
-#        print("MAPA",mapa)
->>>>>>> 8b3461940f5201da382d50517f44033e013588c3
         dat[col] = dat[col].map(mapa)
-        #print("data col mapeado","==============", dat[col][0],"==============")
 
     dat[map_variables.keys()].dropna()
-    #print("=================================================== NOMINAL")
 
     tipos=[]
     map_variables = {}
@@ -652,49 +612,23 @@ def load_custom(config,id):
     for feat in metadata["entries"][0]["featureSet"]["features"]:
         tipos.append(feat["dataType"])
         if feat["dataType"] == "BOOLEAN" and feat["statistics"]["numOfNotNull"] != 0:
-            #print("=============")
             map_variables[feat["name"]] = boolean_map
-    #print(" MAP VARIABLES BOOLEAN", map_variables)
-    #print(" DATASETS:: BOOLEAN :::::::::::::::::::::::::::::::::::::::::::::")
     for col,mapa in map_variables.items():
-        #print("COL",col)
-        #print("MAPA",mapa)
-        #print("data col sin mapear=====", dat[col][0],"==============")
-        #print("data col sin mapear=====", type(dat[col][0]),"==============")
-
-<<<<<<< HEAD
         dat[col] = dat[col].map(boolean_map)
-        #dat[col] = boolean_map[dat[col]]
-        #print("data col mapeado==========", dat[col][0],"====================")
-        #print("data col",dat[col])
 
-#    dat[map_variables.keys()].dropna()
-=======
     dat[map_variables.keys()].dropna()
-#    print("=================================================== NOMINAL")
-
-    # ===================================================
     tipos=[]
     map_variables = {}
     boolean_map = {"False":0,"True":1}
     for feat in metadata["entries"][0]["featureSet"]["features"]:
         tipos.append(feat["dataType"])
         if feat["dataType"] == "BOOLEAN" and feat["statistics"]["numOfNotNull"] != 0:
-#            print("=============")
-#            print( feat) #["statistics"]["valueset"])
             map_variables[feat["name"]] = boolean_map
 
     for col,mapa in map_variables.items():
-#        print("COL",col)
-#        print("MAPA",mapa)
         dat[col] = dat[col].map(boolean_map)
 
     dat[map_variables.keys()].dropna()
-
-    # ===================================================
-
-    # ===================================================
->>>>>>> 8b3461940f5201da382d50517f44033e013588c3
 
     """    # Print statistics
     for i in dat.keys():
@@ -714,33 +648,16 @@ def load_custom(config,id):
 
     target_labels = config["target_label"]
     train_labels = config["train_labels"]
-    #print("LABELS",config["target_label"],config["train_labels"])
     data_train = dat_shuffled[train_labels] #.to_numpy()
     data_target = dat_shuffled[target_labels] #.to_numpy()
-
-<<<<<<< HEAD
-    #print("data_train", data_train.shape)
-    #print("data_target", data_target.shape)
-    #print("maximo",int(dat_len*config["train_size"]),data_train.shape,data_target.shape)
-=======
     data_train = dat_shuffled[train_labels].to_numpy()
     data_target = dat_shuffled[target_labels].to_numpy()
 
->>>>>>> 8b3461940f5201da382d50517f44033e013588c3
     X_train = data_train[:int(dat_len*config["train_size"])]
     y_train = data_target[:int(dat_len*config["train_size"]):].iloc[:, 0]
 
-    #print("data_train", X_train.shape)
-    #print("data_target", y_train.shape)
-
     X_test = data_train[int(dat_len*config["train_size"]):]
     y_test = data_target[int(dat_len*config["train_size"]):].iloc[:, 0]
-    #print("DEVOLVIENDO DATASETS")
-    #print(X_train.mean(),y_train.mean(), X_test.mean(), y_test.mean())
-    #print(X_train[:10,:],y_train[:10,:], X_test[:10,:], y_test[:10,:])
-    #print(X_train.shape,y_train.shape, X_test.shape, y_test.shape)
-    #print(type(X_train),type(y_train[:,0]), type(X_test), type(y_test[:,0]))
-    #print("DEVUELTOS")
     return (X_train, y_train), (X_test, y_test)
 
 
@@ -801,8 +718,8 @@ def load_dataset(config, id=None):
         return load_kaggle_hf(config["data_path"], id, config)
     elif config["dataset"] == "libsvm":
         return load_libsvm(config, id)
-    elif config["dataset"] == "custom":
-        return load_custom(config, id)
+    elif config["dataset"] == "dt4h_format":
+        return load_dt4h_format(config, id)
     else:
         raise ValueError("Invalid dataset name")
 
