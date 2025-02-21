@@ -11,7 +11,7 @@
 
 ##############  Dataset type to use
 # Possible values: , kaggle_hf, mnist, dt4h_format
-dataset: custom
+dataset: dt4h_format
 #libsvm
 #kaggle_hf
 
