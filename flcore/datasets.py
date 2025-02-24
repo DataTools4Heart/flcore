@@ -649,8 +649,6 @@ def load_dt4h_format(config,id):
     train_labels = config["train_labels"]
     data_train = dat_shuffled[train_labels] #.to_numpy()
     data_target = dat_shuffled[target_labels] #.to_numpy()
-    data_train = dat_shuffled[train_labels].to_numpy()
-    data_target = dat_shuffled[target_labels].to_numpy()
 
     X_train = data_train[:int(dat_len*config["train_size"])]
     y_train = data_target[:int(dat_len*config["train_size"]):].iloc[:, 0]
