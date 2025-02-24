@@ -599,11 +599,10 @@ def load_dt4h_format(config,id):
             for ind, cat in enumerate(feat["statistics"]["valueset"]):
                 map_cat[cat] = ind
             map_variables[feat["name"]] = map_cat
-    for col,mapa in map_variables.items():
-            map_variables[feat["name"]] = map_cat
+#    for col,mapa in map_variables.items():
+#            map_variables[feat["name"]] = map_cat
     for col,mapa in map_variables.items():
         dat[col] = dat[col].map(mapa)
-
     dat[map_variables.keys()].dropna()
 
     tipos=[]
