@@ -20,7 +20,7 @@ dataset: dt4h_format
 # New variables
 # ****** * * * * * * *  *  *   *    *    *  *  * * * * * * * *******************
 metadata_file: metadata.json
-data_file : 3362-2045-1944.parquet.parquet
+data_file : 3362-2045-1944.parquet
 # Options: IQR STD MIN_MAX
 normalization_method : IQR
 
