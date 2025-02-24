@@ -12,6 +12,7 @@
 ##############  Dataset type to use
 # Possible values: , kaggle_hf, mnist, dt4h_format
 dataset: dt4h_format
+#custom
 #libsvm
 #kaggle_hf
 
@@ -19,7 +20,7 @@ dataset: dt4h_format
 # New variables
 # ****** * * * * * * *  *  *   *    *    *  *  * * * * * * * *******************
 metadata_file: metadata.json
-data_file : 3362-2045-1944.parquet
+data_file : dataset_new.parquet
 # Options: IQR STD MIN_MAX
 normalization_method : IQR
 
