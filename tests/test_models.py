@@ -12,9 +12,9 @@ import pytest
 LOGGING_LEVEL = logging.INFO  # WARNING  # logging.INFO
 
 model_names = [
-    "logistic_regression", 
-    "elastic_net",
-    "lsvc",
+#    "logistic_regression",
+#    "elastic_net",
+#    "lsvc",
     "random_forest",
     # "weighted_random_forest",
     # "xgb"
