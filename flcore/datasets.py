@@ -540,8 +540,6 @@ def load_libsvm(config, center_id=None, task_type="BINARY"):
     test_max_acc = test_unique[1][0] / len(y_test)
     # print(train_max_acc)
     # print(test_max_acc)
-    print(X_train.shape, y_train.shape, X_test.shape, y_test.shape)
-    print(type(X_train), type(y_train), type(X_test),type(y_test))
     return (X_train, y_train), (X_test, y_test)
 
 def std_normalize(col, mean, std):
@@ -553,7 +551,7 @@ def iqr_normalize(col, Q1, Q2, Q3):
 def min_max_normalize(col, min_val, max_val):
     return (col - min_val) / (max_val - min_val)
 
-def load_dt4h_format(config,id):
+def load_dt4h(config,id):
     with open(config["data_path"]+config['metadata_file'], 'r') as file:
         metadata = json.load(file)
 
@@ -599,12 +597,11 @@ def load_dt4h_format(config,id):
             for ind, cat in enumerate(feat["statistics"]["valueset"]):
                 map_cat[cat] = ind
             map_variables[feat["name"]] = map_cat
-#    for col,mapa in map_variables.items():
-#            map_variables[feat["name"]] = map_cat
     for col,mapa in map_variables.items():
         dat[col] = dat[col].map(mapa)
+    
     dat[map_variables.keys()].dropna()
-
+    
     tipos=[]
     map_variables = {}
     boolean_map = {np.bool_(False) :0, np.bool_(True):1, "False":0,"True":1}
@@ -614,19 +611,7 @@ def load_dt4h_format(config,id):
             map_variables[feat["name"]] = boolean_map
     for col,mapa in map_variables.items():
         dat[col] = dat[col].map(boolean_map)
-
-    dat[map_variables.keys()].dropna()
-    tipos=[]
-    map_variables = {}
-    boolean_map = {"False":0,"True":1}
-    for feat in metadata["entries"][0]["featureSet"]["features"]:
-        tipos.append(feat["dataType"])
-        if feat["dataType"] == "BOOLEAN" and feat["statistics"]["numOfNotNull"] != 0:
-            map_variables[feat["name"]] = boolean_map
-
-    for col,mapa in map_variables.items():
-        dat[col] = dat[col].map(boolean_map)
-
+    
     dat[map_variables.keys()].dropna()
 
     """    # Print statistics
@@ -716,7 +701,7 @@ def load_dataset(config, id=None):
     elif config["dataset"] == "libsvm":
         return load_libsvm(config, id)
     elif config["dataset"] == "dt4h_format":
-        return load_dt4h_format(config, id)
+        return load_dt4h(config, id)
     else:
         raise ValueError("Invalid dataset name")
 
