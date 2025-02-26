@@ -3,6 +3,7 @@ import os
 import shutil
 import urllib.request
 from typing import Tuple
+import json
 
 import numpy as np
 import openml
@@ -402,7 +403,6 @@ def load_kaggle_hf(data_path, center_id, config) -> Dataset:
     n_males = len(X_train[X_train['Sex'] == 1])
     print(f'Center {center_id} of size {len(X_train)} with n_females {n_females} and n_males {n_males} in training set')
     # xx
-
     return (X_train, y_train), (X_test, y_test)
 
 
@@ -542,19 +542,81 @@ def load_libsvm(config, center_id=None, task_type="BINARY"):
     test_max_acc = test_unique[1][0] / len(y_test)
     # print(train_max_acc)
     # print(test_max_acc)
-
     return (X_train, y_train), (X_test, y_test)
 
-def load_custom(config):
-    data_file = config["data_file"]
+def std_normalize(col, mean, std):
+    return (col - mean) / std
+
+def iqr_normalize(col, Q1, Q2, Q3):
+    return (col - Q2) / (Q3 - Q1)
+
+def min_max_normalize(col, min_val, max_val):
+    return (col - min_val) / (max_val - min_val)
+
+def load_dt4h(config,id):
+    with open(config["data_path"]+config['metadata_file'], 'r') as file:
+        metadata = json.load(file)
+
+    data_file = config["data_path"] + config["data_file"]
     ext = data_file.split(".")[-1]
     if ext == "pqt" or ext == "parquet":
         dat = pd.read_parquet(data_file)
     elif ext == "csv":
         dat = pd.read_csv(data_file)
+
     dat_len = len(dat)
 
-    # Print statistics
+    # Numerical variables
+    numeric_columns_non_zero = {}
+    for feat in metadata["entries"][0]["featureSet"]["features"]:
+        if feat["dataType"] == "NUMERIC" and feat["statistics"]["numOfNotNull"] != 0:
+            # statistic keys = ['Q1', 'avg', 'min', 'Q2', 'max', 'Q3', 'numOfNotNull']
+            numeric_columns_non_zero[feat["name"]] = (
+                feat["statistics"]["Q1"],
+                feat["statistics"]["avg"],
+                feat["statistics"]["min"],
+                feat["statistics"]["Q2"],
+                feat["statistics"]["max"],
+                feat["statistics"]["Q3"],
+                feat["statistics"]["numOfNotNull"],
+            )
+
+    for col, (q1,avg,mini,q2,maxi,q3,numOfNotNull) in numeric_columns_non_zero.items():
+        if col in dat.columns:
+            if config["normalization_method"] == "IQR":
+               dat[col] = iqr_normalize(dat[col], q1,q2,q3 )
+            elif config["normalization_method"] == "STD":
+                pass # no std found in data set
+            elif config["normalization_method"] == "MIN_MAX":
+               dat[col] = min_max_normalize(col, mini, maxi)
+    tipos=[]
+    map_variables = {}
+    for feat in metadata["entries"][0]["featureSet"]["features"]:
+        tipos.append(feat["dataType"])
+        if feat["dataType"] == "NOMINAL" and feat["statistics"]["numOfNotNull"] != 0:
+            num_cat = len(feat["statistics"]["valueset"])
+            map_cat = {}
+            for ind, cat in enumerate(feat["statistics"]["valueset"]):
+                map_cat[cat] = ind
+            map_variables[feat["name"]] = map_cat
+    for col,mapa in map_variables.items():
+        dat[col] = dat[col].map(mapa)
+    
+    dat[map_variables.keys()].dropna()
+    
+    tipos=[]
+    map_variables = {}
+    boolean_map = {np.bool_(False) :0, np.bool_(True):1, "False":0,"True":1}
+    for feat in metadata["entries"][0]["featureSet"]["features"]:
+        tipos.append(feat["dataType"])
+        if feat["dataType"] == "BOOLEAN" and feat["statistics"]["numOfNotNull"] != 0:
+            map_variables[feat["name"]] = boolean_map
+    for col,mapa in map_variables.items():
+        dat[col] = dat[col].map(boolean_map)
+    
+    dat[map_variables.keys()].dropna()
+
+    """    # Print statistics
     for i in dat.keys():
         maxim = dat[i].max()
         minim = dat[i].min()
@@ -566,25 +628,22 @@ def load_custom(config):
         print(f"  Mean:             {mean:10.2f}")
         print(f"  Std dev:          {estd:10.2f}")
         print("-" * 40)
+    """
 
-    # Z-score    
-    dat_norm = (dat - dat.mean()) / dat.std()
-
-    dat_shuffled = dat_norm.sample(frac=1).reset_index(drop=True)
+    dat_shuffled = dat.sample(frac=1).reset_index(drop=True)
 
     target_labels = config["target_label"]
     train_labels = config["train_labels"]
+    data_train = dat_shuffled[train_labels] #.to_numpy()
+    data_target = dat_shuffled[target_labels] #.to_numpy()
 
-    data_train = dat_shuffled[train_labels].to_numpy()
-    data_target = dat_shuffled[target_labels].to_numpy()
-    
     X_train = data_train[:int(dat_len*config["train_size"])]
-    y_train = data_target[:int(dat_len*config["train_size"])]
+    y_train = data_target[:int(dat_len*config["train_size"]):].iloc[:, 0]
 
     X_test = data_train[int(dat_len*config["train_size"]):]
-    y_test = data_target[int(dat_len*config["train_size"]):]
-
+    y_test = data_target[int(dat_len*config["train_size"]):].iloc[:, 0]
     return (X_train, y_train), (X_test, y_test)
+
 
 def cvd_to_torch(config):
     pass
@@ -605,7 +664,6 @@ def custom_to_torch(config):
         dat = pd.read_parquet(data_file)
     elif ext == "csv":
         dat = pd.read_csv(data_file)
-        
     keys = list(dat.keys())
     data_set = []
     for i in range(len(dat)):
@@ -644,8 +702,8 @@ def load_dataset(config, id=None):
         return load_kaggle_hf(config["data_path"], id, config)
     elif config["dataset"] == "libsvm":
         return load_libsvm(config, id)
-    elif config["dataset"] == "custom":
-        return load_custom(config, id)
+    elif config["dataset"] == "dt4h_format":
+        return load_dt4h(config, id)
     else:
         raise ValueError("Invalid dataset name")
 
