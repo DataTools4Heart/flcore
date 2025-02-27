@@ -34,6 +34,7 @@ if __name__ == "__main__":
     parser.add_argument("--data_path", type=str, default=None, help="Data path")
     parser.add_argument("--production_mode", type=bool, default=False, help="Production mode")
 
+    parser.add_argument("--sandbox_path", type=str, default="./", help="Sandbox path to use")
     parser.add_argument("--experiment", type=json.loads, default={"name": "experiment_1", "log_path": "logs", "debug": "true"}, help="experiment logs")
     parser.add_argument("--smoothWeights", type=json.loads, default= {"smoothing_strenght": 0.5}, help="Smoothing parameters")
     parser.add_argument("--linear_models", type=json.loads, default={"n_features": 9}, help="Linear model parameters")
@@ -44,6 +45,11 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     config = vars(args)
+
+    sandbox_log_file = Path(os.path.join(config["sandbox_path"], "log.txt"))
+    file_out = open(sandbox_log_file, "w")
+    sys.stdout = file_out
+    sys.stderr = file_out
 
     model = config["model"]
 
@@ -85,3 +91,4 @@ else:
         root_certificates=root_certificate,
         client=client,
     )
+file_out.close()
