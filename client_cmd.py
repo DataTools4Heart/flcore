@@ -33,6 +33,7 @@ if __name__ == "__main__":
     parser.add_argument("--local_port", type=int, default=8081, help="Local port")
     parser.add_argument("--data_path", type=str, default=None, help="Data path")
     parser.add_argument("--production_mode", type=bool, default=False, help="Production mode")
+    parser.add_argument("--certs_path", type=str, default="./", help="Certificates path")
 
     parser.add_argument("--sandbox_path", type=str, default="./", help="Sandbox path to use")
     parser.add_argument("--experiment", type=json.loads, default={"name": "experiment_1", "log_path": "logs", "debug": "true"}, help="experiment logs")
@@ -57,8 +58,8 @@ if __name__ == "__main__":
         node_name = os.getenv("NODE_NAME")
         num_client = int(node_name.split("_")[-1])
         data_path = os.getenv("DATA_PATH")
-        flower_ssl_cacert = os.getenv("FLOWER_SSL_CACERT")
-        root_certificate = Path(f"{flower_ssl_cacert}").read_bytes()
+        ca_cert = Path(os.path.join(config["certs_path"],"rootCA_cert.pem"))
+        root_certificate = Path(f"{ca_cert}").read_bytes()
         central_ip = os.getenv("FLOWER_CENTRAL_SERVER_IP")
         central_port = os.getenv("FLOWER_CENTRAL_SERVER_PORT")
 
