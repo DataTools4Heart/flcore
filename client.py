@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 import flwr as fl
 import yaml
+import random
 
 import flcore.datasets as datasets
 from flcore.client_selector import get_model_client
@@ -21,7 +22,7 @@ if __name__ == "__main__":
 
     if config["production_mode"]:
         node_name = os.getenv("NODE_NAME")
-        num_client = int(node_name.split("_")[-1])
+        num_client = random.randint(0, 2)
         data_path = os.getenv("DATA_PATH")
         flower_ssl_cacert = os.getenv("FLOWER_SSL_CACERT")
         root_certificate = Path(f"{flower_ssl_cacert}").read_bytes()
