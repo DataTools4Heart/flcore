@@ -40,6 +40,7 @@ if __name__ == "__main__":
     parser.add_argument("--model", type=str, default="random_forest", help="Model to train")
     parser.add_argument("--dataset", type=str, default="dt4h_format", help="Dataloader to use")
     parser.add_argument("--sandbox_path", type=str, default="./", help="Sandbox path to use")
+    parser.add_argument("--certs_path", type=str, default="./", help="Certificates path")
 
     parser.add_argument("--smooth_method", type=str, default="EqualVoting", help="Weight smoothing")
     parser.add_argument("--smoothWeights", type=json.loads, default= {"smoothing_strenght": 0.5}, help="Smoothing parameters")
@@ -70,14 +71,23 @@ if __name__ == "__main__":
     #Check the config file
     check_config(config)
     if config["production_mode"] == "True":
+        print("TRUE")
         data_path = os.getenv("DATA_PATH")
         central_ip = os.getenv("FLOWER_CENTRAL_SERVER_IP")
         central_port = os.getenv("FLOWER_CENTRAL_SERVER_PORT")
+
+        ca_cert = Path(os.path.join(config["certs_path"],"rootCA_cert.pem"))
+        server_cert =  Path(os.path.join(config["certs_path"],"server_cert.pem"))
+        server_key =  Path(os.path.join(config["certs_path"],"server_key.pem"))
+
         certificates = (
-            Path('.cache/certificates/rootCA_cert.pem').read_bytes(),
-            Path('.cache/certificates/server_cert.pem').read_bytes(),
-            Path('.cache/certificates/server_key.pem').read_bytes(),
+            Path(f"{ca_cert}").read_bytes(),
+            Path(f"{server_cert}").read_bytes(),
+            Path(f"{server_key}").read_bytes(),
         )
+#            Path('.cache/certificates/rootCA_cert.pem').read_bytes(),
+#            Path('.cache/certificates/server_cert.pem').read_bytes(),
+#            Path('.cache/certificates/server_key.pem').read_bytes(),
     else:
         data_path = config["data_path"]
         central_ip = "LOCALHOST"
