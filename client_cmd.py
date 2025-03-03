@@ -5,6 +5,7 @@ import flwr as fl
 import yaml
 import argparse
 import json
+import logging
 
 import flcore.datasets as datasets
 from flcore.client_selector import get_model_client
@@ -32,7 +33,7 @@ if __name__ == "__main__":
     parser.add_argument("--seed", type=int, default=42, help="Seed")
     parser.add_argument("--local_port", type=int, default=8081, help="Local port")
     parser.add_argument("--data_path", type=str, default=None, help="Data path")
-    parser.add_argument("--production_mode", type=bool, default=False, help="Production mode")
+    parser.add_argument("--production_mode", type=str, default="True",  help="Production mode")
     parser.add_argument("--certs_path", type=str, default="./", help="Certificates path")
 
     parser.add_argument("--sandbox_path", type=str, default="./", help="Sandbox path to use")
@@ -46,17 +47,17 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     config = vars(args)
-
     sandbox_log_file = Path(os.path.join(config["sandbox_path"], "log.txt"))
+    logging.basicConfig(level=logging.INFO, filename=sandbox_log_file)
     file_out = open(sandbox_log_file, "w")
     sys.stdout = file_out
     sys.stderr = file_out
 
     model = config["model"]
-
-    if config["production_mode"]:
+    if config["production_mode"] == "True":
         node_name = os.getenv("NODE_NAME")
-        num_client = int(node_name.split("_")[-1])
+#        num_client = int(node_name.split("_")[-1])
+        num_client = config["client_id"]
         data_path = os.getenv("DATA_PATH")
         ca_cert = Path(os.path.join(config["certs_path"],"rootCA_cert.pem"))
         root_certificate = Path(f"{ca_cert}").read_bytes()

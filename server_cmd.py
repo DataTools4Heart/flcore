@@ -4,6 +4,7 @@ import sys
 from pathlib import Path
 import argparse
 import json
+import logging
 
 import flwr as fl
 import numpy
@@ -48,8 +49,7 @@ if __name__ == "__main__":
     parser.add_argument("--dropout", type=json.loads, default={"percentage_drop":0}, help="Dropout parameters")
     parser.add_argument("--weighted_random_forest", type=json.loads, default={"balanced_rf": "true", "levelOfDetail": "DecisionTree"}, help="Weighted random forest parameters")
     parser.add_argument("--checkpoint_selection_metric", type=str, default="precision", help="Metric used for checkpoints")
-    parser.add_argument("--production_mode", type=str, default="False",  help="Production mode")
-#    parser.add_argument("--production_mode", type=bool, default=False,  help="Production mode")
+    parser.add_argument("--production_mode", type=str, default="True",  help="Production mode")
 
     parser.add_argument("--data_path", type=str, default=None, help="Data path")
     parser.add_argument("--local_port", type=int, default=8081, help="Local port")
@@ -64,6 +64,8 @@ if __name__ == "__main__":
     config["experiment_dir"] = experiment_dir
 
     sandbox_log_file = Path(os.path.join(config["sandbox_path"], "log.txt"))
+    logging.basicConfig(level=logging.INFO, filename=sandbox_log_file)
+
     file_out = open(sandbox_log_file, "w")
     sys.stdout = file_out
     sys.stderr = file_out
