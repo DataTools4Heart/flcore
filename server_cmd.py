@@ -66,7 +66,7 @@ if __name__ == "__main__":
     sandbox_log_file = Path(os.path.join(config["sandbox_path"], "log.txt"))
     logging.basicConfig(level=logging.INFO, filename=sandbox_log_file)
 
-    file_out = open(sandbox_log_file, "w")
+    file_out = open(sandbox_log_file, "a")
     sys.stdout = file_out
     sys.stderr = file_out
 
