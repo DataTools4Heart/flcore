@@ -89,6 +89,7 @@ if __name__ == "__main__":
 #            Path('.cache/certificates/server_cert.pem').read_bytes(),
 #            Path('.cache/certificates/server_key.pem').read_bytes(),
     else:
+        print("ELSE")
         data_path = config["data_path"]
         central_ip = "LOCALHOST"
         central_port = config["local_port"]
