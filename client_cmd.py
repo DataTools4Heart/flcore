@@ -66,10 +66,10 @@ if __name__ == "__main__":
             Path(os.path.join(config["certs_path"],"rootCA_cert.pem")).read_bytes(),
             Path(os.path.join(config["certs_path"],"rootCA_key.pem")).read_bytes() )"""
 
-        root_cert = Path("./src/certificates/rootCA_cert.pem").read_bytes()
-        client_cert = Path("./src/certificates/client_cert.pem").read_bytes()
-        client_key = Path("./src/certificates/client_key.pem").read_bytes()
-
+        root_cert = Path(os.path.join(config["certs_path"],"rootCA_cert.pem")).read_bytes()
+        client_cert = Path(os.path.join(config["certs_path"],"rootCA_cert.pem")).read_bytes()
+        client_key = Path(os.path.join(config["certs_path"],"rootCA_key.pem")).read_bytes()
+        
         ssl_credentials = grpc.ssl_channel_credentials(
             root_cert,  # Certificado raíz del servidor
             client_key,  # Clave privada del cliente
