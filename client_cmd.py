@@ -6,6 +6,7 @@ import yaml
 import argparse
 import json
 import logging
+import grpc
 
 import flcore.datasets as datasets
 from flcore.client_selector import get_model_client
@@ -61,10 +62,19 @@ if __name__ == "__main__":
         data_path = os.getenv("DATA_PATH")
         #ca_cert = Path(os.path.join(config["certs_path"],"rootCA_cert.pem"))
         #root_certificate = Path(f"{ca_cert}").read_bytes()
-        root_certificate =( Path(os.path.join(config["certs_path"],"rootCA_cert.pem")).read_bytes(),
+        """root_certificate =( Path(os.path.join(config["certs_path"],"rootCA_cert.pem")).read_bytes(),
             Path(os.path.join(config["certs_path"],"rootCA_cert.pem")).read_bytes(),
-            Path(os.path.join(config["certs_path"],"rootCA_key.pem")).read_bytes() )
+            Path(os.path.join(config["certs_path"],"rootCA_key.pem")).read_bytes() )"""
 
+        root_cert = Path("./src/certificates/rootCA_cert.pem").read_bytes()
+        client_cert = Path("./src/certificates/client_cert.pem").read_bytes()
+        client_key = Path("./src/certificates/client_key.pem").read_bytes()
+
+        ssl_credentials = grpc.ssl_channel_credentials(
+            root_cert,  # Certificado raíz del servidor
+            client_key,  # Clave privada del cliente
+            client_cert  # Certificado del cliente
+        )
         central_ip = os.getenv("FLOWER_CENTRAL_SERVER_IP")
         central_port = os.getenv("FLOWER_CENTRAL_SERVER_PORT")
 
@@ -88,7 +98,8 @@ client = get_model_client(config, data, num_client)
 if isinstance(client, fl.client.NumPyClient):
     fl.client.start_numpy_client(
         server_address=f"{central_ip}:{central_port}",
-        root_certificates=root_certificate,
+        credentials=ssl_credentials,
+#        root_certificates=root_certificate,
         client=client,
     )
 else:
