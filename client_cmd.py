@@ -47,7 +47,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     config = vars(args)
-    sandbox_log_file = Path(os.path.join(config["sandbox_path"], "log.txt"))
+    sandbox_log_file = Path(os.path.join(config["sandbox_path"], "log_client.txt"))
     logging.basicConfig(level=logging.INFO, filename=sandbox_log_file)
     file_out = open(sandbox_log_file, "a")
     sys.stdout = file_out
