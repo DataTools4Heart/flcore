@@ -127,7 +127,7 @@ if __name__ == "__main__":
     # Start Flower server for three rounds of federated learning
     history = fl.server.start_server(
         server_address=f"{central_ip}:{central_port}",
-        config=fl.server.ServerConfig(num_rounds=config["num_rounds"]),
+        config=fl.server.ServerConfig(num_rounds=config["num_rounds"], round_timeout=None ),
         server=server,
         strategy=strategy,
         certificates = certificates,
