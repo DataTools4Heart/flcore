@@ -105,7 +105,8 @@ if isinstance(client, fl.client.NumPyClient):
 else:
     fl.client.start_client(
         server_address=f"{central_ip}:{central_port}",
-        root_certificates=root_certificate,
+        credentials=ssl_credentials,
+#       root_certificates=root_certificate,
         client=client,
     )
 file_out.close()
