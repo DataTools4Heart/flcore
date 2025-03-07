@@ -59,8 +59,12 @@ if __name__ == "__main__":
 #        num_client = int(node_name.split("_")[-1])
         num_client = config["client_id"]
         data_path = os.getenv("DATA_PATH")
-        ca_cert = Path(os.path.join(config["certs_path"],"rootCA_cert.pem"))
-        root_certificate = Path(f"{ca_cert}").read_bytes()
+        #ca_cert = Path(os.path.join(config["certs_path"],"rootCA_cert.pem"))
+        #root_certificate = Path(f"{ca_cert}").read_bytes()
+        root_certificate =( Path(os.path.join(config["certs_path"],"rootCA_cert.pem")).read_bytes(),
+            Path(os.path.join(config["certs_path"],"rootCA_cert.pem")).read_bytes(),
+            Path(os.path.join(config["certs_path"],"rootCA_key.pem")).read_bytes() )
+
         central_ip = os.getenv("FLOWER_CENTRAL_SERVER_IP")
         central_port = os.getenv("FLOWER_CENTRAL_SERVER_PORT")
 
@@ -94,3 +98,28 @@ else:
         client=client,
     )
 file_out.close()
+
+
+"""
+
+# Cargar el certificado raíz
+root_cert = Path("./src/certificates/rootCA_cert.pem").read_bytes()
+
+# Crear las credenciales de seguridad TLS (solo necesitamos el certificado raíz)
+ssl_credentials = grpc.ssl_channel_credentials(root_cert)
+
+# Iniciar el cliente con TLS habilitado
+fl.client.start_client(
+    server_address=params.server_address,  # Dirección del servidor
+    client=client,  # Tu objeto cliente
+    credentials=ssl_credentials  # Proporcionar las credenciales TLS
+)
+
+
+    certificates=(
+                Path("./src/certificates/rootCA_cert.pem").read_bytes(),
+                Path("./src/certificates/server_cert.pem").read_bytes(),
+                Path("./src/certificates/server_key.pem").read_bytes(),
+            ),    config=fl.server.ServerConfig(num_rounds=params.num_rounds),
+        
+"""
