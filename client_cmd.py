@@ -59,8 +59,12 @@ if __name__ == "__main__":
 #        num_client = int(node_name.split("_")[-1])
         num_client = config["client_id"]
         data_path = os.getenv("DATA_PATH")
-        ca_cert = Path(os.path.join(config["certs_path"],"rootCA_cert.pem"))
-        root_certificate = Path(f"{ca_cert}").read_bytes()
+        #ca_cert = Path(os.path.join(config["certs_path"],"rootCA_cert.pem"))
+        #root_certificate = Path(f"{ca_cert}").read_bytes()
+        root_certificate =( Path(os.path.join(config["certs_path"],"rootCA_cert.pem")).read_bytes(),
+            Path(os.path.join(config["certs_path"],"rootCA_cert.pem")).read_bytes(),
+            Path(os.path.join(config["certs_path"],"rootCA_key.pem")).read_bytes() )
+
         central_ip = os.getenv("FLOWER_CENTRAL_SERVER_IP")
         central_port = os.getenv("FLOWER_CENTRAL_SERVER_PORT")
 
