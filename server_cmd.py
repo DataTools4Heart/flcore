@@ -149,7 +149,7 @@ if __name__ == "__main__":
         config=fl.server.ServerConfig(num_rounds=config["num_rounds"], round_timeout=None ),
         server=server,
         strategy=strategy,
-        certificates = certificates,
+#        certificates = certificates,
     )
     # # Save the model and the history
     # filename = os.path.join( checkpoint_dir, 'final_model.pt' )
