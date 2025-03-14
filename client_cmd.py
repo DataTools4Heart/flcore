@@ -48,11 +48,28 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     config = vars(args)
+    
+    # Create sandbox log file path
     sandbox_log_file = Path(os.path.join(config["sandbox_path"], "log_client.txt"))
-    logging.basicConfig(level=logging.INFO, filename=sandbox_log_file)
-    file_out = open(sandbox_log_file, "a")
-    sys.stdout = file_out
-    sys.stderr = file_out
+
+    # Set up the file handler
+    file_handler = logging.FileHandler(sandbox_log_file)
+    file_handler.setLevel(logging.DEBUG)
+
+    # Set up the console handler
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setLevel(logging.DEBUG)
+
+    # Create a formatter and set it for both handlers
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    file_handler.setFormatter(formatter)
+    console_handler.setFormatter(formatter)
+
+    # Add both handlers to the root logger
+    logging.basicConfig(level=logging.DEBUG, handlers=[file_handler, console_handler])
+
+    # Now you can use logging in both places
+    logging.debug("This will be logged to both the console and the file.")
 
     model = config["model"]
     if config["production_mode"] == "True":
@@ -115,4 +132,3 @@ else:
 #        channel = channel,
     )
 #fl.client.start_client(channel=channel, client=client)
-file_out.close()
