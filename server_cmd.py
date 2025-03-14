@@ -87,7 +87,7 @@ if __name__ == "__main__":
 
     # Your existing code continues here...
     # For example, the following logs will go to both stdout and file:
-    logging.info("Starting Flower server...")
+    logging.debug("Starting Flower server...")
 
     #Check the config file
     check_config(config)
