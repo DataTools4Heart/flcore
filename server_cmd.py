@@ -156,6 +156,7 @@ if __name__ == "__main__":
     # joblib.dump(model, filename)
     # Save the history as a yaml file
     print(history)
+    """
     with open(experiment_dir / "metrics.txt", "w") as f:
         f.write(f"Results of the experiment {config['experiment']['name']}\n")
         f.write(f"Model: {config['model']}\n")
@@ -221,3 +222,4 @@ with open(experiment_dir / "history.yaml", "w") as f:
 
 # Compile the results
 compile_results(experiment_dir)
+"""
