@@ -49,11 +49,19 @@ if __name__ == "__main__":
         data_path = os.getenv("DATA_PATH")
         central_ip = os.getenv("FLOWER_CENTRAL_SERVER_IP")
         central_port = os.getenv("FLOWER_CENTRAL_SERVER_PORT")
+        ca_cert = os.getenv("FLOWER_SSL_CACERT") #  ca.crt
+        server_cert = os.getenv("FLOWER_SSL_SERVER_CERT") # server.pem
+        server_key = os.getenv("FLOWER_SSL_SERVER_KEY") # server.key
         certificates = (
-            Path('.cache/certificates/rootCA_cert.pem').read_bytes(),
-            Path('.cache/certificates/server_cert.pem').read_bytes(),
-            Path('.cache/certificates/server_key.pem').read_bytes(),
+            Path(f"{ca_cert}").read_bytes(),
+            Path(f"{server_cert}").read_bytes(),
+            Path(f"{server_key}").read_bytes(),
         )
+         # certificates = (
+        #     Path('.cache/certificates/rootCA_cert.pem').read_bytes(),
+        #     Path('.cache/certificates/server_cert.pem').read_bytes(),
+        #     Path('.cache/certificates/server_key.pem').read_bytes(),
+        # )
     else:
         data_path = config["data_path"]
         central_ip = "LOCALHOST"
