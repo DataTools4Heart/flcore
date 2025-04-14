@@ -127,7 +127,7 @@ else:
     fl.client.start_client(
         server_address=f"{central_ip}:{central_port}",
 #        credentials=ssl_credentials,
-#        root_certificates=root_certificate,
+        root_certificates=root_certificate,
         client=client,
 #        channel = channel,
     )
