@@ -1,5 +1,7 @@
 import sys
 import os
+
+import time
 from pathlib import Path
 import flwr as fl
 import yaml
@@ -115,6 +117,7 @@ if __name__ == "__main__":
 
 data = (X_train, y_train), (X_test, y_test)
 client = get_model_client(config, data, num_client)
+"""
 if isinstance(client, fl.client.NumPyClient):
     fl.client.start_numpy_client(
         server_address=f"{central_ip}:{central_port}",
@@ -132,3 +135,30 @@ else:
 #        channel = channel,
     )
 #fl.client.start_client(channel=channel, client=client)
+"""
+for attempt in range(3):
+    try:
+        if isinstance(client, fl.client.NumPyClient):
+            fl.client.start_numpy_client(
+                server_address=f"{central_ip}:{central_port}",
+                # credentials=ssl_credentials,
+                root_certificates=root_certificate,
+                client=client,
+                # channel=channel,
+            )
+        else:
+            fl.client.start_client(
+                server_address=f"{central_ip}:{central_port}",
+                # credentials=ssl_credentials,
+                root_certificates=root_certificate,
+                client=client,
+                # channel=channel,
+            )
+        break  # Si todo salió bien, salimos del bucle
+    except Exception as e:
+        print(f"Attempt {attempt + 1} failed: {e}")
+        if attempt < 2:
+            time.sleep(2)  # Espera un poco antes de reintentar
+        else:
+            print("All connection attempts failed.")
+            raise
