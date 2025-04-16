@@ -18,7 +18,6 @@ from flcore.client_selector import get_model_client
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Reads parameters from command line.")
-
     parser.add_argument("--client_id", type=int, default="Client Id", help="Number of client")
     parser.add_argument("--dataset", type=str, default="dt4h_format", help="Dataloader to use")
     parser.add_argument("--metadata_file", type=str, default="metadata.json", help="Json file with metadata")
@@ -38,6 +37,7 @@ if __name__ == "__main__":
     parser.add_argument("--data_path", type=str, default=None, help="Data path")
     parser.add_argument("--production_mode", type=str, default="True",  help="Production mode")
     parser.add_argument("--certs_path", type=str, default="./", help="Certificates path")
+    parser.add_argument("--node_name", type=str, default="./", help="Node name for certificates")
 
     parser.add_argument("--sandbox_path", type=str, default="./", help="Sandbox path to use")
     parser.add_argument("--experiment", type=json.loads, default={"name": "experiment_1", "log_path": "logs", "debug": "true"}, help="experiment logs")
@@ -86,19 +86,19 @@ if __name__ == "__main__":
 #            Path(os.path.join(config["certs_path"],"rootCA_cert.pem")).read_bytes(),
 #            Path(os.path.join(config["certs_path"],"rootCA_key.pem")).read_bytes() )
 
-#        root_cert = Path(os.path.join(config["certs_path"],"rootCA_cert.pem")).read_bytes()
-#        client_cert = Path(os.path.join(config["certs_path"],"rootCA_cert.pem")).read_bytes()
-#        client_key = Path(os.path.join(config["certs_path"],"rootCA_key.pem")).read_bytes()
+        root_cert = Path(os.path.join(config["certs_path"],"rootCA_cert.pem")).read_bytes()
+        client_cert = Path(os.path.join(config["certs_path"],config["node_name"]+"_client_cert.pem")).read_bytes()
+        client_key = Path(os.path.join(config["certs_path"],config["node_name"]+"_client_key.pem")).read_bytes()
 
-#        ssl_credentials = grpc.ssl_channel_credentials(
-#            root_cert,  # Certificado raíz del servidor
-#            client_key,  # Clave privada del cliente
-#            client_cert  # Certificado del cliente
-#        )
+        ssl_credentials = grpc.ssl_channel_credentials(
+            root_certificates=root_cert,  # Certificado raíz del servidor
+            private_key=client_key,  # Clave privada del cliente
+            certificate_chain=client_cert  # Certificado del cliente
+        )
 
         central_ip = os.getenv("FLOWER_CENTRAL_SERVER_IP")
         central_port = os.getenv("FLOWER_CENTRAL_SERVER_PORT")
-#        channel = grpc.secure_channel(f"{central_ip}:{central_port}", ssl_credentials)
+        channel = grpc.secure_channel(f"{central_ip}:{central_port}", ssl_credentials)
 
     else:
         data_path = config["data_path"]
@@ -141,18 +141,18 @@ for attempt in range(3):
         if isinstance(client, fl.client.NumPyClient):
             fl.client.start_numpy_client(
                 server_address=f"{central_ip}:{central_port}",
-                # credentials=ssl_credentials,
-                root_certificates=root_certificate,
+                #credentials=ssl_credentials,
+                #root_certificates=root_certificate,
                 client=client,
-                # channel=channel,
+                channel=channel,
             )
         else:
             fl.client.start_client(
                 server_address=f"{central_ip}:{central_port}",
                 # credentials=ssl_credentials,
-                root_certificates=root_certificate,
+                # root_certificates=root_certificate,
                 client=client,
-                # channel=channel,
+                channel=channel,
             )
         break  # Si todo salió bien, salimos del bucle
     except Exception as e:
