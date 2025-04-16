@@ -90,15 +90,15 @@ if __name__ == "__main__":
         client_cert = Path(os.path.join(config["certs_path"],config["node_name"]+"_client_cert.pem")).read_bytes()
         client_key = Path(os.path.join(config["certs_path"],config["node_name"]+"_client_key.pem")).read_bytes()
 
-        ssl_credentials = grpc.ssl_channel_credentials(
-            root_certificates=root_cert,  # Certificado raíz del servidor
-            private_key=client_key,  # Clave privada del cliente
-            certificate_chain=client_cert  # Certificado del cliente
-        )
+        #ssl_credentials = grpc.ssl_channel_credentials(
+        #    root_certificates=root_cert,  # Certificado raíz del servidor
+        #    private_key=client_key,  # Clave privada del cliente
+        #    certificate_chain=client_cert  # Certificado del cliente
+        #)
 
         central_ip = os.getenv("FLOWER_CENTRAL_SERVER_IP")
         central_port = os.getenv("FLOWER_CENTRAL_SERVER_PORT")
-        channel = grpc.secure_channel(f"{central_ip}:{central_port}", ssl_credentials)
+        #channel = grpc.secure_channel(f"{central_ip}:{central_port}", ssl_credentials)
 
     else:
         data_path = config["data_path"]
@@ -142,9 +142,9 @@ for attempt in range(3):
             fl.client.start_numpy_client(
                 server_address=f"{central_ip}:{central_port}",
                 #credentials=ssl_credentials,
-                #root_certificates=root_certificate,
+                root_certificates=root_certificate,
                 client=client,
-                channel=channel,
+                #channel=channel,
             )
         else:
             fl.client.start_client(
@@ -152,7 +152,7 @@ for attempt in range(3):
                 # credentials=ssl_credentials,
                 # root_certificates=root_certificate,
                 client=client,
-                channel=channel,
+                #channel=channel,
             )
         break  # Si todo salió bien, salimos del bucle
     except Exception as e:
