@@ -1,19 +1,17 @@
-import sys
 import os
+import sys
 
 import time
-from pathlib import Path
-import flwr as fl
 import yaml
-import argparse
 import json
 import logging
-#import grpc
+import argparse
+import flwr as fl
+from pathlib import Path
+from flwr.common import SecureGRPCBridge, SuperLink
 
 import flcore.datasets as datasets
 from flcore.client_selector import get_model_client
-
-# Start Flower client but after the server or error
 
 if __name__ == "__main__":
 
@@ -75,30 +73,23 @@ if __name__ == "__main__":
 
     model = config["model"]
     if config["production_mode"] == "True":
-        node_name = os.getenv("NODE_NAME")
-#        num_client = int(node_name.split("_")[-1])
         num_client = config["client_id"]
+        node_name = os.getenv("NODE_NAME")
         data_path = os.getenv("DATA_PATH")
-        ca_cert = Path(os.path.join(config["certs_path"],"rootCA_cert.pem"))
-        root_certificate = Path(f"{ca_cert}").read_bytes()
-#        root_certificate = ca_cert
-#        root_certificate =( Path(os.path.join(config["certs_path"],"rootCA_cert.pem")).read_bytes(),
-#            Path(os.path.join(config["certs_path"],"rootCA_cert.pem")).read_bytes(),
-#            Path(os.path.join(config["certs_path"],"rootCA_key.pem")).read_bytes() )
+        central_ip = os.getenv("FLOWER_CENTRAL_SERVER_IP")
+        central_port = os.getenv("FLOWER_CENTRAL_SERVER_PORT")
 
         root_cert = Path(os.path.join(config["certs_path"],"rootCA_cert.pem")).read_bytes()
         client_cert = Path(os.path.join(config["certs_path"],config["node_name"]+"_client_cert.pem")).read_bytes()
         client_key = Path(os.path.join(config["certs_path"],config["node_name"]+"_client_key.pem")).read_bytes()
 
-        ssl_credentials = grpc.ssl_channel_credentials(
-            root_certificates=root_cert,  # Certificado raíz del servidor
-            private_key=client_key,  # Clave privada del cliente
-            certificate_chain=client_cert  # Certificado del cliente
+        bridge = SecureGRPCBridge(
+            server_address=f"{central_ip}:{central_port}",
+            root_certificates=root_cert,
+            private_key=client_key,
+            certificate_chain=client_cert,
         )
-
-        central_ip = os.getenv("FLOWER_CENTRAL_SERVER_IP")
-        central_port = os.getenv("FLOWER_CENTRAL_SERVER_PORT")
-        channel = grpc.secure_channel(f"{central_ip}:{central_port}", ssl_credentials)
+        superlink = SuperLink(bridge)
 
     else:
         data_path = config["data_path"]
@@ -106,10 +97,6 @@ if __name__ == "__main__":
         central_ip = "LOCALHOST"
         central_port = config["local_port"]
         num_client = config["client_id"]
-#        if len(sys.argv) == 1:
-#            raise ValueError("Please provide the client id when running in simulation mode")
-#        num_client = int(sys.argv[1])
-
 
     print("Client id:" + str(num_client))
 
@@ -117,48 +104,25 @@ if __name__ == "__main__":
 
 data = (X_train, y_train), (X_test, y_test)
 client = get_model_client(config, data, num_client)
-"""
-if isinstance(client, fl.client.NumPyClient):
-    fl.client.start_numpy_client(
-        server_address=f"{central_ip}:{central_port}",
-#        credentials=ssl_credentials,
-        root_certificates=root_certificate,
-        client=client,
-#        channel = channel,
-    )
-else:
-    fl.client.start_client(
-        server_address=f"{central_ip}:{central_port}",
-#        credentials=ssl_credentials,
-        root_certificates=root_certificate,
-        client=client,
-#        channel = channel,
-    )
-#fl.client.start_client(channel=channel, client=client)
-"""
+
+# Intentar la conexión al servidor
 for attempt in range(3):
     try:
         if isinstance(client, fl.client.NumPyClient):
-            fl.client.start_numpy_client(
-                server_address=f"{central_ip}:{central_port}",
-                #credentials=ssl_credentials,
-                #root_certificates=root_certificate,
+            fl.client.run_numpy_client(
                 client=client,
-                channel=channel,
+                server=superlink,
             )
         else:
-            fl.client.start_client(
-                server_address=f"{central_ip}:{central_port}",
-                # credentials=ssl_credentials,
-                # root_certificates=root_certificate,
+            fl.client.run_client(
                 client=client,
-                channel=channel,
+                server=superlink,
             )
-        break  # Si todo salió bien, salimos del bucle
+        break
     except Exception as e:
         print(f"Attempt {attempt + 1} failed: {e}")
         if attempt < 2:
-            time.sleep(2)  # Espera un poco antes de reintentar
+            time.sleep(2)
         else:
             print("All connection attempts failed.")
             raise
