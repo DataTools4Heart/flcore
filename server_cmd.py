@@ -1,17 +1,19 @@
-import warnings
 import os
 import sys
-from pathlib import Path
-import argparse
 import json
 import logging
+import warnings
+import argparse
+from pathlib import Path
 
-import flwr as fl
-import numpy
 import yaml
+import numpy
+import flwr as fl
+
 import flcore.datasets as datasets
-from flcore.server_selector import get_model_server_and_strategy
 from flcore.compile_results import compile_results
+from flwr.common import SecureGRPCBridge, SuperLink
+from flcore.server_selector import get_model_server_and_strategy
 
 warnings.filterwarnings("ignore")
 
@@ -63,72 +65,54 @@ if __name__ == "__main__":
     experiment_dir = Path(os.path.join(config["experiment"]["log_path"], config["experiment"]["name"]))
     config["experiment_dir"] = experiment_dir
 
-    # Create sandbox log file path
     sandbox_log_file = Path(os.path.join(config["sandbox_path"], "log_server.txt"))
 
-    # Set up the file handler
     file_handler = logging.FileHandler(sandbox_log_file)
     file_handler.setLevel(logging.DEBUG)
 
-    # Set up the console handler
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setLevel(logging.DEBUG)
 
-    # Create a formatter and set it for both handlers
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     file_handler.setFormatter(formatter)
     console_handler.setFormatter(formatter)
 
-    # Add both handlers to the root logger
     logging.basicConfig(level=logging.DEBUG, handlers=[file_handler, console_handler])
 
-    # Now you can use logging in both places
     logging.debug("This will be logged to both the console and the file.")
 
-    # Your existing code continues here...
-    # For example, the following logs will go to both stdout and file:
     logging.debug("Starting Flower server...")
 
-    #Check the config file
     check_config(config)
     if config["production_mode"] == "True":
-        print("TRUE")
         data_path = os.getenv("DATA_PATH")
         central_ip = os.getenv("FLOWER_CENTRAL_SERVER_IP")
         central_port = os.getenv("FLOWER_CENTRAL_SERVER_PORT")
 
-        ca_cert = Path(os.path.join(config["certs_path"],"rootCA_cert.pem"))
+        root_certificate = Path(os.path.join(config["certs_path"],"rootCA_cert.pem"))
         server_cert =  Path(os.path.join(config["certs_path"],"server_cert.pem"))
         server_key =  Path(os.path.join(config["certs_path"],"server_key.pem"))
 
-        certificates = (
-            Path(f"{ca_cert}").read_bytes(),
-            Path(f"{server_cert}").read_bytes(),
-            Path(f"{server_key}").read_bytes(),
+        bridge = SecureGRPCBridge(
+            server_address=f"{central_ip}:{central_port}",
+            root_certificates=root_certificate,
+            private_key=server_key,
+            certificate_chain=server_cert,
         )
-#            Path('.cache/certificates/rootCA_cert.pem').read_bytes(),
-#            Path('.cache/certificates/server_cert.pem').read_bytes(),
-#            Path('.cache/certificates/server_key.pem').read_bytes(),
+        superlink = SuperLink(bridge)
+
     else:
-        print("ELSE")
         data_path = config["data_path"]
         central_ip = "LOCALHOST"
         central_port = config["local_port"]
         certificates = None
 
-    # Create experiment directory
     experiment_dir = Path(os.path.join(config["experiment"]["log_path"], config["experiment"]["name"]))
     experiment_dir.mkdir(parents=True, exist_ok=True)
     config["experiment_dir"] = experiment_dir
 
-    # Checkpoint directory for saving the model
     checkpoint_dir = experiment_dir / "checkpoints"
     checkpoint_dir.mkdir(parents=True, exist_ok=True)
-    # # History directory for saving the history
-    # history_dir = experiment_dir / "history"
-    # history_dir.mkdir(parents=True, exist_ok=True)
-
-    # Copy the config file to the experiment directory
 
     with open("config.yaml", "w") as f:
         yaml.dump(vars(args), f, default_flow_style=False)
@@ -143,83 +127,10 @@ if __name__ == "__main__":
     # ***********************************************************************
     server, strategy = get_model_server_and_strategy(config, data)
 
-    # Start Flower server for three rounds of federated learning
-    history = fl.server.start_server(
-        server_address=f"{central_ip}:{central_port}",
-        config=fl.server.ServerConfig(num_rounds=config["num_rounds"], round_timeout=None ),
+    history = fl.server.run_server(
         server=server,
         strategy=strategy,
-        certificates = certificates,
+        server_config=fl.server.ServerConfig(num_rounds=config["num_rounds"], round_timeout=None),
+        transport=superlink,
     )
-    # # Save the model and the history
-    # filename = os.path.join( checkpoint_dir, 'final_model.pt' )
-    # joblib.dump(model, filename)
-    # Save the history as a yaml file
     print(history)
-    """
-    with open(experiment_dir / "metrics.txt", "w") as f:
-        f.write(f"Results of the experiment {config['experiment']['name']}\n")
-        f.write(f"Model: {config['model']}\n")
-        f.write(f"Data: {config['dataset']}\n")
-        f.write(f"Number of clients: {config['num_clients']}\n")
-
-        # selection_metric = 'val ' + config['checkpoint_selection_metric']
-        selection_metric = config['checkpoint_selection_metric']
-        # Get index of tuple of the best round
-        best_round = int(numpy.argmax([round[1] for round in history.metrics_distributed[selection_metric]]))
-        training_time = history.metrics_distributed_fit['training_time [s]'][-1][1]
-        f.write(f"Total training time: {training_time:.2f} [s] \n")
-        f.write(f"Best checkpoint based on {selection_metric} after round: {best_round}\n\n")
-        print(f"Best checkpoint based on {selection_metric} after round: {best_round}\n\n")
-
-        f.write(f"\nAggregated results:\n\n")
-
-        # best_round = best_round - 1
-        per_client_values = {}
-        for metric in history.metrics_distributed:
-            metric_value = history.metrics_distributed[metric][best_round][1]
-            if type(metric_value) in [int, float, numpy.float64]:
-                f.write(f"{metric} {metric_value:.4f} \n")
-            else:
-                for per_client_metric_value in metric_value:
-                    metric = metric.replace("per client ", "")
-                    if metric not in per_client_values:
-                        per_client_values[metric] = []
-                    per_client_values[metric].append(round(per_client_metric_value, 3))
-        
-        f.write(f"\n\nPer client results:\n\n")
-        for metric in per_client_values:
-            f.write(f"{metric} {per_client_values[metric]} \n")
-        
-        f.write(f"\n\nHeld out set evaluation:\n\n")
-        for metric in history.metrics_centralized:
-            # print(f"Len of centralized metric {metric} ", len(history.metrics_centralized[metric]))
-            if len(history.metrics_centralized[metric]) == 1:
-                metric_value = history.metrics_centralized[metric][0][1]
-            else:
-                metric_value = history.metrics_centralized[metric][best_round][1]
-            if type(metric_value) in [int, float, numpy.float64]:
-                f.write(f"{metric} {metric_value:.4f} \n")
-
-dict_history = {}
-history = history.__dict__
-for logs in history.keys():
-    if isinstance(history[logs], list):
-        history[logs] = [float(loss) for (round, loss) in history[logs]]
-    if isinstance(history[logs], dict):
-        for metric in history[logs]:
-            extracted_values = [value for (round, value) in history[logs][metric]]
-            if isinstance(extracted_values[0], list):
-                # Convert list elements to float
-                extracted_values = [[float(value) for value in sublist] for sublist in extracted_values]
-            else:
-                extracted_values = [float(value) for value in extracted_values]
-            history[logs][metric] = extracted_values
-
-
-with open(experiment_dir / "history.yaml", "w") as f:
-    yaml.dump(history, f)
-
-# Compile the results
-compile_results(experiment_dir)
-"""
