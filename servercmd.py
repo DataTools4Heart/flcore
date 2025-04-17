@@ -9,10 +9,11 @@ from pathlib import Path
 import yaml
 import numpy
 import flwr as fl
+#from flwr.common import SecureGRPCBridge, SuperLink
 
 import flcore.datasets as datasets
 from flcore.compile_results import compile_results
-from flwr.common import SecureGRPCBridge, SuperLink
+#from flwr.common import SecureGRPCBridge, SuperLink
 from flcore.server_selector import get_model_server_and_strategy
 
 warnings.filterwarnings("ignore")

@@ -1,0 +1,19 @@
+# conexiones
+flower-superlink --insecure
+flower-supernode      --insecure      --superlink 127.0.0.1:9092      --clientappio-api-address 127.0.0.1:9094 \
+
+
+# ejecutar el proyecto:
+flwr new
+# sin mas, te da esto
+# To run your Flower App, use the following command:
+#	flwr run asdf
+# If you haven't installed all dependencies yet, follow these steps:
+#	cd asdf
+#	pip install -e .
+#	flwr run .
+
+flwr run fed
+
+# Supongo que podríamos mover los clients y server al fed o algo asi, en principio esto ya esta funcionaod,
+# otra opcion es probar desde ya las conexiones con el superlink ese de los huevos

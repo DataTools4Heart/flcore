@@ -8,7 +8,8 @@ import logging
 import argparse
 import flwr as fl
 from pathlib import Path
-from flwr.common import SecureGRPCBridge, SuperLink
+#from flwr.common import SecureGRPCBridge, SuperLink
+from flwr.client import ClientApp, NumPyClient
 
 import flcore.datasets as datasets
 from flcore.client_selector import get_model_client
@@ -83,13 +84,13 @@ if __name__ == "__main__":
         client_cert = Path(os.path.join(config["certs_path"],config["node_name"]+"_client_cert.pem")).read_bytes()
         client_key = Path(os.path.join(config["certs_path"],config["node_name"]+"_client_key.pem")).read_bytes()
 
-        bridge = SecureGRPCBridge(
-            server_address=f"{central_ip}:{central_port}",
-            root_certificates=root_cert,
-            private_key=client_key,
-            certificate_chain=client_cert,
-        )
-        superlink = SuperLink(bridge)
+        #bridge = SecureGRPCBridge(
+        #    server_address=f"{central_ip}:{central_port}",
+        #    root_certificates=root_cert,
+        #    private_key=client_key,
+        #    certificate_chain=client_cert,
+        #)
+        #superlink = SuperLink(bridge)
 
     else:
         data_path = config["data_path"]
@@ -105,19 +106,23 @@ if __name__ == "__main__":
 data = (X_train, y_train), (X_test, y_test)
 client = get_model_client(config, data, num_client)
 
-# Intentar la conexión al servidor
+#def client_fn(context: Context):
+#    return SimpleClient(context).to_client()
+
 for attempt in range(3):
     try:
         if isinstance(client, fl.client.NumPyClient):
-            fl.client.run_numpy_client(
-                client=client,
-                server=superlink,
-            )
+            #fl.client.run_numpy_client(
+            #    client=client,
+            #    server=superlink,
+            #)
+            app = ClientApp(client)
         else:
-            fl.client.run_client(
-                client=client,
-                server=superlink,
-            )
+            #fl.client.run_client(
+            #    client=client,
+            #    server=superlink,
+            #)
+            app = ClientApp(client)
         break
     except Exception as e:
         print(f"Attempt {attempt + 1} failed: {e}")
