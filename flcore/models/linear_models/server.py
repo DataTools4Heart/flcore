@@ -59,8 +59,17 @@ def evaluate_held_out(
     kwargs: Dict[str, fl.common.Scalar],
     config: Dict[str, fl.common.Scalar],
 ) -> Tuple[float, Dict[str, float]]:
-    
+    """
+    Esta función no tiene razón de ser, para funcionar necesita acceso
+    al dataset, cosa que no tiene por qué tener. Esta es la idea central
+    del aprendizaje federado. La infraestructura de DT4H NO permitirá
+    tener un dataset para llevar a cabo esta prueba. Razón por la que
+    esta función no tiene propósito de existir. Tiene sentido que exista
+    en un ambiente simulado con un dataset público, pero no en un despliegue
+    real.
+    """
     """Evaluate the current model on the held-out validation set."""
+    """
     # Load held-out validation data
     client_id = config['held_out_center_id']
     # client_id = -1 # kaggle hf
@@ -122,9 +131,9 @@ def evaluate_held_out(
         #Add 'centralized' to the metrics to identify them
         non_weighted_centralized_metrics = {f"non weighted centralized {key}": non_weighted_centralized_metrics[key] for key in non_weighted_centralized_metrics}
         metrics.update(non_weighted_centralized_metrics)
-
-
     return loss, metrics
+    """
+    return 0, {}
 
 
 def get_server_and_strategy(config):
