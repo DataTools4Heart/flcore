@@ -54,21 +54,48 @@ if __name__ == "__main__":
     # Create sandbox log file path
     sandbox_log_file = Path(os.path.join(config["sandbox_path"], "log_client.txt"))
 
-    # Set up the file handler
+    # Set up the file handler (writes to file)
     file_handler = logging.FileHandler(sandbox_log_file)
     file_handler.setLevel(logging.DEBUG)
-
-    # Set up the console handler
+    # Set up the console handler (writes to Docker logs via stdout)
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setLevel(logging.DEBUG)
 
-    # Create a formatter and set it for both handlers
+    # Create a formatter for consistency
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     file_handler.setFormatter(formatter)
     console_handler.setFormatter(formatter)
 
-    # Add both handlers to the root logger
-    logging.basicConfig(level=logging.DEBUG, handlers=[file_handler, console_handler])
+    # Get the root logger and configure it
+    logger = logging.getLogger()
+    logger.setLevel(logging.DEBUG)
+    logger.handlers = []  # Clear any default handlers
+    logger.addHandler(file_handler)
+    logger.addHandler(console_handler)
+
+    # Redirect print() and sys.stdout/sys.stderr into logger
+    class StreamToLogger:
+        def __init__(self, logger, level):
+            self.logger = logger
+            self.level = level
+
+        def write(self, message):
+            for line in message.rstrip().splitlines():
+                self.logger.log(self.level, line.rstrip())
+
+        def flush(self):
+            pass
+
+    # Create two sub-loggers
+    stdout_logger = logging.getLogger("STDOUT")
+    stderr_logger = logging.getLogger("STDERR")
+
+    # Redirect standard output and error to logging
+    sys.stdout = StreamToLogger(stdout_logger, logging.INFO)
+    sys.stderr = StreamToLogger(stderr_logger, logging.ERROR)
+
+    # Now you can use logging in both places
+    logging.debug("This will be logged to both the console and the file.")
 
     # Now you can use logging in both places
     logging.debug("This will be logged to both the console and the file.")
