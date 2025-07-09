@@ -566,17 +566,28 @@ def load_dt4h(config,id):
 
     # Numerical variables
     numeric_columns_non_zero = {}
-    for feat in metadata["entries"][0]["featureSet"]["features"]:
-        if feat["dataType"] == "NUMERIC" and feat["statistics"]["numOfNotNull"] != 0:
+#    for feat in metadata["entries"][0]["featureSet"]["features"]:
+#        if feat["dataType"] == "NUMERIC" and feat["statistics"]["numOfNotNull"] != 0:
+    for feat in metadata["entity"]["features"]:
+        if feat["dataType"] == "NUMERIC" and metadata["entity"]["datasetStats"]["outcomeStats"][feat]["numOfNotNull"] != 0:
             # statistic keys = ['Q1', 'avg', 'min', 'Q2', 'max', 'Q3', 'numOfNotNull']
+            """
+          "min": 12.0,
+          "max": 152.45,
+          "avg": 112.37444444444445,
+          "q1": 133.76,
+          "q2": 139.34,
+          "q3": 141.09,
+
+            """
             numeric_columns_non_zero[feat["name"]] = (
-                feat["statistics"]["Q1"],
-                feat["statistics"]["avg"],
-                feat["statistics"]["min"],
-                feat["statistics"]["Q2"],
-                feat["statistics"]["max"],
-                feat["statistics"]["Q3"],
-                feat["statistics"]["numOfNotNull"],
+                metadata["entity"]["datasetStats"]["outcomeStats"][feat]["q1"],
+                metadata["entity"]["datasetStats"]["outcomeStats"][feat]["avg"],
+                metadata["entity"]["datasetStats"]["outcomeStats"][feat]["min"],
+                metadata["entity"]["datasetStats"]["outcomeStats"][feat]["q2"],
+                metadata["entity"]["datasetStats"]["outcomeStats"][feat]["max"],
+                metadata["entity"]["datasetStats"]["outcomeStats"][feat]["q3"],
+                metadata["entity"]["datasetStats"]["outcomeStats"][feat]["numOfNotNull"],
             )
 
     for col, (q1,avg,mini,q2,maxi,q3,numOfNotNull) in numeric_columns_non_zero.items():
