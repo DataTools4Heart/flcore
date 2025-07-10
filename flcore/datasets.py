@@ -564,30 +564,19 @@ def load_dt4h(config,id):
 
     dat_len = len(dat)
 
-    # Numerical variables
     numeric_columns_non_zero = {}
-#    for feat in metadata["entries"][0]["featureSet"]["features"]:
-#        if feat["dataType"] == "NUMERIC" and feat["statistics"]["numOfNotNull"] != 0:
+    # SE TENDRIA QUE HACER LO MISMO PARA outcomeStats en vez de featureStats y metadata["entity"]["outcomes"]
     for feat in metadata["entity"]["features"]:
-        if feat["dataType"] == "NUMERIC" and metadata["entity"]["datasetStats"]["outcomeStats"][feat]["numOfNotNull"] != 0:
+        if feat["dataType"] == "NUMERIC" and metadata["entity"]["datasetStats"]["featureStats"][feat["name"]]["numOfNotNull"] != 0:
             # statistic keys = ['Q1', 'avg', 'min', 'Q2', 'max', 'Q3', 'numOfNotNull']
-            """
-          "min": 12.0,
-          "max": 152.45,
-          "avg": 112.37444444444445,
-          "q1": 133.76,
-          "q2": 139.34,
-          "q3": 141.09,
-
-            """
             numeric_columns_non_zero[feat["name"]] = (
-                metadata["entity"]["datasetStats"]["outcomeStats"][feat]["q1"],
-                metadata["entity"]["datasetStats"]["outcomeStats"][feat]["avg"],
-                metadata["entity"]["datasetStats"]["outcomeStats"][feat]["min"],
-                metadata["entity"]["datasetStats"]["outcomeStats"][feat]["q2"],
-                metadata["entity"]["datasetStats"]["outcomeStats"][feat]["max"],
-                metadata["entity"]["datasetStats"]["outcomeStats"][feat]["q3"],
-                metadata["entity"]["datasetStats"]["outcomeStats"][feat]["numOfNotNull"],
+                metadata["entity"]["datasetStats"]["featureStats"][feat["name"]]["q1"],
+                metadata["entity"]["datasetStats"]["featureStats"][feat["name"]]["avg"],
+                metadata["entity"]["datasetStats"]["featureStats"][feat["name"]]["min"],
+                metadata["entity"]["datasetStats"]["featureStats"][feat["name"]]["q2"],
+                metadata["entity"]["datasetStats"]["featureStats"][feat["name"]]["max"],
+                metadata["entity"]["datasetStats"]["featureStats"][feat["name"]]["q3"],
+                metadata["entity"]["datasetStats"]["featureStats"][feat["name"]]["numOfNotNull"],
             )
 
     for col, (q1,avg,mini,q2,maxi,q3,numOfNotNull) in numeric_columns_non_zero.items():
@@ -598,11 +587,13 @@ def load_dt4h(config,id):
                 pass # no std found in data set
             elif config["normalization_method"] == "MIN_MAX":
                dat[col] = min_max_normalize(col, mini, maxi)
-    tipos=[]
+    #tipos=[]
     map_variables = {}
-    for feat in metadata["entries"][0]["featureSet"]["features"]:
-        tipos.append(feat["dataType"])
-        if feat["dataType"] == "NOMINAL" and feat["statistics"]["numOfNotNull"] != 0:
+    for feat in metadata["entity"]["features"]:
+    #for feat in metadata["entries"][0]["featureSet"]["features"]:
+        #if feat["dataType"] == "NOMINAL" and feat["statistics"]["numOfNotNull"] != 0:
+    #    tipos.append(feat["dataType"])
+        if feat["dataType"] == "NOMINAL" and metadata["entity"]["datasetStats"]["outcomeStats"][feat]["numOfNotNull"] != 0:
             num_cat = len(feat["statistics"]["valueset"])
             map_cat = {}
             for ind, cat in enumerate(feat["statistics"]["valueset"]):
@@ -612,13 +603,15 @@ def load_dt4h(config,id):
         dat[col] = dat[col].map(mapa)
     
     dat[map_variables.keys()].dropna()
-    
-    tipos=[]
+
+    #tipos=[]
     map_variables = {}
     boolean_map = {np.bool_(False) :0, np.bool_(True):1, "False":0,"True":1}
-    for feat in metadata["entries"][0]["featureSet"]["features"]:
-        tipos.append(feat["dataType"])
-        if feat["dataType"] == "BOOLEAN" and feat["statistics"]["numOfNotNull"] != 0:
+    for feat in metadata["entity"]["features"]:
+    #for feat in metadata["entries"][0]["featureSet"]["features"]:
+    #    tipos.append(feat["dataType"])
+        if feat["dataType"] == "NOMINAL" and metadata["entity"]["datasetStats"]["outcomeStats"][feat]["numOfNotNull"] != 0:
+#        if feat["dataType"] == "BOOLEAN" and feat["statistics"]["numOfNotNull"] != 0:
             map_variables[feat["name"]] = boolean_map
     for col,mapa in map_variables.items():
         dat[col] = dat[col].map(boolean_map)
