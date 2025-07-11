@@ -566,7 +566,9 @@ def load_dt4h(config,id):
 
     numeric_columns_non_zero = {}
     for feat in metadata["entity"]["features"]:
-        if feat["dataType"] == "NUMERIC" and metadata["entity"]["datasetStats"]["featureStats"][feat["name"]]["numOfNotNull"] != 0:
+        if (feat["dataType"] == "NUMERIC"
+            and feat["name"] in train_labels
+            and metadata["entity"]["datasetStats"]["featureStats"][feat["name"]]["numOfNotNull"] != 0):
             # statistic keys = ['Q1', 'avg', 'min', 'Q2', 'max', 'Q3', 'numOfNotNull']
             numeric_columns_non_zero[feat["name"]] = (
                 metadata["entity"]["datasetStats"]["featureStats"][feat["name"]]["q1"],
@@ -578,7 +580,9 @@ def load_dt4h(config,id):
                 metadata["entity"]["datasetStats"]["featureStats"][feat["name"]]["numOfNotNull"],
             )
     for feat in metadata["entity"]["outcomes"]:
-        if feat["dataType"] == "NUMERIC" and metadata["entity"]["datasetStats"]["outcomeStats"][feat["name"]]["numOfNotNull"] != 0:
+        if (feat["dataType"] == "NUMERIC"
+            and feat["name"] in target_labels
+            and metadata["entity"]["datasetStats"]["outcomeStats"][feat["name"]]["numOfNotNull"] != 0):
             # statistic keys = ['Q1', 'avg', 'min', 'Q2', 'max', 'Q3', 'numOfNotNull']
             numeric_columns_non_zero[feat["name"]] = (
                 metadata["entity"]["datasetStats"]["outcomeStats"][feat["name"]]["q1"],
@@ -601,29 +605,35 @@ def load_dt4h(config,id):
     #tipos=[]
     map_variables = {}
     for feat in metadata["entity"]["features"]:
-        if feat["dataType"] == "NOMINAL" and metadata["entity"]["datasetStats"]["featureStats"][feat["name"]]["numOfNotNull"] != 0:
-            print("FEAT", feat["name"])
+        if (feat["dataType"] == "NOMINAL" 
+            and feat["name"] in train_labels
+            and metadata["entity"]["datasetStats"]["featureStats"][feat["name"]]["numOfNotNull"] != 0):
+            #print("FEAT", feat["name"])
             map_cat = {}
             if "valueSet" in feat.keys():
                 for ind, cat_ in enumerate(feat["valueSet"]["concept"]):
-                    print(ind,cat_["code"])
+                    #print(ind,cat_["code"])
                     cat = cat_["code"]
                     map_cat[cat] = ind
             else:
-                print("NO",feat["name"])
+                pass
+                #print("NO",feat["name"])
             map_variables[feat["name"]] = map_cat
 
     for feat in metadata["entity"]["outcomes"]:
-        if feat["dataType"] == "NOMINAL" and metadata["entity"]["datasetStats"]["outcomeStats"][feat["name"]]["numOfNotNull"] != 0:
-            print("FEAT", feat["name"])
+        if (feat["dataType"] == "NOMINAL"
+            and feat["name"] in target_labels
+            and metadata["entity"]["datasetStats"]["outcomeStats"][feat["name"]]["numOfNotNull"] != 0):
+            #print("FEAT", feat["name"])
             map_cat = {}
             if "valueSet" in feat.keys():
                 for ind, cat_ in enumerate(feat["valueSet"]["concept"]):
-                    print(ind,cat_["code"])
+                    #print(ind,cat_["code"])
                     cat = cat_["code"]
                     map_cat[cat] = ind
             else:
-                print("NO",feat["name"])
+                pass # temporal
+                #print("NO",feat["name"])
             map_variables[feat["name"]] = map_cat
 
     for col,mapa in map_variables.items():
@@ -634,11 +644,15 @@ def load_dt4h(config,id):
     map_variables = {}
     boolean_map = {np.bool_(False) :0, np.bool_(True):1, "False":0,"True":1}
     for feat in metadata["entity"]["features"]:
-        if feat["dataType"] == "BOOLEAN" and metadata["entity"]["datasetStats"]["featureStats"][feat["name"]]["numOfNotNull"] != 0:
+        if (feat["dataType"] == "BOOLEAN" 
+            and feat["name"] in train_labels
+            and metadata["entity"]["datasetStats"]["featureStats"][feat["name"]]["numOfNotNull"] != 0):
             map_variables[feat["name"]] = boolean_map
 
     for feat in metadata["entity"]["outcomes"]:
-        if feat["dataType"] == "BOOLEAN" and metadata["entity"]["datasetStats"]["outcomeStats"][feat["name"]]["numOfNotNull"] != 0:
+        if (feat["dataType"] == "BOOLEAN" 
+            and feat["name"] in target_labels
+            and metadata["entity"]["datasetStats"]["outcomeStats"][feat["name"]]["numOfNotNull"] != 0):
             map_variables[feat["name"]] = boolean_map
 
     for col,mapa in map_variables.items():
