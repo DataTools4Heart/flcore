@@ -631,15 +631,16 @@ def load_dt4h(config,id):
     
     dat[map_variables.keys()].dropna()
 
-    #tipos=[]
     map_variables = {}
     boolean_map = {np.bool_(False) :0, np.bool_(True):1, "False":0,"True":1}
     for feat in metadata["entity"]["features"]:
-    #for feat in metadata["entries"][0]["featureSet"]["features"]:
-    #    tipos.append(feat["dataType"])
-        if feat["dataType"] == "NOMINAL" and metadata["entity"]["datasetStats"]["outcomeStats"][feat]["numOfNotNull"] != 0:
-#        if feat["dataType"] == "BOOLEAN" and feat["statistics"]["numOfNotNull"] != 0:
+        if feat["dataType"] == "BOOLEAN" and metadata["entity"]["datasetStats"]["featureStats"][feat["name"]]["numOfNotNull"] != 0:
             map_variables[feat["name"]] = boolean_map
+
+    for feat in metadata["entity"]["outcomes"]:
+        if feat["dataType"] == "BOOLEAN" and metadata["entity"]["datasetStats"]["outcomeStats"][feat["name"]]["numOfNotNull"] != 0:
+            map_variables[feat["name"]] = boolean_map
+
     for col,mapa in map_variables.items():
         dat[col] = dat[col].map(boolean_map)
     
