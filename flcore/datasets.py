@@ -602,11 +602,30 @@ def load_dt4h(config,id):
     map_variables = {}
     for feat in metadata["entity"]["features"]:
         if feat["dataType"] == "NOMINAL" and metadata["entity"]["datasetStats"]["featureStats"][feat["name"]]["numOfNotNull"] != 0:
-            num_cat = len(feat["statistics"]["valueset"])
+            print("FEAT", feat["name"])
             map_cat = {}
-            for ind, cat in enumerate(feat["statistics"]["valueset"]):
-                map_cat[cat] = ind
+            if "valueSet" in feat.keys():
+                for ind, cat_ in enumerate(feat["valueSet"]["concept"]):
+                    print(ind,cat_["code"])
+                    cat = cat_["code"]
+                    map_cat[cat] = ind
+            else:
+                print("NO",feat["name"])
             map_variables[feat["name"]] = map_cat
+
+    for feat in metadata["entity"]["outcomes"]:
+        if feat["dataType"] == "NOMINAL" and metadata["entity"]["datasetStats"]["outcomeStats"][feat["name"]]["numOfNotNull"] != 0:
+            print("FEAT", feat["name"])
+            map_cat = {}
+            if "valueSet" in feat.keys():
+                for ind, cat_ in enumerate(feat["valueSet"]["concept"]):
+                    print(ind,cat_["code"])
+                    cat = cat_["code"]
+                    map_cat[cat] = ind
+            else:
+                print("NO",feat["name"])
+            map_variables[feat["name"]] = map_cat
+
     for col,mapa in map_variables.items():
         dat[col] = dat[col].map(mapa)
     
