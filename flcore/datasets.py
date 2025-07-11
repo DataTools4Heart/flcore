@@ -565,7 +565,6 @@ def load_dt4h(config,id):
     dat_len = len(dat)
 
     numeric_columns_non_zero = {}
-    # SE TENDRIA QUE HACER LO MISMO PARA outcomeStats en vez de featureStats y metadata["entity"]["outcomes"]
     for feat in metadata["entity"]["features"]:
         if feat["dataType"] == "NUMERIC" and metadata["entity"]["datasetStats"]["featureStats"][feat["name"]]["numOfNotNull"] != 0:
             # statistic keys = ['Q1', 'avg', 'min', 'Q2', 'max', 'Q3', 'numOfNotNull']
@@ -577,6 +576,18 @@ def load_dt4h(config,id):
                 metadata["entity"]["datasetStats"]["featureStats"][feat["name"]]["max"],
                 metadata["entity"]["datasetStats"]["featureStats"][feat["name"]]["q3"],
                 metadata["entity"]["datasetStats"]["featureStats"][feat["name"]]["numOfNotNull"],
+            )
+    for feat in metadata["entity"]["outcomes"]:
+        if feat["dataType"] == "NUMERIC" and metadata["entity"]["datasetStats"]["outcomeStats"][feat["name"]]["numOfNotNull"] != 0:
+            # statistic keys = ['Q1', 'avg', 'min', 'Q2', 'max', 'Q3', 'numOfNotNull']
+            numeric_columns_non_zero[feat["name"]] = (
+                metadata["entity"]["datasetStats"]["outcomeStats"][feat["name"]]["q1"],
+                metadata["entity"]["datasetStats"]["outcomeStats"][feat["name"]]["avg"],
+                metadata["entity"]["datasetStats"]["outcomeStats"][feat["name"]]["min"],
+                metadata["entity"]["datasetStats"]["outcomeStats"][feat["name"]]["q2"],
+                metadata["entity"]["datasetStats"]["outcomeStats"][feat["name"]]["max"],
+                metadata["entity"]["datasetStats"]["outcomeStats"][feat["name"]]["q3"],
+                metadata["entity"]["datasetStats"]["outcomeStats"][feat["name"]]["numOfNotNull"],
             )
 
     for col, (q1,avg,mini,q2,maxi,q3,numOfNotNull) in numeric_columns_non_zero.items():
@@ -590,10 +601,7 @@ def load_dt4h(config,id):
     #tipos=[]
     map_variables = {}
     for feat in metadata["entity"]["features"]:
-    #for feat in metadata["entries"][0]["featureSet"]["features"]:
-        #if feat["dataType"] == "NOMINAL" and feat["statistics"]["numOfNotNull"] != 0:
-    #    tipos.append(feat["dataType"])
-        if feat["dataType"] == "NOMINAL" and metadata["entity"]["datasetStats"]["outcomeStats"][feat]["numOfNotNull"] != 0:
+        if feat["dataType"] == "NOMINAL" and metadata["entity"]["datasetStats"]["featureStats"][feat["name"]]["numOfNotNull"] != 0:
             num_cat = len(feat["statistics"]["valueset"])
             map_cat = {}
             for ind, cat in enumerate(feat["statistics"]["valueset"]):
