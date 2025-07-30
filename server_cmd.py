@@ -55,10 +55,17 @@ if __name__ == "__main__":
     parser.add_argument("--local_port", type=int, default=8081, help="Local port")
     parser.add_argument("--experiment", type=json.loads, default={"name": "experiment_1", "log_path": "logs", "debug": "true"}, help="experiment logs")
     parser.add_argument("--random_forest", type=json.loads, default={"balanced_rf": "true"}, help="Random forest parameters")
+    parser.add_argument("--n_features", type=int, default=0, help="Number of features")
 
     args = parser.parse_args()
 
     config = vars(args)
+
+    if config["model"] in ("logistic_regression", "elastic_net", "lsvc"):
+        print("LINEAR", config["model"], config["n_features"])
+        config["linear_models"] = {}
+        config['linear_models']['n_features'] = config["n_features"]
+        config["held_out_center_id"] = -1
 
     experiment_dir = Path(os.path.join(config["experiment"]["log_path"], config["experiment"]["name"]))
     config["experiment_dir"] = experiment_dir
