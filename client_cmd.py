@@ -34,12 +34,9 @@ if __name__ == "__main__":
     parser.add_argument("--smooth_method", type=str, default=None, help="Weight smoothing")
     parser.add_argument("--seed", type=int, default=42, help="Seed")
     parser.add_argument("--local_port", type=int, default=8081, help="Local port")
-    parser.add_argument("--data_path", type=str, default=None, help="Data path")
     parser.add_argument("--production_mode", type=str, default="True",  help="Production mode")
-    parser.add_argument("--certs_path", type=str, default="./", help="Certificates path")
     parser.add_argument("--node_name", type=str, default="./", help="Node name for certificates")
 
-    parser.add_argument("--sandbox_path", type=str, default="./", help="Sandbox path to use")
     parser.add_argument("--experiment", type=json.loads, default={"name": "experiment_1", "log_path": "logs", "debug": "true"}, help="experiment logs")
     parser.add_argument("--smoothWeights", type=json.loads, default= {"smoothing_strenght": 0.5}, help="Smoothing parameters")
     parser.add_argument("--linear_models", type=json.loads, default={"n_features": 9}, help="Linear model parameters")
@@ -48,9 +45,16 @@ if __name__ == "__main__":
     parser.add_argument("--weighted_random_forest", type=json.loads, default={"balanced_rf": "true", "levelOfDetail": "DecisionTree"}, help="Weighted random forest parameters")
     parser.add_argument("--xgb", type=json.loads, default={"batch_size": 32,"num_iterations": 100,"task_type": "BINARY","tree_num": 500}, help="XGB parameters")
 
+# Variables hardcoded
+    parser.add_argument("--sandbox_path", type=str, default="./sandbox", help="Sandbox path to use")
+    parser.add_argument("--certs_path", type=str, default="./certs_path", help="Certificates path")
+    parser.add_argument("--data_path", type=str, default="./data", help="Data path")
     args = parser.parse_args()
 
     config = vars(args)
+#    config["sandbox_path"] = "./sandbox"
+#    config["certs_path"] = "/app/config/certificates"
+#    config["data_path"] = "./data"
 
     if config["model"] in ("logistic_regression", "elastic_net", "lsvc"):
         config["linear_models"] = {}
