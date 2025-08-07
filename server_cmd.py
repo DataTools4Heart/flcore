@@ -40,8 +40,8 @@ if __name__ == "__main__":
     parser.add_argument("--num_rounds", type=int, default=50, help="Number of federated iterations")
     parser.add_argument("--model", type=str, default="random_forest", help="Model to train")
     parser.add_argument("--dataset", type=str, default="dt4h_format", help="Dataloader to use")
-    parser.add_argument("--sandbox_path", type=str, default="./", help="Sandbox path to use")
-    parser.add_argument("--certs_path", type=str, default="./", help="Certificates path")
+    #parser.add_argument("--sandbox_path", type=str, default="./", help="Sandbox path to use")
+    #parser.add_argument("--certs_path", type=str, default="./", help="Certificates path")
 
     parser.add_argument("--smooth_method", type=str, default="EqualVoting", help="Weight smoothing")
     parser.add_argument("--smoothWeights", type=json.loads, default= {"smoothing_strenght": 0.5}, help="Smoothing parameters")
@@ -51,7 +51,7 @@ if __name__ == "__main__":
     parser.add_argument("--checkpoint_selection_metric", type=str, default="precision", help="Metric used for checkpoints")
     parser.add_argument("--production_mode", type=str, default="True",  help="Production mode")
 
-    parser.add_argument("--data_path", type=str, default=None, help="Data path")
+    #parser.add_argument("--Wdata_path", type=str, default=None, help="Data path")
     parser.add_argument("--local_port", type=int, default=8081, help="Local port")
     parser.add_argument("--experiment", type=json.loads, default={"name": "experiment_1", "log_path": "logs", "debug": "true"}, help="experiment logs")
     parser.add_argument("--random_forest", type=json.loads, default={"balanced_rf": "true"}, help="Random forest parameters")
@@ -71,7 +71,7 @@ if __name__ == "__main__":
     config["experiment_dir"] = experiment_dir
 
     # Create sandbox log file path
-    sandbox_log_file = Path(os.path.join(config["sandbox_path"], "log_server.txt"))
+    sandbox_log_file = Path(os.path.join("/sandbox", "log_server.txt"))
 
     # Set up the file handler (writes to file)
     file_handler = logging.FileHandler(sandbox_log_file)
@@ -125,13 +125,13 @@ if __name__ == "__main__":
     check_config(config)
     if config["production_mode"] == "True":
         print("TRUE")
-        data_path = os.getenv("DATA_PATH")
+        #data_path = ""
         central_ip = os.getenv("FLOWER_CENTRAL_SERVER_IP")
         central_port = os.getenv("FLOWER_CENTRAL_SERVER_PORT")
 
-        ca_cert = Path(os.path.join(config["certs_path"],"rootCA_cert.pem"))
-        server_cert =  Path(os.path.join(config["certs_path"],"server_cert.pem"))
-        server_key =  Path(os.path.join(config["certs_path"],"server_key.pem"))
+        ca_cert = Path(os.path.join("/certs","rootCA_cert.pem"))
+        server_cert =  Path(os.path.join("/certs","server_cert.pem"))
+        server_key =  Path(os.path.join("/certs","server_key.pem"))
 
         certificates = (
             Path(f"{ca_cert}").read_bytes(),
@@ -143,7 +143,7 @@ if __name__ == "__main__":
 #            Path('.cache/certificates/server_key.pem').read_bytes(),
     else:
         print("ELSE")
-        data_path = config["data_path"]
+        #data_path = config["data_path"]
         central_ip = "LOCALHOST"
         central_port = config["local_port"]
         certificates = None
