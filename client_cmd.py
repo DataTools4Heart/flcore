@@ -18,7 +18,7 @@ from flcore.client_selector import get_model_client
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Reads parameters from command line.")
-    # parser.add_argument("--client_id", type=int, default="Client Id", help="Number of client")
+    # # parser.add_argument("--client_id", type=int, default="Client Id", help="Number of client")
     parser.add_argument("--dataset", type=str, default="dt4h_format", help="Dataloader to use")
     parser.add_argument("--metadata_file", type=str, default="metadata.json", help="Json file with metadata")
     parser.add_argument("--data_id", type=str, default="data_id.parquet" , help="Dataset ID")
