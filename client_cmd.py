@@ -53,6 +53,17 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     config = vars(args)
+    new = []
+    for i in config["train_labels"]:
+        parsed = i.replace("]", "").replace("[", "").replace(",", "")
+        new.append(parsed)
+    config["train_labels"] = new
+
+    new = []
+    for i in config["target_label"]:
+        parsed = i.replace("]", "").replace("[", "").replace(",", "")
+        new.append(parsed)
+    config["target_labels"] = new
 
     if config["model"] in ("logistic_regression", "elastic_net", "lsvc"):
         config["linear_models"] = {}
