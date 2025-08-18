@@ -1,5 +1,6 @@
 import sys
 import os
+import glob
 
 import time
 from pathlib import Path
@@ -20,7 +21,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Reads parameters from command line.")
     # # parser.add_argument("--client_id", type=int, default="Client Id", help="Number of client")
     parser.add_argument("--dataset", type=str, default="dt4h_format", help="Dataloader to use")
-    parser.add_argument("--metadata_file", type=str, default="metadata.json", help="Json file with metadata")
+    #parser.add_argument("--metadata_file", type=str, default="metadata.json", help="Json file with metadata")
     parser.add_argument("--data_id", type=str, default="data_id.parquet" , help="Dataset ID")
     parser.add_argument("--normalization_method",type=str, default="IQR", help="Type of normalization: IQR STD MIN_MAX")
     parser.add_argument("--train_labels", type=str, nargs='+', default=None, help="Dataloader to use")
@@ -53,6 +54,19 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     config = vars(args)
+
+    est = config["data_id"]
+    id = est.split("/")[-1]
+#    dir_name = os.path.dirname(config["data_id"])
+    dir_name_parent = str(Path(config["data_id"]).parent)
+
+    config["metadata_file"] = os.path.join(dir_name_parent,"metadata.json")
+
+    pattern = "*.parquet"
+    parquet_files = glob.glob(os.path.join(est, pattern))
+    # ¿How to choose one of the list?
+    config["data_file"] = parquet_files[-1]
+
     new = []
     for i in config["train_labels"]:
         parsed = i.replace("]", "").replace("[", "").replace(",", "")

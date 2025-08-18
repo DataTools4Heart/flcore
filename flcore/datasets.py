@@ -553,22 +553,14 @@ def min_max_normalize(col, min_val, max_val):
     return (col - min_val) / (max_val - min_val)
 
 def load_dt4h(config,id):
-#    print("LOAD_DT4H::",config["data_path"]+config['metadata_file'])
-    metadata_ = Path(os.path.join(config["data_path"],config['data_id']))
-    metadata = Path(os.path.join(metadata_,config['metadata_file']))
+    metadata = Path(config['metadata_file'])
     with open(metadata, 'r') as file:
         metadata = json.load(file)
-#    print("METADATA",metadata)
-    data_file = Path(os.path.join(metadata_,config['data_id']+".parquet"))
-#    print("LOAD_DT4H::",data_file)
-#    ext = data_file.split(".")[-1]
-#    if ext == "pqt" or ext == "parquet":
+
+    data_file = Path(config['data_file'])
     dat = pd.read_parquet(data_file)
-#    elif ext == "csv":
-#        dat = pd.read_csv(data_file)
 
     dat_len = len(dat)
-#    print("PARQUET", dat_len, dat)
     # Numerical variables
     numeric_columns_non_zero = {}
     for feat in metadata["entries"][0]["featureSet"]["features"]:
