@@ -60,7 +60,8 @@ if __name__ == "__main__":
 #    dir_name = os.path.dirname(config["data_id"])
     dir_name_parent = str(Path(config["data_id"]).parent)
 
-    config["metadata_file"] = os.path.join(dir_name_parent,"metadata.json")
+#    config["metadata_file"] = os.path.join(dir_name_parent,"metadata.json")
+    config["metadata_file"] = os.path.join(est,"metadata.json")
 
     pattern = "*.parquet"
     parquet_files = glob.glob(os.path.join(est, pattern))
