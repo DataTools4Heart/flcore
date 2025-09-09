@@ -166,14 +166,7 @@ if __name__ == "__main__":
         yaml.dump(vars(args), f, default_flow_style=False)
     os.system(f"cp config.yaml {experiment_dir}")
 
-    # **************** This part to be removed since data should not be here
-    #(X_train, y_train), (X_test, y_test) = datasets.load_dataset(config)
-    (X_train, y_train), (X_test, y_test) = ([0],[0]), ([0],[0])
-    # valid since only xgb requieres the data and will not be used
-    data = (X_train, y_train), (X_test, y_test)
-
-    # ***********************************************************************
-    server, strategy = get_model_server_and_strategy(config, data)
+    server, strategy = get_model_server_and_strategy(config)
 
     # Start Flower server for three rounds of federated learning
     history = fl.server.start_server(
