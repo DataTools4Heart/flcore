@@ -44,6 +44,7 @@ if __name__ == "__main__":
 #    parser.add_argument("--n_features", type=int, default=0, help="Number of features")
     parser.add_argument("--random_forest", type=json.loads, default={"balanced_rf": "true"}, help="Random forest parameters")
     parser.add_argument("--weighted_random_forest", type=json.loads, default={"balanced_rf": "true", "levelOfDetail": "DecisionTree"}, help="Weighted random forest parameters")
+    parser.add_argument("--neural_network", type=json.loads, default={"param1": "default", "param2": "default"}, help="Neural Network parameters")
     parser.add_argument("--xgb", type=json.loads, default={"batch_size": 32,"num_iterations": 100,"task_type": "BINARY","tree_num": 500}, help="XGB parameters")
 
 # Variables hardcoded
