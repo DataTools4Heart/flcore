@@ -129,6 +129,8 @@ class FlowerClient(fl.client.NumPyClient):
 
 #    @torch.no_grad()
     def evaluate(self, parameters, params):
+        print(f"^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[Client {self.params.client_id}] evaluate")
+        self.set_parameters(parameters)
 # ****** * * * * *  * *  *  *   *   *    *    *  * * * * * * * * ********
         self.model.eval()
         total_loss, correct, total = 0, 0, 0
@@ -142,33 +144,11 @@ class FlowerClient(fl.client.NumPyClient):
             preds = torch.argmax(logits, dim=1)
             correct += (preds == y).sum().item()
             total += y.size(0)
-        
         return total_loss / total, correct / total
-
 # ****** * * * * *  * *  *  *   *   *    *    *  * * * * * * * * ********
-set_weights(self.model, parameters)
-self.model.eval()
-criterion = nn.CrossEntropyLoss(reduction="sum")
-loss_sum, total, correct = 0.0, 0, 0
-with torch.no_grad():
-for x, y in self.val_loader:
-x, y = x.to(DEVICE), y.to(DEVICE)
-logits = self.model(x)
-loss = criterion(logits, y)
-pred = logits.argmax(dim=-1)
-correct += (pred == y).sum().item()
-total += y.numel()
-loss_sum += loss.item()
-return float(loss_sum / max(1, total)), total, {"val_accuracy": correct / max(1, total)}
-
+#        loss, accuracy = test(self.model, self.dataset)
+#        return float(loss), self.dataset.test_size, {"accuracy": float(accuracy)}
 # ****** * * * * *  * *  *  *   *   *    *    *  * * * * * * * * ********
-        # parameters es una lista y params un diccionario vacio
-        # En principio aqui aceptamos params, pero no depende de nosotros pasar params,
-        # flower pasa los parametros que le salen de los huevos
-        print(f"^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[Client {self.params.client_id}] evaluate")
-        self.set_parameters(parameters)
-        loss, accuracy = test(self.model, self.dataset)
-        return float(loss), self.dataset.test_size, {"accuracy": float(accuracy)}
 
 def get_client(config,data,client_id) -> fl.client.Client:
 #    client = FlowerClient(params).to_client()
