@@ -44,7 +44,8 @@ if __name__ == "__main__":
 #    parser.add_argument("--n_features", type=int, default=0, help="Number of features")
     parser.add_argument("--random_forest", type=json.loads, default={"balanced_rf": "true"}, help="Random forest parameters")
     parser.add_argument("--weighted_random_forest", type=json.loads, default={"balanced_rf": "true", "levelOfDetail": "DecisionTree"}, help="Weighted random forest parameters")
-    parser.add_argument("--neural_network", type=json.loads, default={"param1": "default", "param2": "default"}, help="Neural Network parameters")
+    parser.add_argument("--neural_network", type=json.loads, default={"dropout_p": 0.2, "device": "cpu","local_epochs":100}, help="Neural Network parameters")
+    # params : type: "nn", "BNN" Bayesiana, otros
     parser.add_argument("--xgb", type=json.loads, default={"batch_size": 32,"num_iterations": 100,"task_type": "BINARY","tree_num": 500}, help="XGB parameters")
 
 # Variables hardcoded
@@ -86,6 +87,14 @@ if __name__ == "__main__":
         n_feats = len(config["train_labels"])
         config['linear_models']['n_features'] = n_feats # config["n_features"]
         config["held_out_center_id"] = -1
+    elif config["model"] == "nn": # in ("nn", "BNN"):
+        config["n_feats"] = len(config["train_labels"])
+        config["n_out"] = 1 # Quizás añadir como parámetro también
+        config["dropout_p"] = config["neural_network"]["dropout_p"]
+        config["device"] = config["neural_network"]["device"]
+        config["batch_size"] = 32
+        config["lr"] = 1e-3
+        config["local_epochs"] = config["neural_network"]["local_epochs"]
 
     # Create sandbox log file path
     sandbox_log_file = Path(os.path.join(config["sandbox_path"], "log_client.txt"))
