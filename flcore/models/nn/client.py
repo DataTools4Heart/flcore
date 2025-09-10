@@ -81,6 +81,10 @@ class FlowerClient(fl.client.NumPyClient):
         self.model.load_state_dict(state_dict, strict=True)
 
     def fit(self, parameters, params):
+        print(" ***************************************** FIT self.params.client_id ", self.params)
+        print(f"[Client {self.params.client_id}] fit")
+        self.set_parameters(parameters)
+        #train(self.model,self.params,self.dataset)
 # ****** * * * * *  * *  *  *   *   *    *    *  * * * * * * * * ********
         for epoch in range(self.epochs):
             self.model.train()
@@ -97,7 +101,15 @@ class FlowerClient(fl.client.NumPyClient):
                 self.optimizer.zero_grad()
                 loss.backward()
                 self.optimizer.step()
-                
+                """
+                self.optimizer.step()
+                # métricas de incertidumbre en validación
+                metrics = uncertainty_metrics(self.model, self.val_loader, device=DEVICE, T=int(config.get("T", 20)))
+                # importante: el servidor usará 'entropy' y 'val_accuracy'
+
+                num_examples = len(self.train_loader.dataset)
+                return get_weights(self.model), num_examples, metrics
+                """                
                 # métricas
                 total_loss += loss.item() * X.size(0)
                 preds = torch.argmax(logits, dim=1)
@@ -111,34 +123,10 @@ class FlowerClient(fl.client.NumPyClient):
             print(f"Epoch {epoch+1:02d} | "
                   f"Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.4f} | "
                   f"Test Loss: {test_loss:.4f}, Test Acc: {test_acc:.4f}")
-    
 
-# ****** * * * * *  * *  *  *   *   *    *    *  * * * * * * * * ********
-        self.set_weights(self.model, parameters)
-        self.model.train()
-        epochs = int(self.params["local_epochs"])
-        for _ in range(epochs):
-            for x, y in self.train_loader:
-                x, y = x.to(DEVICE), y.to(DEVICE)
-                self.optimizer.zero_grad()
-                logits = self.model(x)
-                loss = self.criterion(logits, y)
-                loss.backward()
-                self.optimizer.step()
-                # métricas de incertidumbre en validación
-                metrics = uncertainty_metrics(self.model, self.val_loader, device=DEVICE, T=int(config.get("T", 20)))
-                # importante: el servidor usará 'entropy' y 'val_accuracy'
-        num_examples = len(self.train_loader.dataset)
-        return get_weights(self.model), num_examples, metrics
-
-# ****** * * * * *  * *  *  *   *   *    *    *  * * * * * * * * ********
-        print(" ***************************************** FIT self.params.client_id ", self.params)
-        print(f"[Client {self.params.client_id}] fit")
-        self.set_parameters(parameters)
-        train(self.model,self.params,self.dataset)
         trainloader_dataset_len = self.dataset.train_size
         return self.get_parameters(config={}), trainloader_dataset_len, {}
-# ****** * * * * *  * *  *  *   *   *    *    *  * * * * * * * * ********
+
 #    @torch.no_grad()
     def evaluate(self, parameters, params):
 # ****** * * * * *  * *  *  *   *   *    *    *  * * * * * * * * ********
