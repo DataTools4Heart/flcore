@@ -40,6 +40,8 @@ if __name__ == "__main__":
     parser.add_argument("--num_rounds", type=int, default=50, help="Number of federated iterations")
     parser.add_argument("--model", type=str, default="random_forest", help="Model to train")
     parser.add_argument("--dataset", type=str, default="dt4h_format", help="Dataloader to use")
+    parser.add_argument("--train_labels", type=str, nargs='+', default=None, help="Dataloader to use")
+    parser.add_argument("--target_label", type=str, nargs='+', default=None, help="Dataloader to use")
     #parser.add_argument("--sandbox_path", type=str, default="./", help="Sandbox path to use")
     #parser.add_argument("--certs_path", type=str, default="./", help="Certificates path")
 
@@ -50,12 +52,15 @@ if __name__ == "__main__":
     parser.add_argument("--weighted_random_forest", type=json.loads, default={"balanced_rf": "true", "levelOfDetail": "DecisionTree"}, help="Weighted random forest parameters")
     parser.add_argument("--checkpoint_selection_metric", type=str, default="precision", help="Metric used for checkpoints")
     parser.add_argument("--production_mode", type=str, default="True",  help="Production mode")
+    parser.add_argument("--neural_network", type=json.loads, default={"dropout_p": 0.2, "device": "cpu","local_epochs":100}, help="Neural Network parameters")
 
     #parser.add_argument("--Wdata_path", type=str, default=None, help="Data path")
     parser.add_argument("--local_port", type=int, default=8081, help="Local port")
     parser.add_argument("--experiment", type=json.loads, default={"name": "experiment_1", "log_path": "logs", "debug": "true"}, help="experiment logs")
     parser.add_argument("--random_forest", type=json.loads, default={"balanced_rf": "true"}, help="Random forest parameters")
     parser.add_argument("--n_features", type=int, default=0, help="Number of features")
+    parser.add_argument("--metrics_aggregation", type=str, default="weighted_average",  help="Metrics")
+    parser.add_argument("--strategy", type=str, default="FedAvg",  help="Metrics")
 
     args = parser.parse_args()
 
@@ -66,12 +71,25 @@ if __name__ == "__main__":
         config["linear_models"] = {}
         config['linear_models']['n_features'] = config["n_features"]
         config["held_out_center_id"] = -1
+    elif config["model"] == "nn": # in ("nn", "BNN"):
+#        config["n_feats"] = config["n_features"]
+        config["n_feats"] = len(config["train_labels"])
+        config["n_out"] = 1 # Quizás añadir como parámetro también
+        config["dropout_p"] = config["neural_network"]["dropout_p"]
+        config["device"] = config["neural_network"]["device"]
+        config["batch_size"] = 32
+        config["lr"] = 1e-3
+        config["local_epochs"] = config["neural_network"]["local_epochs"]
+
+    config["min_fit_clients"] = config["num_clients"]
+    config["min_evaluate_clients"] = config["num_clients"]
+    config["min_available_clients"] = config["num_clients"]
 
     experiment_dir = Path(os.path.join(config["experiment"]["log_path"], config["experiment"]["name"]))
     config["experiment_dir"] = experiment_dir
 
     # Create sandbox log file path
-    sandbox_log_file = Path(os.path.join("/sandbox", "log_server.txt"))
+    sandbox_log_file = Path(os.path.join("./sandbox", "log_server.txt"))
 
     # Set up the file handler (writes to file)
     file_handler = logging.FileHandler(sandbox_log_file)
