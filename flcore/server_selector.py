@@ -18,7 +18,7 @@ def get_model_server_and_strategy(config):
     elif model == "xgb":
         server, strategy = xgb_server.get_server_and_strategy(config) #, data)
     elif model == "nn":
-        server,strategy = nn_server.get_server_and_strategy(config)
+        server, strategy = nn_server.get_server_and_strategy(config)
     else:
         raise ValueError(f"Unknown model: {model}")
 
