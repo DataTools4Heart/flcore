@@ -5,6 +5,8 @@
 # Project: DT4H
 # ********* * * * * *  *  *   *   *    *   *  *  *  * * * * *
 
+import torch
+from typing import Dict, List, Tuple
 
 @torch.no_grad()
 def predict_proba_mc(self, x, T: int = 20):
