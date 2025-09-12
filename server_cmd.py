@@ -42,7 +42,7 @@ if __name__ == "__main__":
     parser.add_argument("--dataset", type=str, default="dt4h_format", help="Dataloader to use")
     parser.add_argument("--train_labels", type=str, nargs='+', default=None, help="Dataloader to use")
     parser.add_argument("--target_label", type=str, nargs='+', default=None, help="Dataloader to use")
-    #parser.add_argument("--sandbox_path", type=str, default="./", help="Sandbox path to use")
+    parser.add_argument("--sandbox_path", type=str, default="./sandbox", help="Sandbox path to use")
     #parser.add_argument("--certs_path", type=str, default="./", help="Certificates path")
 
     parser.add_argument("--smooth_method", type=str, default="EqualVoting", help="Weight smoothing")
@@ -89,7 +89,9 @@ if __name__ == "__main__":
     config["experiment_dir"] = experiment_dir
 
     # Create sandbox log file path
-    sandbox_log_file = Path(os.path.join("./sandbox", "log_server.txt"))
+# Originalmente estaba asi:
+#    sandbox_log_file = Path(os.path.join("./sandbox", "log_server.txt"))
+    sandbox_log_file = Path(os.path.join(config["sandbox_path"], "log_server.txt"))
 
     # Set up the file handler (writes to file)
     file_handler = logging.FileHandler(sandbox_log_file)
