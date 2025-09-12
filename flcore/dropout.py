@@ -20,17 +20,14 @@ from flwr.common.logger import log
 import random
 
 def select_clients(dropout_method, percentage_drop,clients,clients_first_round_time,server_round,clients_num_examples):
-    match dropout_method:
-        case "Fast_at_odd_rounds":
+    if dropout_method == "Fast_at_odd_rounds":
             clients = Fast_at_odd_rounds(server_round,clients,clients_first_round_time, percentage_drop)
-
-        case "Fast_every_three":
+    elif dropout_method == "Fast_every_three":
             clients = Fast_every_three(server_round,clients,clients_first_round_time, percentage_drop)
 
-        case "random_dropout":
+    elif dropout_method == "random_dropout":
             clients = random_dropout(server_round,clients,clients_first_round_time, percentage_drop)
-            
-        case _:
+    else:
             clients = Less_participants_at_odd_rounds(server_round,clients, clients_num_examples,percentage_drop)
 
     return clients
