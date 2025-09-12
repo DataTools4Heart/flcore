@@ -5,9 +5,10 @@ import torch.nn.functional as F
 class BasicNN(nn.Module):
     def __init__(self,n_feats, n_out , p: float = 0.2):
         super().__init__()
-        self.fc1 = nn.Linear(28 * 28, 256)
-        self.fc2 = nn.Linear(256, 128)
-        self.fc3 = nn.Linear(128, 10)
+        print("NFEATS", n_feats)
+        self.fc1 = nn.Linear(n_feats, 64)
+        self.fc2 = nn.Linear(64, 64)
+        self.fc3 = nn.Linear(64, n_out)
         self.dropout = nn.Dropout(p)
 
     def forward(self, x):
