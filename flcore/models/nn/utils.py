@@ -47,18 +47,3 @@ def uncertainty_metrics(model, val_loader, device="cpu", T: int = 20) -> Dict[st
             entropy_mean = torch.cat(ents).mean().item()
             acc = correct / max(1, total)
     return {"entropy": float(entropy_mean), "val_accuracy": float(acc)}
-
-
-# =================== LAS OTRAS
-
-from typing import Dict, List
-import numpy as np
-import torch
-
-def get_weights(model) -> List[np.ndarray]:
-    return [v.detach().cpu().numpy() for _, v in model.state_dict().items()]
-
-def set_weights(model, weights: List[np.ndarray]):
-    state_dict = model.state_dict()
-    params = {k: torch.tensor(w) for k, w in zip(state_dict.keys(), weights)}
-    model.load_state_dict(params)
