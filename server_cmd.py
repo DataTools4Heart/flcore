@@ -136,7 +136,7 @@ if __name__ == "__main__":
 
     # Now you can use logging in both places
     logging.debug("This will be logged to both the console and the file.")
-    
+
     # Your existing code continues here...
     # For example, the following logs will go to both stdout and file:
     logging.debug("Starting Flower server...")
@@ -185,6 +185,14 @@ if __name__ == "__main__":
     with open("config.yaml", "w") as f:
         yaml.dump(vars(args), f, default_flow_style=False)
     os.system(f"cp config.yaml {experiment_dir}")
+
+    if config["strategy"] == "UncertaintyWeighted":
+        if config["model"] == "nn":
+            pass
+        else:
+           print("UncertaintyWeighted is only available for NN")
+           print("Changing strategy to FedAvg")
+           config["strategy"] = "FedAvg"
 
     server, strategy = get_model_server_and_strategy(config)
 
