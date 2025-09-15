@@ -20,7 +20,7 @@ from flcore.metrics import metrics_aggregation_fn
 from sklearn.metrics import log_loss
 from typing import Dict
 import joblib
-from flcore.models.linear_models.FedCustomAggregator import FedCustom
+from flcore.models.nn.FedCustomAggregator import UncertaintyWeightedFedAvg
 from flcore.datasets import load_dataset
 from sklearn.ensemble import RandomForestClassifier
 from flcore.models.linear_models.utils import get_model
@@ -69,6 +69,10 @@ def get_server_and_strategy(config):
         min_fit_clients = config["min_fit_clients"],
         min_evaluate_clients = config["min_evaluate_clients"],
         min_available_clients = config["min_available_clients"])
-
+    elif config["strategy"] == "UncertaintyWeighted":
+        strategy = UncertaintyWeightedFedAvg(
+        min_fit_clients = config["min_fit_clients"],
+        min_evaluate_clients = config["min_evaluate_clients"],
+        min_available_clients = config["min_available_clients"])
     return None, strategy
 
