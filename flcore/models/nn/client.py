@@ -38,6 +38,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from flcore.models.nn.basic_nn import BasicNN
+from flcore.models.nn.utils import uncertainty_metrics
 
 class FlowerClient(fl.client.NumPyClient):
     def __init__(self, config, data):
@@ -63,6 +64,7 @@ class FlowerClient(fl.client.NumPyClient):
         test_ds = TensorDataset(self.X_test, self.y_test)
         self.train_loader = DataLoader(train_ds, batch_size=self.batch_size, shuffle=True)
         self.test_loader = DataLoader(test_ds, batch_size=self.batch_size, shuffle=False)
+        self.val_loader = DataLoader(test_ds, batch_size=self.batch_size, shuffle=False)
 
         self.model = BasicNN( config["n_feats"], config["n_out"], config["dropout_p"] ).to(self.device)
 #        self.criterion = nn.CrossEntropyLoss()
@@ -102,7 +104,7 @@ class FlowerClient(fl.client.NumPyClient):
         for epoch in range(self.epochs):
             self.model.train()
             total_loss, correct, total = 0, 0, 0
-            
+
             for X, y in self.train_loader:
                 X, y = X.to(self.device), y.to(self.device)
                 logits = self.model(X)
@@ -118,29 +120,23 @@ class FlowerClient(fl.client.NumPyClient):
                 self.optimizer.zero_grad()
                 loss.backward()
                 self.optimizer.step()
-                """
-                self.optimizer.step()
                 # métricas de incertidumbre en validación
-                metrics = uncertainty_metrics(self.model, self.val_loader, device=DEVICE, T=int(config.get("T", 20)))
+                metrics = uncertainty_metrics(self.model, self.val_loader, device=self.device, T=int(self.params["temperature"]))
                 # importante: el servidor usará 'entropy' y 'val_accuracy'
-
-                num_examples = len(self.train_loader.dataset)
-                return get_weights(self.model), num_examples, metrics
-                """                
-                # métricas
                 total_loss += loss.item() * X.size(0)
                 correct += (preds == y).sum().item()
                 total += y.size(0)
-            
+
             train_loss = total_loss / total
             train_acc = correct / total
             #test_loss, test_acc = self.evaluate()
-            
+
             print(f"Epoch {epoch+1:02d} | "
                   f"Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.4f} ")
             #      f"Test Loss: {test_loss:.4f}, Test Acc: {test_acc:.4f}")
 
         dataset_len = self.y_train.shape[0]
+#       return get_weights(self.model), num_examples, metrics
         return self.get_parameters(config={}), dataset_len, {}
 
 #    @torch.no_grad()
