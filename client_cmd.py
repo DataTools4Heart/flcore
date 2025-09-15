@@ -230,3 +230,7 @@ for attempt in range(3):
         else:
             print("All connection attempts failed.")
             raise
+
+sys.stdout.flush()
+sys.stderr.flush()
+os._exit(0)
