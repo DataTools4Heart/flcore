@@ -44,7 +44,9 @@ if __name__ == "__main__":
 #    parser.add_argument("--n_features", type=int, default=0, help="Number of features")
     parser.add_argument("--random_forest", type=json.loads, default={"balanced_rf": "true"}, help="Random forest parameters")
     parser.add_argument("--weighted_random_forest", type=json.loads, default={"balanced_rf": "true", "levelOfDetail": "DecisionTree"}, help="Weighted random forest parameters")
-    parser.add_argument("--neural_network", type=json.loads, default={"dropout_p": 0.2, "device": "cpu","local_epochs":100}, help="Neural Network parameters")
+    parser.add_argument("--neural_network", type=json.loads, default={"dropout_p": 0.2, "device": "cpu","local_epochs":10}, help="Neural Network parameters")
+    parser.add_argument("--temperature", type=int, default=20, help="Temperature for entropy calculation")
+
     # params : type: "nn", "BNN" Bayesiana, otros
     parser.add_argument("--xgb", type=json.loads, default={"batch_size": 32,"num_iterations": 100,"task_type": "BINARY","tree_num": 500}, help="XGB parameters")
 
