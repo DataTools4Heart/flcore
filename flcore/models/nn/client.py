@@ -121,7 +121,7 @@ class FlowerClient(fl.client.NumPyClient):
                 loss.backward()
                 self.optimizer.step()
                 # métricas de incertidumbre en validación
-                metrics = uncertainty_metrics(self.model, self.val_loader, device=self.device, T=int(self.params["temperature"]))
+                metrics = uncertainty_metrics(self.model, self.val_loader, device=self.device, T=int(self.params["T"]))
                 # importante: el servidor usará 'entropy' y 'val_accuracy'
                 total_loss += loss.item() * X.size(0)
                 correct += (preds == y).sum().item()

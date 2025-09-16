@@ -61,7 +61,7 @@ if __name__ == "__main__":
     parser.add_argument("--n_features", type=int, default=0, help="Number of features")
     parser.add_argument("--metrics_aggregation", type=str, default="weighted_average",  help="Metrics")
     parser.add_argument("--strategy", type=str, default="FedAvg",  help="Metrics")
-    parser.add_argument("--temperature", type=int, default=20, help="Temperature for entropy calculation")
+    parser.add_argument("--T", type=int, default=20, help="Samples of MC dropout")
     args = parser.parse_args()
 
     config = vars(args)
