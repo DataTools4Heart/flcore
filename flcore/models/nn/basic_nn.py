@@ -35,10 +35,11 @@ class BasicNN(nn.Module):
         for _ in range(T):
             logits = self(x)
             probs.append(F.softmax(logits, dim=-1))
-            probs = torch.stack(probs, dim=0) # [T, B, C]
-            mean = probs.mean(dim=0)
-            var = probs.var(dim=0) # var. epistemológica aprox.
-            return mean, var
+
+        probs = torch.stack(probs, dim=0) # [T, B, C]
+        mean = probs.mean(dim=0)
+        var = probs.var(dim=0) # var. epistemológica aprox.
+        return mean, var
 
 
     @torch.no_grad()
