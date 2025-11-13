@@ -17,7 +17,7 @@ model_names = [
    "lsvc",
     "random_forest",
     "balanced_random_forest",
-    # "weighted_random_forest",
+    # # "weighted_random_forest",
     "xgb"
     ]
 
@@ -55,6 +55,7 @@ class TestFLCoreModels:
         self, model_name, dataset_name
     ):
         self.config["model"] = model_name
+        self.config['data_path'] = 'dataset/'
         self.config["dataset"] = dataset_name
         
         from flcore.client_selector import get_model_client
