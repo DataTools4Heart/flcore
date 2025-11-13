@@ -11,7 +11,7 @@ def get_model_client(config, data, client_id):
     if model in ("logistic_regression", "elastic_net", "lsvc"):
         client = linear_models.client.get_client(config,data,client_id)
 
-    elif model == "random_forest":
+    elif model in ("random_forest", "balanced_random_forest"):
         client = random_forest.client.get_client(config,data,client_id) 
     
     elif model == "weighted_random_forest":

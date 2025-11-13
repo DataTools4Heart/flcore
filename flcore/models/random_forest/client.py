@@ -30,8 +30,9 @@ class MnistClient(fl.client.Client):
         # Load data
         (self.X_train, self.y_train), (self.X_test, self.y_test) = data
         self.splits_nested  = datasets.split_partitions(n_folds_out,0.2, seed, self.X_train, self.y_train)
-        self.bal_RF = config['random_forest']['balanced_rf']
-        self.model = utils.get_model(self.bal_RF) 
+        self.bal_RF = True if config['model'] == 'balanced_random_forest' else False
+        self.model = utils.get_model(self.bal_RF)
+        self.round_time = 0 
         # Setting initial parameters, akin to model.compile for keras models
         utils.set_initial_params_client(self.model,self.X_train, self.y_train)
     def get_parameters(self, ins: GetParametersIns):  # , config type: ignore
@@ -64,6 +65,7 @@ class MnistClient(fl.client.Client):
             #To implement the center dropout, we need the execution time
             start_time = time.time()
             self.model.fit(X_train_2, y_train_2)
+            elapsed_time = (time.time() - start_time)
             #accuracy = model.score( X_test, y_test )
             # accuracy,specificity,sensitivity,balanced_accuracy, precision, F1_score = \
             # measurements_metrics(self.model,X_val, y_val)
@@ -76,8 +78,8 @@ class MnistClient(fl.client.Client):
             # print(f"precision in fit:  {precision}")
             # print(f"F1_score in fit:  {F1_score}")
     
-            elapsed_time = (time.time() - start_time)
             metrics["running_time"] = elapsed_time
+            self.round_time = elapsed_time
 
             print(f"num_client {self.client_id} has an elapsed time {elapsed_time}")
             
@@ -108,6 +110,8 @@ class MnistClient(fl.client.Client):
         # measurements_metrics(self.model,self.X_test, self.y_test)
         y_pred = self.model.predict(self.X_test)
         metrics = calculate_metrics(self.y_test, y_pred)
+        metrics["round_time [s]"] = self.round_time
+        metrics["client_id"] = self.client_id
         # print(f"Accuracy client in evaluate:  {accuracy}")
         # print(f"Sensitivity client in evaluate:  {sensitivity}")
         # print(f"Specificity client in evaluate:  {specificity}")

@@ -13,7 +13,7 @@ def get_model_server_and_strategy(config, data=None):
         server, strategy = linear_models_server.get_server_and_strategy(
             config
         )
-    elif model == "random_forest":
+    elif model in ("random_forest", "balanced_random_forest"):
         server, strategy = random_forest_server.get_server_and_strategy(
             config
         )
