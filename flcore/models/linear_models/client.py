@@ -37,15 +37,13 @@ class MnistClient(fl.client.NumPyClient):
         # scaled_features_df = pd.DataFrame(scaled_features, index=self.X_test.index, columns=self.X_test.columns)
         # self.X_test = scaled_features_df
 
-        self.model_name = config['model']
-        self.n_features = config['linear_models']['n_features']
-        self.model = utils.get_model(self.model_name)
+        self.model = utils.get_model(config)
         self.round_time = 0
         self.first_round = True
         self.personalize = True
         # Setting initial parameters, akin to model.compile for keras models
-        utils.set_initial_params(self.model,self.n_features)
-    
+        utils.set_initial_params(self.model, config)
+
     def get_parameters(self, config):  # type: ignore
         #compute the feature selection
         #We perform it from the one called by the server
