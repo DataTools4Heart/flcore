@@ -1,6 +1,7 @@
 from typing import Tuple, Union, List
 import numpy as np
 from sklearn.linear_model import LogisticRegression,SGDClassifier
+from sklearn.linear_model import LinearRegression, ElasticNet
 
 XY = Tuple[np.ndarray, np.ndarray]
 Dataset = Tuple[XY, XY]
@@ -8,33 +9,63 @@ LinearMLParams = Union[XY, Tuple[np.ndarray]]
 LinearClassifier = Union[LogisticRegression, SGDClassifier]
 XYList = List[XY]
 
-
 def get_model(config):
+    # Esto cubre clasificación con SVM y logistic regression con y sin elastic net
+    if config["task"] == "classification":
+        if config["model"] == "lsvc":
+                #Linear classifiers (SVM, logistic regression, etc.) with SGD training.
+                #If we use hinge, it implements SVM
+                model = SGDClassifier(
+                    max_iter=config["max_iter"],
+                    n_iter_no_change=1000,
+                    average=True,
+                    random_state=config["seed"],
+                    warm_start=True,
+                    fit_intercept=True,
+                    loss="hinge",
+                    learning_rate='optimal')
 
-    if config["model"] == "lsvc":
-            #Linear classifiers (SVM, logistic regression, etc.) with SGD training.
-            #If we use hinge, it implements SVM
-            model = SGDClassifier(
-                max_iter=config["max_iter"],
-                n_iter_no_change=1000,
-                average=True,
-                random_state=config["seed"],
-                warm_start=True,
-                fit_intercept=True,
-                loss="hinge",
-                learning_rate='optimal')
+        elif config["model"] == "logistic_regression":
+                model = LogisticRegression(
+                    penalty=config["penalty"],
+                    solver=config["solver"], #necessary param for elasticnet otherwise error
+                    l1_ratio=config["l1_ratio"],#necessary param for elasticnet otherwise error
+                    #max_iter=1,  # local epoch ==>> it doesn't work
+                    max_iter=config["max_iter"],
+                    warm_start=True,  # prevent refreshing weights when fitting
+                    random_state=config["seed"])
+    #                class_weight= config["class_weight"],
+    # Aqui cubrimos regresión con modelo lineal
+    elif config["task"] == "regression":
+        # nos solicitan tambien el pearson coefficiente:
+        # from scipy.stats import pearsonr
+        if config["model"] == "linear_regression":
+            if config["penalty"] == "elasticnet":
+                model = ElasticNet(
+                    alpha=1.0, 
+                    l1_ratio=config["l1_ratio"],
+                    fit_intercept=True,
+                    precompute=False,
+                    max_iter=config["max_iter"],
+                    copy_X=True,
+                    tol=0.0001,
+                    warm_start=False,
+                    positive=False,
+                    random_state=config["seed"],
+                    selection='cyclic')
+            elif config["penalty"] == "l1":
+                pass
+                # ¿LASSOO?
+            elif config["penalty"] == "l2":
+                pass
+                # ¿RIDGE?
+            elif config["penalty"] == "none" or config["penalty"] == None: 
+                model = LinearRegression()
+    else:
+        # Invalid combinations: already managed by sanity check
+        #print("COMBINACIóN NO VÁLIDA: no debió llegar aquí")
+        pass
 
-    elif config["model"] == "logistic_regression":
-            model = LogisticRegression(
-                penalty=config["penalty"],
-                solver=config["solver"], #necessary param for elasticnet otherwise error
-                l1_ratio=config["l1_ratio"],#necessary param for elasticnet otherwise error
-                #max_iter=1,  # local epoch ==>> it doesn't work
-                max_iter=config["max_iter"],
-                warm_start=True,  # prevent refreshing weights when fitting
-                random_state=config["seed"],
-#                class_weight= config["class_weight"],
-        )
     return model
 
 def get_model_parameters(model: LinearClassifier) -> LinearMLParams:
