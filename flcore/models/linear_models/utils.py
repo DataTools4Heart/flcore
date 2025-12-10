@@ -9,38 +9,32 @@ LinearClassifier = Union[LogisticRegression, SGDClassifier]
 XYList = List[XY]
 
 
-def get_model(model_name, local=False):
+def get_model(config):
 
-    if local:
-        max_iter = 100000
-    else:
-        max_iter = 1
-    
-    if model_name == "lsvc":
+    if config["model"] == "lsvc":
             #Linear classifiers (SVM, logistic regression, etc.) with SGD training.
             #If we use hinge, it implements SVM
-            model = SGDClassifier(max_iter=max_iter,n_iter_no_change=1000,average=True,random_state=42,class_weight= "balanced",warm_start=True,fit_intercept=True,loss="hinge", learning_rate='optimal')
-    elif model_name == "logistic_regression":
-            model = LogisticRegression(
-            penalty="l2",
-            #max_iter=1,  # local epoch ==>> it doesn't work
-            max_iter=max_iter,  # local epoch
-            warm_start=True,  # prevent refreshing weights when fitting
-            random_state=42,
-            class_weight= "balanced" #For unbalanced
-        )
-    elif "elastic_net":
-            model = LogisticRegression(
-            l1_ratio=0.5,#necessary param for elasticnet otherwise error
-            penalty="elasticnet",
-            solver='saga', #necessary param for elasticnet otherwise error
-            #max_iter=1,  # local epoch ==>> it doesn't work
-            max_iter=max_iter,  # local epoch
-            warm_start=True,  # prevent refreshing weights when fitting
-            random_state=42,
-            class_weight= "balanced" #For unbalanced
-        )
+            model = SGDClassifier(
+                max_iter=config["max_iter"],
+                n_iter_no_change=1000,
+                average=True,
+                random_state=config["seed"],
+                warm_start=True,
+                fit_intercept=True,
+                loss="hinge",
+                learning_rate='optimal')
 
+    elif config["model"] == "logistic_regression":
+            model = LogisticRegression(
+                penalty=config["penalty"],
+                solver=config["solver"], #necessary param for elasticnet otherwise error
+                l1_ratio=config["l1_ratio"],#necessary param for elasticnet otherwise error
+                #max_iter=1,  # local epoch ==>> it doesn't work
+                max_iter=config["max_iter"],
+                warm_start=True,  # prevent refreshing weights when fitting
+                random_state=config["seed"],
+#                class_weight= config["class_weight"],
+        )
     return model
 
 def get_model_parameters(model: LinearClassifier) -> LinearMLParams:
@@ -71,14 +65,16 @@ def set_model_params(
     return model
 
 
-def set_initial_params(model: LinearClassifier,n_features):
+def set_initial_params(model: LinearClassifier,config):
     """Sets initial parameters as zeros Required since model params are
     uninitialized until model.fit is called.
     But server asks for initial parameters from clients at launch. Refer
     to sklearn.linear_model.LogisticRegression documentation for more
     information.
     """    
-    n_classes = 2  # MNIST has 10 classes
+    #n_classes = 2  # MNIST has 10 classes
+    n_classes = config["n_out"]  # MNIST has 10 classes
+    n_features = config["n_feats"]
     #n_features = 9  # Number of features in dataset
     model.classes_ = np.array([i for i in range(n_classes)])
 
