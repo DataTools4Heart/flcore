@@ -36,8 +36,12 @@ if __name__ == "__main__":
     # Variables training related
     parser.add_argument("--num_rounds", type=int, default=50, help="Number of federated iterations")
     parser.add_argument("--checkpoint_selection_metric", type=str, default="precision", help="Metric used for checkpoints")
+    # Esos dropouts puede que sean para el server y yno deberían estar aquí
     parser.add_argument("--dropout_method", type=str, default=None, help="Determines if dropout is used")
-    parser.add_argument("--smooth_method", type=str, default=None, help="Weight smoothing")
+    parser.add_argument("--dropout_percentage", type=str, default=None, help="Ratio of dropout nodes")
+    parser.add_argument("--smooth_method", type=str, default=None, help="Smoothing method")
+    parser.add_argument("--smoothing_strenght", type=str, default=None, help="Smoothing strenght")
+    # _____________________________________________________________________________________
     parser.add_argument("--seed", type=int, default=42, help="Seed")
     parser.add_argument("--experiment", type=json.loads, default={"name": "experiment_1", "log_path": "logs", "debug": "true"}, help="experiment logs")
     parser.add_argument("--smoothWeights", type=json.loads, default= {"smoothing_strenght": 0.5}, help="Smoothing parameters")
