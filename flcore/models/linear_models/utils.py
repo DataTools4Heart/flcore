@@ -56,9 +56,12 @@ def get_model(config):
             elif config["penalty"] == "l1":
                 pass
                 # ¿LASSOO?
+#class sklearn.linear_model.Lasso(alpha=1.0, *, fit_intercept=True, precompute=False, copy_X=True, max_iter=1000, tol=0.0001, warm_start=False, positive=False, random_state=None, selection='cyclic')
             elif config["penalty"] == "l2":
                 pass
                 # ¿RIDGE?
+#                 sklearn.linear_model.Ridge(alpha=1.0, *, fit_intercept=True, copy_X=True, max_iter=None, tol=0.0001, solver='auto', positive=False, random_state=None)[source]
+
             elif config["penalty"] == "none" or config["penalty"] == None: 
                 model = LinearRegression()
     else:
