@@ -102,6 +102,11 @@ if __name__ == "__main__":
 
     pattern = "*.parquet"
     parquet_files = glob.glob(os.path.join(est, pattern))
+    # Saniy check, empty list
+    if len(parquet_files) == 0:
+        print("No parquet files found in ",est)
+        sys.exit()
+
     # ¿How to choose one of the list?
     config["data_file"] = parquet_files[-1]
 
