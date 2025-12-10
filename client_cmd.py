@@ -68,7 +68,7 @@ if __name__ == "__main__":
     parser.add_argument("--levelOfDetail", type=str, default="DecisionTree", help="Level of detail")
     # # Neural networks
     # params : type: "nn", "BNN" Bayesiana, otros
-   parser.add_argument("--neural_network", type=json.loads, default={"dropout_p": 0.2, "device": "cpu","local_epochs":10}, help="Neural Network parameters")
+    parser.add_argument("--neural_network", type=json.loads, default={"dropout_p": 0.2, "device": "cpu","local_epochs":10}, help="Neural Network parameters")
     parser.add_argument("--dropout_p", type=int, default=0.2, help="Montecarlo dropout rate")
     parser.add_argument("--T", type=int, default=20, help="Samples of MC dropout")
     parser.add_argument("--model", type=str, default="random_forest", help="Model to train")
@@ -115,6 +115,21 @@ if __name__ == "__main__":
 
 ###################### AQUI HAY QUE PONER LO DEL SANITY CHECK, concordancia entre task, modelo, etc
     """
+    if config["model"] == "logistic_regression":
+        if config["penalty"] == "elasticnet":
+            if config["solver"] != "saga":
+                config["solver"] = "saga"
+            if config["l1_ratio"] == 0:
+                print("Degenerate case equivalent to Penalty L1")
+            elif config["l1_ratio"] == 1:
+                print("Degenerate case equivalent to Penalty L2")
+        if config["penalty"] == "L1":
+            if config["l1_ratio"] != 0:
+               config["l1_ratio"] = 0
+            elif config["l1_ratio"] != 1:
+               config["l1_ratio"] = 1
+                
+            
 En el sanity check hay que poner que el uncertainty aware es solamente para NN
 Solvers como 'newton-cg', 'sag', 'lbfgs' — sólo soportan L2 o ninguna penalización. 
 Scikit-learn
