@@ -23,15 +23,14 @@ import time
 
 # Define Flower client
 class MnistClient(fl.client.Client):
-    def __init__(self, data,client_id,config):
-        self.client_id = client_id
+    def __init__(self, data, config):
+        self.node_name = config["node_name"]
         n_folds_out= config['num_rounds']
-        seed=42
+        seed=config["seed"]
         # Load data
         (self.X_train, self.y_train), (self.X_test, self.y_test) = data
         self.splits_nested  = datasets.split_partitions(n_folds_out,0.2, seed, self.X_train, self.y_train)
-        self.bal_RF = config['random_forest']['balanced_rf']
-        self.model = utils.get_model(self.bal_RF) 
+        self.model = utils.get_model(config)
         # Setting initial parameters, akin to model.compile for keras models
         utils.set_initial_params_client(self.model,self.X_train, self.y_train)
     def get_parameters(self, ins: GetParametersIns):  # , config type: ignore
@@ -79,7 +78,7 @@ class MnistClient(fl.client.Client):
             elapsed_time = (time.time() - start_time)
             metrics["running_time"] = elapsed_time
 
-            print(f"num_client {self.client_id} has an elapsed time {elapsed_time}")
+            print(f"num_client {self.node_name} has an elapsed time {elapsed_time}")
             
         print(f"Training finished for round {ins.config['server_round']}")
 
@@ -128,7 +127,7 @@ class MnistClient(fl.client.Client):
         )
 
 
-def get_client(config,data,client_id) -> fl.client.Client:
-    return MnistClient(data,client_id,config)
+def get_client(config,data) -> fl.client.Client:
+    return MnistClient(data, config)
     # # Start Flower client
     # fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=MnistClient())

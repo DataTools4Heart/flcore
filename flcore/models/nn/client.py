@@ -169,7 +169,7 @@ class FlowerClient(fl.client.NumPyClient):
 #        return total_loss / total, correct / total
         return float(total_loss), dataset_len, {"accuracy": float(acc)}
 
-def get_client(config,data,client_id) -> fl.client.Client:
+def get_client(config,data) -> fl.client.Client:
 #    client = FlowerClient(params).to_client()
     return FlowerClient(config,data)
 #_______________________________________________________________________________________

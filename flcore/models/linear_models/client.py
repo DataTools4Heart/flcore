@@ -19,8 +19,8 @@ from sklearn.preprocessing import StandardScaler
 
 # Define Flower client
 class MnistClient(fl.client.NumPyClient):
-    def __init__(self, data,client_id,config):
-        self.client_id = client_id
+    def __init__(self, data,config):
+        self.node_name = config["node_name"]
         # Load data
         (self.X_train, self.y_train), (self.X_test, self.y_test) = data
 
@@ -68,7 +68,7 @@ class MnistClient(fl.client.NumPyClient):
             y_pred = self.model.predict(self.X_test)
 
             metrics = calculate_metrics(self.y_test, y_pred)
-            print(f"Client {self.client_id} Evaluation just after local training: {metrics['balanced_accuracy']}")
+            print(f"Client {self.node_name} Evaluation just after local training: {metrics['balanced_accuracy']}")
             # Add 'personalized' to the metrics to identify them
             metrics = {f"personalized {key}": metrics[key] for key in metrics}
             self.round_time = (time.time() - start_time)
@@ -120,8 +120,8 @@ class MnistClient(fl.client.NumPyClient):
         return loss, len(y_pred),  metrics
 
 
-def get_client(config,data,client_id) -> fl.client.Client:
-    return MnistClient(data,client_id,config)
+def get_client(config,data) -> fl.client.Client:
+    return MnistClient(data,config)
     # # Start Flower client
     # fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=MnistClient())
 
