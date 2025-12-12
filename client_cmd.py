@@ -124,6 +124,7 @@ if __name__ == "__main__":
 
 ###################### AQUI HAY QUE PONER LO DEL SANITY CHECK, concordancia entre task, modelo, etc
     """
+    # Compaibilidad de logistic regression y elastic net con sus parámetros
     if config["model"] == "logistic_regression":
         if config["penalty"] == "elasticnet":
             if config["solver"] != "saga":
@@ -136,21 +137,25 @@ if __name__ == "__main__":
             if config["l1_ratio"] != 0:
                config["l1_ratio"] = 0
             elif config["l1_ratio"] != 1:
-               config["l1_ratio"] = 1
-                
+               config["l1_ratio"] = 1                
             
-En el sanity check hay que poner que el uncertainty aware es solamente para NN
-Solvers como 'newton-cg', 'sag', 'lbfgs' — sólo soportan L2 o ninguna penalización. 
-Scikit-learn
-+1
+        En el sanity check hay que poner que el uncertainty aware es solamente para NN
+        Solvers como 'newton-cg', 'sag', 'lbfgs' — sólo soportan L2 o ninguna penalización. 
 
-Solvers 'liblinear' — soportan L1 y L2 (pero no elasticnet). 
-Qu4nt
-+1
+        Solvers 'liblinear' — soportan L1 y L2 (pero no elasticnet). 
 
-Solver 'saga' — soporta L1, L2 y elasticnet, por lo que es el más flexible entre ellos. 
-Scikit-learn
-+1
+        Solver 'saga' — soporta L1, L2 y elasticnet, por lo que es el más flexible entre ellos. 
+    # Disponibilidad de clasificación / regresión según el modelo
+
+    if config["model"] in ["lsvc", "logistic_regression"]:
+        if config["task"] == "regression":
+            print("The nature of the selected ML models does not allow to perform regression")
+            print("if you want to perform regression with a linear model you can change to linear regression)
+            # sys.exit()
+    elif config["model"] == "linear_regression":
+        if config["task"] == "classification":
+            print("The nature of the selected ML model does not allow to perform classification")
+            # sys.exit()
     """
 
     if config["model"] in ("logistic_regression", "elastic_net", "lsvc"):
