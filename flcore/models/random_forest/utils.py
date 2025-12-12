@@ -1,7 +1,7 @@
 from typing import Optional, Tuple, List
 import numpy as np
 import pandas as pd
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from imblearn.ensemble import BalancedRandomForestClassifier
 
 XY = Tuple[np.ndarray, np.ndarray]
@@ -21,12 +21,41 @@ NDArrays = List[NDArray]
 from typing import cast
 
 
-def get_model(bal_RF):
-    if(bal_RF == True):
-        model = BalancedRandomForestClassifier(n_estimators=100,random_state=42)
-    else:
-        model = RandomForestClassifier(n_estimators=100,class_weight= "balanced",max_depth=2,random_state=42)
-    
+def get_model(config):
+    if config["task"] == "classification":
+        # ESTOS DOS CASOS YA CUBREN RANDOM FOREST BALANCEADO,
+        if (config["balanced"] == True or config["balanced"] == "True"):
+        #if str(config["balanced"]).lower() == "true":
+            model = BalancedRandomForestClassifier(
+                n_estimators=config["n_estimators"],
+                random_state=config["seed"])
+        else:
+            model = RandomForestClassifier(
+                n_estimators=config["n_estimators"],
+                random_state=config["seed"],
+                class_weight=config["class_weight"],
+                max_depth=config["max_depth"])
+    elif config["task"] == "regression":
+        model = RandomForestRegressor(
+            n_estimators=config["n_estimators"],
+            criterion=config["regression_criterion"],
+            max_depth=config["max_depth"],
+            min_samples_split=2,
+            min_samples_leaf=1,
+            min_weight_fraction_leaf=0.0,
+            max_features=1.0,
+            max_leaf_nodes=None,
+            min_impurity_decrease=0.0,
+            bootstrap=True,
+            oob_score=False,
+            n_jobs=None,
+            random_state=config["seed"],
+            verbose=0,
+            warm_start=False,
+            ccp_alpha=0.0,
+            max_samples=None,
+            monotonic_cst=None)
+
     return model
 
 def get_model_parameters(model: RandomForestClassifier) -> RFRegParams:
