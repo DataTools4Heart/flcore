@@ -2,6 +2,7 @@ from typing import Tuple, Union, List
 import numpy as np
 from sklearn.linear_model import LogisticRegression,SGDClassifier
 from sklearn.linear_model import LinearRegression, ElasticNet
+from sklearn.linear_model import Lasso, Ridge
 
 XY = Tuple[np.ndarray, np.ndarray]
 Dataset = Tuple[XY, XY]
@@ -54,13 +55,28 @@ def get_model(config):
                     random_state=config["seed"],
                     selection='cyclic')
             elif config["penalty"] == "l1":
-                pass
                 # ¿LASSOO?
-#class sklearn.linear_model.Lasso(alpha=1.0, *, fit_intercept=True, precompute=False, copy_X=True, max_iter=1000, tol=0.0001, warm_start=False, positive=False, random_state=None, selection='cyclic')
+                model = Lasso(
+                    fit_intercept=True,
+                    precompute=False,
+                    copy_X=True,
+                    max_iter=config["max_iter"],
+                    tol=0.0001,
+                    warm_start=False,
+                    positive=False,
+                    random_state=config["seed"],
+                    selection='cyclic')
             elif config["penalty"] == "l2":
-                pass
                 # ¿RIDGE?
-#                 sklearn.linear_model.Ridge(alpha=1.0, *, fit_intercept=True, copy_X=True, max_iter=None, tol=0.0001, solver='auto', positive=False, random_state=None)[source]
+                model = Ridge(
+                    fit_intercept=True,
+                    copy_X=True,
+                    max_iter=config["max_iter"],
+                    tol=0.0001,
+                    solver='auto',
+                    positive=False,
+                    random_state=config["seed"],
+                    )
 
             elif config["penalty"] == "none" or config["penalty"] == None: 
                 model = LinearRegression()
