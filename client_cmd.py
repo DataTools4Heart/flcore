@@ -265,7 +265,7 @@ num_client = 0 # config["client_id"]
 (X_train, y_train), (X_test, y_test) = datasets.load_dataset(config, num_client)
 
 data = (X_train, y_train), (X_test, y_test)
-client = get_model_client(config, data, num_client)
+client = get_model_client(config, data)
 """
 if isinstance(client, fl.client.NumPyClient):
     fl.client.start_numpy_client(
