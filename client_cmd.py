@@ -70,6 +70,7 @@ if __name__ == "__main__":
     parser.add_argument("--max_depth", type=int, default=2, help="Max depth")
     parser.add_argument("--class_weight", type=str, default="balanced", help="Class weight")
     parser.add_argument("--levelOfDetail", type=str, default="DecisionTree", help="Level of detail")
+    parser.add_argument("--regression_criterion", type=str, default="squared_error", help="Criterion for training")
     # # Neural networks
     # params : type: "nn", "BNN" Bayesiana, otros
     parser.add_argument("--neural_network", type=json.loads, default={"dropout_p": 0.2, "device": "cpu","local_epochs":10}, help="Neural Network parameters")
