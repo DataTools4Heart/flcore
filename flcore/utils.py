@@ -1,3 +1,4 @@
+import sys
 import numpy as np
 
 import flcore.models.linear_models as linear_models
@@ -45,59 +46,59 @@ class StreamToLogger:
         pass
 
 def SanityCheck(config):
-    ###################### AQUI HAY QUE PONER LO DEL SANITY CHECK, concordancia entre task, modelo, etc
-    """
     # Compaibilidad de logistic regression y elastic net con sus parámetros
+    linear_regression_models_list = ["linear_regression","lasso_regression","ridge_regression","linear_regression_elasticnet"]
     if config["model"] == "logistic_regression":
-        if config["penalty"] == "elasticnet":
-            if config["solver"] != "saga":
-                config["solver"] = "saga"
-            if config["l1_ratio"] == 0:
-                print("Degenerate case equivalent to Penalty L1")
-            elif config["l1_ratio"] == 1:
-                print("Degenerate case equivalent to Penalty L2")
-        if config["penalty"] == "L1":
-            if config["l1_ratio"] != 0:
-               config["l1_ratio"] = 0
-            elif config["l1_ratio"] != 1:
-               config["l1_ratio"] = 1                
-            
-        En el sanity check hay que poner que el uncertainty aware es solamente para NN
-        Solvers como 'newton-cg', 'sag', 'lbfgs' — sólo soportan L2 o ninguna penalización. 
-
-        Solvers 'liblinear' — soportan L1 y L2 (pero no elasticnet). 
-
-        Solver 'saga' — soporta L1, L2 y elasticnet, por lo que es el más flexible entre ellos. 
-    # Disponibilidad de clasificación / regresión según el modelo
-
-    if config["model"] in ["lsvc", "logistic_regression"]:
-        if config["task"] == "regression":
+        if config["task"] == "classification":
+            if config["penalty"] == "elasticnet":
+                if config["solver"] != "saga":
+                    config["solver"] = "saga"
+                if config["l1_ratio"] == 0:
+                    print("Degenerate case equivalent to Penalty L1")
+                elif config["l1_ratio"] == 1:
+                    print("Degenerate case equivalent to Penalty L2")
+            if config["penalty"] == "L1":
+                if config["l1_ratio"] != 0:
+                    config["l1_ratio"] = 0
+                elif config["l1_ratio"] != 1:
+                    config["l1_ratio"] = 1
+        elif config["task"] == "regression":
             print("The nature of the selected ML models does not allow to perform regression")
-            print("if you want to perform regression with a linear model you can change to linear regression)
-            # sys.exit()
-    elif config["model"] == "linear_regression":
+            print("if you want to perform regression with a linear model you can change to linear_regression")
+            sys.exit()
+    elif config["model"] == "lsvc":
+        if config["task"] == "classification":
+            pass
+            # verificar variables
+        elif config["task"] == "regression":
+            print("The nature of the selected ML models does not allow to perform regression")
+            sys.exit()
+    elif config["model"] in linear_regression_models_list:
         if config["task"] == "classification":
             print("The nature of the selected ML model does not allow to perform classification")
-            # sys.exit()
-    """
-
-    if config["model"] in ("logistic_regression", "elastic_net", "lsvc"):
-        config["linear_models"] = {}
-        n_feats = len(config["train_labels"])
-        config['linear_models']['n_features'] = n_feats # config["n_features"]
-        config["held_out_center_id"] = -1
-    elif config["model"] == "nn": # in ("nn", "BNN"):
+            print("if you want to perform classification with a linear model you can change to logistic_regression")
+            sys.exit()
+        elif config["task"] == "regression":
+            if config["model"] == "lasso_regression":
+                config["model"] == "linear_regression"
+                config["penalty"] = "l1"
+            elif config["model"] == "ridge_regression":
+                config["model"] == "linear_regression"
+                config["penalty"] = "l2"
+            elif config["model"] == "linear_regression_elasticnet":
+                config["model"] == "linear_regression"
+                config["penalty"] = "elasticnet"
+    elif config["model"] == "logistic_regression_elasticnet":
+        if config["task"] == "classification":
+            config["model"] = "logistic_regression"
+            config["penalty"] = "elasticnet"
+            config["solver"] = "saga"
+        elif config["task"] == "regression":
+            print("The nature of the selected ML model does not allow to perform regression despite its name")
+            sys.exit()
+    elif config["model"] == "nn":
         config["n_feats"] = len(config["train_labels"])
         config["n_out"] = 1 # Quizás añadir como parámetro también
-        config["dropout_p"] = config["neural_network"]["dropout_p"]
-        config["device"] = config["neural_network"]["device"]
-        config["batch_size"] = 32
-        config["lr"] = 1e-3
-        config["local_epochs"] = config["neural_network"]["local_epochs"]
-# **************************************************************************************************************
-#    parser.add_argument("--xgb", type=json.loads, default={"batch_size": 32,"num_iterations": 100,"task_type": "BINARY","tree_num": 500}, help="XGB parameters")
     elif config["model"] == "xgb":
         pass
-# **************************************************************************************************************
-
     return config
