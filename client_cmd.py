@@ -33,6 +33,7 @@ if __name__ == "__main__":
     parser.add_argument("--train_size", type=float, default=0.8, help="Fraction of dataset to use for training. [0,1)")
     # Variables training related
     parser.add_argument("--num_rounds", type=int, default=50, help="Number of federated iterations")
+    parser.add_argument("--lr", type=float, default=1e-3, help="Learning rate when needed")    
     parser.add_argument("--checkpoint_selection_metric", type=str, default="precision", help="Metric used for checkpoints")
     # Esos dropouts puede que sean para el server y yno deberían estar aquí
     parser.add_argument("--dropout_method", type=str, default=None, help="Determines if dropout is used")
@@ -58,7 +59,7 @@ if __name__ == "__main__":
 
     # Specific variables model related
     # # Linear models
-    parser.add_argument("--penalty", type=str, default="l2", help="Penalties: none, l1, l2, elasticnet")
+    parser.add_argument("--penalty", type=str, default="none", help="Penalties: none, l1, l2, elasticnet")
     parser.add_argument("--solver", type=str, default="saga", help="Numerical solver of optimization method")
     parser.add_argument("--l1_ratio", type=str, default=0.5, help="L1-L2 Ratio, necessary for ElasticNet, 0 -> L1 ; 1 -> L2")
     parser.add_argument("--max_iter", type=int, default=100000, help="Max iterations of optimizer")
