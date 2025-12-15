@@ -19,6 +19,10 @@ if __name__ == "__main__":
     parser.add_argument("--model", type=str, default="random_forest", help="Model to train")
     parser.add_argument("--num_rounds", type=int, default=50, help="Number of federated iterations")
     parser.add_argument("--num_clients", type=int, default=1, help="Number of clients")
+    parser.add_argument("--min_fit_clients", type=int, default=0, help="Minimum number of fit clients")
+    parser.add_argument("--min_evaluate_clients", type=int, default=0, help="Minimum number of evaluate clients")
+    parser.add_argument("--min_available_clients", type=int, default=0, help="Minimum number of available clients")
+    
     parser.add_argument("--sandbox_path", type=str, default="./sandbox", help="Sandbox path to use")
     parser.add_argument("--local_port", type=int, default=8081, help="Local port")
     parser.add_argument("--production_mode", type=str, default="True",  help="Production mode")
