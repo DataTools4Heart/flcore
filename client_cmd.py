@@ -53,6 +53,10 @@ if __name__ == "__main__":
     parser.add_argument("--solver", type=str, default="saga", help="Numerical solver of optimization method")
     parser.add_argument("--l1_ratio", type=str, default=0.5, help="L1-L2 Ratio, necessary for ElasticNet, 0 -> L1 ; 1 -> L2")
     parser.add_argument("--max_iter", type=int, default=100000, help="Max iterations of optimizer")
+    parser.add_argument("--tol", type=str, default="0.001", help="Gamma for SVR")
+    parser.add_argument("--kernel", type=str, default="rbf", help="Kernel of SVR")
+    parser.add_argument("--degree", type=int, default=3, help="Degree of polinonial")
+    parser.add_argument("--gamma", type=str, default="scale", help="Gamma for SVR")
     # # Random forest
     parser.add_argument("--balanced", type=str, default="True", help="Balanced Random Forest: True or False")
     parser.add_argument("--n_estimators", type=int, default=100, help="Number of estimators")
@@ -64,7 +68,8 @@ if __name__ == "__main__":
     # params : type: "nn", "BNN" Bayesiana, otros
     parser.add_argument("--dropout_p", type=int, default=0.2, help="Montecarlo dropout rate")
     parser.add_argument("--T", type=int, default=20, help="Samples of MC dropout")
-    """parser.add_argument("--model", type=str, default="random_forest", help="Model to train")
+    """
+    parser.add_argument("--model", type=str, default="random_forest", help="Model to train")
     parser.add_argument("--model", type=str, default="random_forest", help="Model to train")
     parser.add_argument("--model", type=str, default="random_forest", help="Model to train")
     parser.add_argument("--model", type=str, default="random_forest", help="Model to train")

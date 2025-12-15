@@ -1,8 +1,9 @@
-from typing import Tuple, Union, List
 import numpy as np
+from typing import Tuple, Union, List
 from sklearn.linear_model import LogisticRegression,SGDClassifier
 from sklearn.linear_model import LinearRegression, ElasticNet
 from sklearn.linear_model import Lasso, Ridge
+from sklearn.svm import SVR
 
 XY = Tuple[np.ndarray, np.ndarray]
 Dataset = Tuple[XY, XY]
@@ -13,7 +14,7 @@ XYList = List[XY]
 def get_model(config):
     # Esto cubre clasificación con SVM y logistic regression con y sin elastic net
     if config["task"] == "classification":
-        if config["model"] == "lsvc":
+        if config["model"] in ["lsvc","svm"]:
                 #Linear classifiers (SVM, logistic regression, etc.) with SGD training.
                 #If we use hinge, it implements SVM
                 model = SGDClassifier(
@@ -49,7 +50,7 @@ def get_model(config):
                     precompute=False,
                     max_iter=config["max_iter"],
                     copy_X=True,
-                    tol=0.0001,
+                    tol=config["tol"],
                     warm_start=False,
                     positive=False,
                     random_state=config["seed"],
@@ -61,7 +62,7 @@ def get_model(config):
                     precompute=False,
                     copy_X=True,
                     max_iter=config["max_iter"],
-                    tol=0.0001,
+                    tol=config["tol"],
                     warm_start=False,
                     positive=False,
                     random_state=config["seed"],
@@ -72,14 +73,27 @@ def get_model(config):
                     fit_intercept=True,
                     copy_X=True,
                     max_iter=config["max_iter"],
-                    tol=0.0001,
+                    tol=config["tol"],
                     solver='auto',
                     positive=False,
                     random_state=config["seed"],
                     )
-
             elif config["penalty"] == "none" or config["penalty"] == None: 
                 model = LinearRegression()
+        elif config["model"] in ["svm", "svr"]:
+            # Añadir el support vector regression
+            model = SVR(
+                kernel=config["max_iter"],
+                degree=3,
+                gamma=config["gamma"],
+                coef0=0.0,
+                tol=config["tol"],
+                C=1.0,
+                epsilon=0.1,
+                shrinking=True,
+                cache_size=200,
+                verbose=False,
+                max_iter=config["max_iter"])
     else:
         # Invalid combinations: already managed by sanity check
         #print("COMBINACIóN NO VÁLIDA: no debió llegar aquí")
