@@ -154,7 +154,6 @@ def CheckClientConfig(config):
         parsed = i.replace("]", "").replace("[", "").replace(",", "")
         new.append(parsed)
     config["target_labels"] = new
-# _________________________________________________________________________________________________--
 
     return config
 
@@ -172,32 +171,17 @@ def CheckServerConfig(config):
         config['smooth_method']== 'SsupperQuartile' or \
         config['smooth_method']== 'None'), 'the smooth methods are not correct: EqualVoting, SlowerQuartile and SsupperQuartile'
 
-    if(config['model'] == 'weighted_random_forest'):
+    """if(config['model'] == 'weighted_random_forest'):
          assert (config['weighted_random_forest']['levelOfDetail']== 'DecisionTree' or \
             config['weighted_random_forest']['levelOfDetail']== 'RandomForest'), 'the levels of detail for weighted RF are not correct: DecisionTree and RandomForest '
-
-    if config["model"] in ("logistic_regression", "elastic_net", "lsvc"):
-        print("LINEAR", config["model"], config["n_features"])
-        config["linear_models"] = {}
-        config['linear_models']['n_features'] = config["n_features"]
-        config["held_out_center_id"] = -1
-    elif config["model"] == "nn": # in ("nn", "NN"):
-        config["n_feats"] = config["n_features"]
-#        config["n_feats"] = len(config["train_labels"])
-#        config["n_out"] = 1 # Quizás añadir como parámetro también
-        config["n_out"] = config["n_out"]
-        config["dropout_p"] = config["neural_network"]["dropout_p"]
-        config["device"] = config["neural_network"]["device"]
-        config["batch_size"] = 32
-        config["lr"] = 1e-3
-        config["local_epochs"] = config["neural_network"]["local_epochs"]
-
-    config["min_fit_clients"] = config["num_clients"]
-    config["min_evaluate_clients"] = config["num_clients"]
-    config["min_available_clients"] = config["num_clients"]
-
-    experiment_dir = Path(os.path.join(config["experiment"]["log_path"], config["experiment"]["name"]))
-    config["experiment_dir"] = experiment_dir
+    """
+# _________________________________________________________________________________________________--
+    if config["min_fit_clients"] == 0:
+        config["min_fit_clients"] = config["num_clients"]
+    if config["min_evaluate_clients"] == 0:
+        config["min_evaluate_clients"] = config["num_clients"]
+    if config["min_available_clients"] == 0:
+        config["min_available_clients"] = config["num_clients"]
 
     if config["strategy"] == "UncertaintyWeighted":
         if config["model"] == "nn":
@@ -206,10 +190,5 @@ def CheckServerConfig(config):
            print("UncertaintyWeighted is only available for NN")
            print("Changing strategy to FedAvg")
            config["strategy"] = "FedAvg"
-
-        # Create experiment directory
-    experiment_dir = Path(os.path.join(config["experiment"]["log_path"], config["experiment"]["name"]))
-    experiment_dir.mkdir(parents=True, exist_ok=True)
-    config["experiment_dir"] = experiment_dir
 
     return config
