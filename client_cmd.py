@@ -12,7 +12,7 @@ import logging
 #import grpc
 
 import flcore.datasets as datasets
-from flcore.utils import StreamToLogger, GetModelClient, SanityCheck
+from flcore.utils import StreamToLogger, GetModelClient, CheckClientConfig
 
 if __name__ == "__main__":
 
@@ -83,7 +83,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     config = vars(args)
-    config = SanityCheck(config)
+    config = CheckClientConfig(config)
 
     # Create sandbox log file path
     sandbox_log_file = Path(os.path.join(config["sandbox_path"], "log_client.txt"))
