@@ -35,18 +35,8 @@ if __name__ == "__main__":
     parser.add_argument("--num_rounds", type=int, default=50, help="Number of federated iterations")
     parser.add_argument("--lr", type=float, default=1e-3, help="Learning rate when needed")    
     parser.add_argument("--checkpoint_selection_metric", type=str, default="precision", help="Metric used for checkpoints")
-    # Esos dropouts puede que sean para el server y yno deberían estar aquí
-    parser.add_argument("--dropout_method", type=str, default=None, help="Determines if dropout is used")
-    parser.add_argument("--dropout_percentage", type=str, default=None, help="Ratio of dropout nodes")
-    parser.add_argument("--smooth_method", type=str, default=None, help="Smoothing method")
-    parser.add_argument("--smoothing_strenght", type=str, default=None, help="Smoothing strenght")
-    # _____________________________________________________________________________________
     parser.add_argument("--seed", type=int, default=42, help="Seed")
-    parser.add_argument("--experiment", type=json.loads, default={"name": "experiment_1", "log_path": "logs", "debug": "true"}, help="experiment logs")
-    parser.add_argument("--smoothWeights", type=json.loads, default= {"smoothing_strenght": 0.5}, help="Smoothing parameters")
-    # ________________________________________________________________________________
     parser.add_argument("--num_clients", type=int, default=1, help="Number of clients") # shouldnt exist here
-    # ________________________________________________________________________________
 
     # General variables model related
     parser.add_argument("--model", type=str, default="random_forest", help="Model to train")
@@ -72,57 +62,29 @@ if __name__ == "__main__":
     parser.add_argument("--regression_criterion", type=str, default="squared_error", help="Criterion for training")
     # # Neural networks
     # params : type: "nn", "BNN" Bayesiana, otros
-    parser.add_argument("--neural_network", type=json.loads, default={"dropout_p": 0.2, "device": "cpu","local_epochs":10}, help="Neural Network parameters")
     parser.add_argument("--dropout_p", type=int, default=0.2, help="Montecarlo dropout rate")
     parser.add_argument("--T", type=int, default=20, help="Samples of MC dropout")
+    """parser.add_argument("--model", type=str, default="random_forest", help="Model to train")
     parser.add_argument("--model", type=str, default="random_forest", help="Model to train")
     parser.add_argument("--model", type=str, default="random_forest", help="Model to train")
     parser.add_argument("--model", type=str, default="random_forest", help="Model to train")
-    parser.add_argument("--model", type=str, default="random_forest", help="Model to train")
+    """
     # # XGB
+    ##############################################################################
     parser.add_argument("--xgb", type=json.loads, default={"batch_size": 32,"num_iterations": 100,"task_type": "BINARY","tree_num": 500}, help="XGB parameters")
+    ##############################################################################
     parser.add_argument("--tree_num", type=int, default=100, help="Number of trees")
+    """
     parser.add_argument("--model", type=str, default="random_forest", help="Model to train")
     parser.add_argument("--model", type=str, default="random_forest", help="Model to train")
     parser.add_argument("--model", type=str, default="random_forest", help="Model to train")
     parser.add_argument("--model", type=str, default="random_forest", help="Model to train")
-# *******************************************************************************************************************
+    """
 
     args = parser.parse_args()
-
     config = vars(args)
+    config = SanityCheck(config)
 
-    est = config["data_id"]
-    id = est.split("/")[-1]
-#    dir_name = os.path.dirname(config["data_id"])
-    dir_name_parent = str(Path(config["data_id"]).parent)
-
-#    config["metadata_file"] = os.path.join(dir_name_parent,"metadata.json")
-    config["metadata_file"] = os.path.join(est,"metadata.json")
-
-    pattern = "*.parquet"
-    parquet_files = glob.glob(os.path.join(est, pattern))
-    # Saniy check, empty list
-    if len(parquet_files) == 0:
-        print("No parquet files found in ",est)
-        sys.exit()
-
-    # ¿How to choose one of the list?
-    config["data_file"] = parquet_files[-1]
-
-    new = []
-    for i in config["train_labels"]:
-        parsed = i.replace("]", "").replace("[", "").replace(",", "")
-        new.append(parsed)
-    config["train_labels"] = new
-
-    new = []
-    for i in config["target_label"]:
-        parsed = i.replace("]", "").replace("[", "").replace(",", "")
-        new.append(parsed)
-    config["target_labels"] = new
-
-    SanityCheck()
     # Create sandbox log file path
     sandbox_log_file = Path(os.path.join(config["sandbox_path"], "log_client.txt"))
 
@@ -159,7 +121,8 @@ if __name__ == "__main__":
     # Now you can use logging in both places
     logging.debug("This will be logged to both the console and the file.")
 
-    model = config["model"]
+#### PODRIAMOS QUITAR ESTO DE PRODUCTION MODE; NO TIENE NINGUN SENTIDO
+    #model = config["model"]
     if config["production_mode"] == "True":
         node_name = os.getenv("NODE_NAME")
 #        num_client = int(node_name.split("_")[-1])
@@ -194,30 +157,13 @@ if __name__ == "__main__":
 #            raise ValueError("Please provide the client id when running in simulation mode")
 #        num_client = int(sys.argv[1])
 
+# *******************************************************************************************
+# Aquí lo correcto es cargar todo como instancias de dataloader de torch
 num_client = 0 # config["client_id"]
 (X_train, y_train), (X_test, y_test) = datasets.load_dataset(config, num_client)
-
 data = (X_train, y_train), (X_test, y_test)
 client = GetModelClient(config, data)
-"""
-if isinstance(client, fl.client.NumPyClient):
-    fl.client.start_numpy_client(
-        server_address=f"{central_ip}:{central_port}",
-#        credentials=ssl_credentials,
-        root_certificates=root_certificate,
-        client=client,
-#        channel = channel,
-    )
-else:
-    fl.client.start_client(
-        server_address=f"{central_ip}:{central_port}",
-#        credentials=ssl_credentials,
-        root_certificates=root_certificate,
-        client=client,
-#        channel = channel,
-    )
-#fl.client.start_client(channel=channel, client=client)
-"""
+# *******************************************************************************************
 for attempt in range(3):
     try:
         if isinstance(client, fl.client.NumPyClient):
