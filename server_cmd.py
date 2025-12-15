@@ -1,92 +1,48 @@
-import warnings
 import os
 import sys
-from pathlib import Path
-import argparse
-import json
-import logging
-
-import flwr as fl
-import numpy
 import yaml
-import flcore.datasets as datasets
-from flcore.server_selector import get_model_server_and_strategy
-from flcore.compile_results import compile_results
+import json
+import numpy
+import logging
+import warnings
+import argparse
+import flwr as fl
+from pathlib import Path
+
+from flcore.utils import StreamToLogger, CheckServerConfig, GetModelServerStrategy
 
 warnings.filterwarnings("ignore")
 
-def check_config(config):
-    assert isinstance(config['num_clients'], int), 'num_clients should be an int'
-    assert isinstance(config['num_rounds'], int), 'num_rounds should be an int'
-    if(config['smooth_method'] != 'None'):
-        assert config['smoothWeights']['smoothing_strenght'] >= 0 and config['smoothWeights']['smoothing_strenght'] <= 1, 'smoothing_strenght should be betwen 0 and 1'
-    if(config['dropout_method'] != 'None'):
-        assert config['dropout']['percentage_drop'] >= 0 and config['dropout']['percentage_drop'] < 100, 'percentage_drop should be betwen 0 and 100'
-
-    assert (config['smooth_method']== 'EqualVoting' or \
-        config['smooth_method']== 'SlowerQuartile' or \
-        config['smooth_method']== 'SsupperQuartile' or \
-        config['smooth_method']== 'None'), 'the smooth methods are not correct: EqualVoting, SlowerQuartile and SsupperQuartile'
-
-    if(config['model'] == 'weighted_random_forest'):
-         assert (config['weighted_random_forest']['levelOfDetail']== 'DecisionTree' or \
-            config['weighted_random_forest']['levelOfDetail']== 'RandomForest'), 'the levels of detail for weighted RF are not correct: DecisionTree and RandomForest '
-
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Reads parameters from command line.")
-
-    parser.add_argument("--num_clients", type=int, default=1, help="Number of clients")
-    parser.add_argument("--num_rounds", type=int, default=50, help="Number of federated iterations")
+    # General settings
     parser.add_argument("--model", type=str, default="random_forest", help="Model to train")
-    parser.add_argument("--dataset", type=str, default="dt4h_format", help="Dataloader to use")
-    parser.add_argument("--train_labels", type=str, nargs='+', default=None, help="Dataloader to use")
-    parser.add_argument("--target_label", type=str, nargs='+', default=None, help="Dataloader to use")
+    parser.add_argument("--num_rounds", type=int, default=50, help="Number of federated iterations")
+    parser.add_argument("--num_clients", type=int, default=1, help="Number of clients")
     parser.add_argument("--sandbox_path", type=str, default="./sandbox", help="Sandbox path to use")
+    parser.add_argument("--local_port", type=int, default=8081, help="Local port")
+    parser.add_argument("--production_mode", type=str, default="True",  help="Production mode")
     #parser.add_argument("--certs_path", type=str, default="./", help="Certificates path")
 
-    parser.add_argument("--smooth_method", type=str, default="EqualVoting", help="Weight smoothing")
-    parser.add_argument("--smoothWeights", type=json.loads, default= {"smoothing_strenght": 0.5}, help="Smoothing parameters")
-    parser.add_argument("--dropout_method", type=str, default=None, help="Determines if dropout is used")
-    parser.add_argument("--dropout", type=json.loads, default={"percentage_drop":0}, help="Dropout parameters")
-    parser.add_argument("--weighted_random_forest", type=json.loads, default={"balanced_rf": "true", "levelOfDetail": "DecisionTree"}, help="Weighted random forest parameters")
-    parser.add_argument("--checkpoint_selection_metric", type=str, default="precision", help="Metric used for checkpoints")
-    parser.add_argument("--production_mode", type=str, default="True",  help="Production mode")
-    parser.add_argument("--neural_network", type=json.loads, default={"dropout_p": 0.2, "device": "cpu","local_epochs":100}, help="Neural Network parameters")
-
-    #parser.add_argument("--Wdata_path", type=str, default=None, help="Data path")
-    parser.add_argument("--local_port", type=int, default=8081, help="Local port")
-    parser.add_argument("--experiment", type=json.loads, default={"name": "experiment_1", "log_path": "logs", "debug": "true"}, help="experiment logs")
-    parser.add_argument("--random_forest", type=json.loads, default={"balanced_rf": "true"}, help="Random forest parameters")
-    parser.add_argument("--n_features", type=int, default=0, help="Number of features")
-    parser.add_argument("--metrics_aggregation", type=str, default="weighted_average",  help="Metrics")
+    # Strategy settings
     parser.add_argument("--strategy", type=str, default="FedAvg",  help="Metrics")
-    parser.add_argument("--T", type=int, default=20, help="Samples of MC dropout")
+    parser.add_argument("--smooth_method", type=str, default="EqualVoting", help="Weight smoothing")
+    parser.add_argument("--smoothing_strenght", type=float, default=0.5, help="Smoothing strenght")
+    parser.add_argument("--dropout_method", type=str, default=None, help="Determines if dropout is used")
+    parser.add_argument("--dropout_percentage", type=str, default=None, help="Ratio of dropout nodes")
+    parser.add_argument("--checkpoint_selection_metric", type=str, default="precision", help="Metric used for checkpoints")
+    parser.add_argument("--metrics_aggregation", type=str, default="weighted_average",  help="Metrics")
+    parser.add_argument("--experiment_dir", type=str, default="experiment_1", help="Experiment directory")
+# *******************************************************************************************
+    parser.add_argument("--weighted_random_forest", type=json.loads, default={"balanced_rf": "true", "levelOfDetail": "DecisionTree"}, help="Weighted random forest parameters")
+    parser.add_argument("--random_forest", type=json.loads, default={"balanced_rf": "true"}, help="Random forest parameters")
+    parser.add_argument("--n_feats", type=int, default=0, help="Number of features")
+    parser.add_argument("--n_out", type=int, default=0, help="Number of outputs")
+# *******************************************************************************************
+
     args = parser.parse_args()
-
     config = vars(args)
-
-    if config["model"] in ("logistic_regression", "elastic_net", "lsvc"):
-        print("LINEAR", config["model"], config["n_features"])
-        config["linear_models"] = {}
-        config['linear_models']['n_features'] = config["n_features"]
-        config["held_out_center_id"] = -1
-    elif config["model"] == "nn": # in ("nn", "BNN"):
-#        config["n_feats"] = config["n_features"]
-        config["n_feats"] = len(config["train_labels"])
-        config["n_out"] = 1 # Quizás añadir como parámetro también
-        config["dropout_p"] = config["neural_network"]["dropout_p"]
-        config["device"] = config["neural_network"]["device"]
-        config["batch_size"] = 32
-        config["lr"] = 1e-3
-        config["local_epochs"] = config["neural_network"]["local_epochs"]
-
-    config["min_fit_clients"] = config["num_clients"]
-    config["min_evaluate_clients"] = config["num_clients"]
-    config["min_available_clients"] = config["num_clients"]
-
-    experiment_dir = Path(os.path.join(config["experiment"]["log_path"], config["experiment"]["name"]))
-    config["experiment_dir"] = experiment_dir
+    config = CheckServerConfig(config)
 
     # Create sandbox log file path
 # Originalmente estaba asi:
@@ -113,19 +69,6 @@ if __name__ == "__main__":
     logger.addHandler(file_handler)
     logger.addHandler(console_handler)
 
-    # Redirect print() and sys.stdout/sys.stderr into logger
-    class StreamToLogger:
-        def __init__(self, logger, level):
-            self.logger = logger
-            self.level = level
-
-        def write(self, message):
-            for line in message.rstrip().splitlines():
-                self.logger.log(self.level, line.rstrip())
-
-        def flush(self):
-            pass
-
     # Create two sub-loggers
     stdout_logger = logging.getLogger("STDOUT")
     stderr_logger = logging.getLogger("STDERR")
@@ -141,8 +84,6 @@ if __name__ == "__main__":
     # For example, the following logs will go to both stdout and file:
     logging.debug("Starting Flower server...")
 
-    #Check the config file
-    check_config(config)
     if config["production_mode"] == "True":
         print("TRUE")
         #data_path = ""
@@ -168,33 +109,14 @@ if __name__ == "__main__":
         central_port = config["local_port"]
         certificates = None
 
-    # Create experiment directory
-    experiment_dir = Path(os.path.join(config["experiment"]["log_path"], config["experiment"]["name"]))
-    experiment_dir.mkdir(parents=True, exist_ok=True)
-    config["experiment_dir"] = experiment_dir
-
     # Checkpoint directory for saving the model
-    checkpoint_dir = experiment_dir / "checkpoints"
+    checkpoint_dir = config["experiment_dir"] / "checkpoints"
     checkpoint_dir.mkdir(parents=True, exist_ok=True)
     # # History directory for saving the history
     # history_dir = experiment_dir / "history"
     # history_dir.mkdir(parents=True, exist_ok=True)
 
-    # Copy the config file to the experiment directory
-
-    with open("config.yaml", "w") as f:
-        yaml.dump(vars(args), f, default_flow_style=False)
-    os.system(f"cp config.yaml {experiment_dir}")
-
-    if config["strategy"] == "UncertaintyWeighted":
-        if config["model"] == "nn":
-            pass
-        else:
-           print("UncertaintyWeighted is only available for NN")
-           print("Changing strategy to FedAvg")
-           config["strategy"] = "FedAvg"
-
-    server, strategy = get_model_server_and_strategy(config)
+    server, strategy = GetModelServerStrategy(config)
 
     # Start Flower server for three rounds of federated learning
     history = fl.server.start_server(
