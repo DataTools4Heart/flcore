@@ -33,7 +33,7 @@ if __name__ == "__main__":
     parser.add_argument("--smooth_method", type=str, default="EqualVoting", help="Weight smoothing")
     parser.add_argument("--smoothing_strenght", type=float, default=0.5, help="Smoothing strenght")
     parser.add_argument("--dropout_method", type=str, default=None, help="Determines if dropout is used")
-    parser.add_argument("--dropout_percentage", type=str, default=None, help="Ratio of dropout nodes")
+    parser.add_argument("--dropout_percentage", type=float, default=0.0, help="Ratio of dropout nodes")
     parser.add_argument("--checkpoint_selection_metric", type=str, default="precision", help="Metric used for checkpoints")
     parser.add_argument("--metrics_aggregation", type=str, default="weighted_average",  help="Metrics")
     parser.add_argument("--experiment_dir", type=str, default="experiment_1", help="Experiment directory")
@@ -114,8 +114,8 @@ if __name__ == "__main__":
         certificates = None
 
     # Checkpoint directory for saving the model
-    checkpoint_dir = config["experiment_dir"] / "checkpoints"
-    checkpoint_dir.mkdir(parents=True, exist_ok=True)
+    #checkpoint_dir = config["experiment_dir"] + "/checkpoints"
+    #checkpoint_dir.mkdir(parents=True, exist_ok=True)
     # # History directory for saving the history
     # history_dir = experiment_dir / "history"
     # history_dir.mkdir(parents=True, exist_ok=True)

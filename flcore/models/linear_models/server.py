@@ -137,8 +137,8 @@ def evaluate_held_out(
 
 
 def get_server_and_strategy(config):
-    model = get_model(config)
-    utils.set_initial_params(model,config['n_feats'] )
+#    model = get_model(config)
+#    utils.set_initial_params(model,config['n_feats'] )
 
     # Pass parameters to the Strategy for server-side parameter initialization
     #strategy = fl.server.strategy.FedAvg(
@@ -155,7 +155,7 @@ def get_server_and_strategy(config):
         fit_metrics_aggregation_fn = metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn = metrics_aggregation_fn,
         on_fit_config_fn = fit_round,
-        checkpoint_dir = config["experiment_dir"] / "checkpoints",
+        checkpoint_dir = config["experiment_dir"] + "/checkpoints",
         dropout_method = config['dropout_method'],
         percentage_drop = config['dropout_percentage'],
         smoothing_method = config['smooth_method'],

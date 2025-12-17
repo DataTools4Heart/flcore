@@ -42,7 +42,7 @@ def GetModelClient(config, data):
 
 def GetModelServerStrategy(config):
     model = config["model"]
-    if model in ("logistic_regression", "elastic_net", "lsvc"):
+    if model in linear_models_list:
         server, strategy = linear_models_server.get_server_and_strategy(config)
     elif model == "random_forest":
         server, strategy = random_forest_server.get_server_and_strategy(config)
@@ -162,9 +162,9 @@ def CheckServerConfig(config):
     assert isinstance(config['num_clients'], int), 'num_clients should be an int'
     assert isinstance(config['num_rounds'], int), 'num_rounds should be an int'
     if(config['smooth_method'] != 'None'):
-        assert config['smoothWeights']['smoothing_strenght'] >= 0 and config['smoothWeights']['smoothing_strenght'] <= 1, 'smoothing_strenght should be betwen 0 and 1'
-    if(config['dropout_method'] != 'None'):
-        assert config['dropout']['percentage_drop'] >= 0 and config['dropout']['percentage_drop'] < 100, 'percentage_drop should be betwen 0 and 100'
+        assert config['smoothing_strenght'] >= 0 and config['smoothing_strenght'] <= 1, 'smoothing_strenght should be betwen 0 and 1'
+    #if(config['dropout_method'] != 'None' or config["dropout_method"] is not None):
+    #    assert config['percentage_drop'] >= 0 and config['percentage_drop'] < 100, 'percentage_drop should be betwen 0 and 100'
 
     assert (config['smooth_method']== 'EqualVoting' or \
         config['smooth_method']== 'SlowerQuartile' or \
