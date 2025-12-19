@@ -183,6 +183,11 @@ def CheckServerConfig(config):
     if config["min_available_clients"] == 0:
         config["min_available_clients"] = config["num_clients"]
 
+    # Specific for models:
+    if config["model"] == "random_forest":
+        assert isinstance(config['balanced'], str), 'Balanced is a parameter required when random forest model is used '
+        assert config["balanced"].lower() == "true" or config["balanced"].lower() == "false", "Balanced is required to be True or False "
+
     if config["strategy"] == "UncertaintyWeighted":
         if config["model"] == "nn":
             pass

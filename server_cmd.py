@@ -16,7 +16,7 @@ warnings.filterwarnings("ignore")
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Reads parameters from command line.")
     # General settings
-    parser.add_argument("--model", type=str, default="random_forest", help="Model to train")
+    parser.add_argument("--model", type=str, default=None, help="Model to train")
     parser.add_argument("--num_rounds", type=int, default=50, help="Number of federated iterations")
     parser.add_argument("--num_clients", type=int, default=1, help="Number of clients")
     parser.add_argument("--min_fit_clients", type=int, default=0, help="Minimum number of fit clients")
@@ -37,6 +37,10 @@ if __name__ == "__main__":
     parser.add_argument("--checkpoint_selection_metric", type=str, default="precision", help="Metric used for checkpoints")
     parser.add_argument("--metrics_aggregation", type=str, default="weighted_average",  help="Metrics")
     parser.add_argument("--experiment_dir", type=str, default="experiment_1", help="Experiment directory")
+
+    # Model specific settings
+    parser.add_argument("--balanced", type=str, default=None, help="Random forest balanced")
+
 # *******************************************************************************************
     parser.add_argument("--weighted_random_forest", type=json.loads, default={"balanced_rf": "true", "levelOfDetail": "DecisionTree"}, help="Weighted random forest parameters")
     parser.add_argument("--random_forest", type=json.loads, default={"balanced_rf": "true"}, help="Random forest parameters")

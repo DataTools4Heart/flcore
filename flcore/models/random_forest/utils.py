@@ -24,8 +24,7 @@ from typing import cast
 def get_model(config):
     if config["task"] == "classification":
         # ESTOS DOS CASOS YA CUBREN RANDOM FOREST BALANCEADO,
-        if (config["balanced"] == True or config["balanced"] == "True"):
-        #if str(config["balanced"]).lower() == "true":
+        if str(config["balanced"]).lower() == "true":
             model = BalancedRandomForestClassifier(
                 n_estimators=config["n_estimators"],
                 random_state=config["seed"])
@@ -58,6 +57,7 @@ def get_model(config):
 
     return model
 
+## ELIMINA LA CLASE RANDOM FOREST CLASSIIFIER NECESITAREMOS REGRESSION
 def get_model_parameters(model: RandomForestClassifier) -> RFRegParams:
     """Returns the paramters of a sklearn LogisticRegression model."""
     params = [model]
@@ -69,6 +69,8 @@ def set_model_params(
     model: RandomForestClassifier, params: RFRegParams
 ) -> RandomForestClassifier:
     """Sets the parameters of a sklean LogisticRegression model."""
+
+    ## AQUI HAY QUE QUITAR EL HARDCODEADO DE ESTO
     model.n_classes_ =2
     model.estimators_ = params[0]
     model.classes_ = np.array([i for i in range(model.n_classes_)])
@@ -76,6 +78,7 @@ def set_model_params(
     return model
 
 
+## ELIMINA LA CLASE RANDOM FOREST CLASSIIFIER NECESITAREMOS REGRESSION
 def set_initial_params_server(model: RandomForestClassifier):
     """Sets initial parameters as zeros Required since model params are
     uninitialized until model.fit is called.
@@ -84,6 +87,7 @@ def set_initial_params_server(model: RandomForestClassifier):
     model.estimators_ = 0
 
 
+## ELIMINA LA CLASE RANDOM FOREST CLASSIIFIER NECESITAREMOS REGRESSION
 def set_initial_params_client(model: RandomForestClassifier,X_train, y_train):
     """Sets initial parameters as zeros Required since model params are
     uninitialized until model.fit is called.
