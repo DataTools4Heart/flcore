@@ -71,8 +71,14 @@ class StreamToLogger:
 
 def CheckClientConfig(config):
     # Compaibilidad de logistic regression y elastic net con sus parámetros
+    if config["task"].lower() == "none":
+        print("Task not assigned. The  ML model  selection requieres a task to perform")
+        sys.exit()  
+
     if config["model"] == "logistic_regression":
-        if config["task"] == "classification":
+        if (config["task"] == "classification" or config["task"].lower() == "none"):
+            if config["task"].lower() == "none":
+                print("Since this model only supports classification assigning task automatically to classification")
             if config["penalty"] == "elasticnet":
                 if config["solver"] != "saga":
                     config["solver"] = "saga"
@@ -90,7 +96,9 @@ def CheckClientConfig(config):
             print("if you want to perform regression with a linear model you can change to linear_regression")
             sys.exit()
     elif config["model"] == "lsvc":
-        if config["task"] == "classification":
+        if (config["task"] == "classification"  or config["task"].lower() == "none"):
+            if config["task"].lower() == "none":
+                print("Since this model only supports classification assigning task automatically to classification")
             pass
             # verificar variables
         elif config["task"] == "regression":
@@ -101,7 +109,10 @@ def CheckClientConfig(config):
             print("The nature of the selected ML model does not allow to perform classification")
             print("if you want to perform classification with a linear model you can change to logistic_regression")
             sys.exit()
-        elif config["task"] == "regression":
+        elif (config["task"] == "regression"  or config["task"].lower() == "none"):
+            if config["task"].lower() == "none":
+                print("Since this model only supports regression assigning task automatically to regression")
+
             if config["model"] == "lasso_regression":
                 config["model"] == "linear_regression"
                 config["penalty"] = "l1"
@@ -112,7 +123,10 @@ def CheckClientConfig(config):
                 config["model"] == "linear_regression"
                 config["penalty"] = "elasticnet"
     elif config["model"] == "logistic_regression_elasticnet":
-        if config["task"] == "classification":
+        if (config["task"] == "classification"  or config["task"].lower() == "none"):
+            if config["task"].lower() == "none":
+                print("Since this model only supports classification assigning task automatically to classification")
+
             config["model"] = "logistic_regression"
             config["penalty"] = "elasticnet"
             config["solver"] = "saga"
@@ -143,13 +157,21 @@ def CheckClientConfig(config):
     # ¿How to choose one of the list?
     config["data_file"] = parquet_files[-1]
 
+    if len(config["train_labels"]) == 0:
+        print("No training labels were provided")
+        sys.exit()
+
     new = []
     for i in config["train_labels"]:
         parsed = i.replace("]", "").replace("[", "").replace(",", "")
         new.append(parsed)
     config["train_labels"] = new
 
-    new = []
+    if len(config["target_labels"]) == 0:
+        print("No target labels were provided")
+        sys.exit()
+
+    new = []        
     for i in config["target_label"]:
         parsed = i.replace("]", "").replace("[", "").replace(",", "")
         new.append(parsed)
