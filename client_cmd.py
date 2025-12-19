@@ -20,7 +20,7 @@ if __name__ == "__main__":
     # Variables node settings
     parser.add_argument("--node_name", type=str, default="./", help="Node name for certificates")
     parser.add_argument("--local_port", type=int, default=8081, help="Local port")
-    parser.add_argument("--sandbox_path", type=str, default="/sandbox", help="Sandbox path to use")
+    parser.add_argument("--sandbox_path", type=str, default="./sandbox", help="Sandbox path to use")
     parser.add_argument("--certs_path", type=str, default="/certs", help="Certificates path")
     parser.add_argument("--data_path", type=str, default="/data", help="Data path")
     parser.add_argument("--production_mode", type=str, default="True",  help="Production mode") # ¿Should exist?
@@ -42,7 +42,7 @@ if __name__ == "__main__":
     parser.add_argument("--model", type=str, default="random_forest", help="Model to train")
     parser.add_argument("--n_feats", type=int, default=0, help="Number of input features")
     parser.add_argument("--n_out", type=int, default=0, help="Number of output features")
-    parser.add_argument("--task", type=int, default=0, help="Task to perform (classification, regression)")
+    parser.add_argument("--task", type=str, default="None", help="Task to perform (classification, regression)")
     parser.add_argument("--device", type=str, default="cpu", help="Device for training, CPU, GPU")
     parser.add_argument("--local_epochs", type=int, default=10, help="Number of local epochs to train in each round")
     parser.add_argument("--batch_size", type=int, default=8, help="Batch size to train")
