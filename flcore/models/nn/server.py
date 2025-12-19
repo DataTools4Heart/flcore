@@ -21,9 +21,6 @@ from sklearn.metrics import log_loss
 from typing import Dict
 import joblib
 from flcore.models.nn.FedCustomAggregator import UncertaintyWeightedFedAvg
-from flcore.datasets import load_dataset
-from sklearn.ensemble import RandomForestClassifier
-from flcore.models.linear_models.utils import get_model
 from flcore.metrics import calculate_metrics
 from flcore.models.nn.basic_nn import BasicNN
 import torch
@@ -39,15 +36,6 @@ def equal_average(metrics: List[Tuple[int, Metrics]]) -> Metrics:
 
 
 def get_server_and_strategy(config):
-    if torch.cuda.is_available() and config["device"] == 'cuda':
-        device = torch.device('cuda')
-    else:
-        device = torch.device("cpu")
-
-    model_type = config['model']
-    model = get_model(model_type)
-    model = BasicNN( config["n_feats"], config["n_out"], config["dropout_p"] ).to(device)
-
     if config["metrics_aggregation"] == "weighted_average":
         metrics = weighted_average
     elif config["metrics_aggregation"] == "equal_average":

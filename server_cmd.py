@@ -42,8 +42,6 @@ if __name__ == "__main__":
     parser.add_argument("--balanced", type=str, default=None, help="Random forest balanced")
 
 # *******************************************************************************************
-    parser.add_argument("--weighted_random_forest", type=json.loads, default={"balanced_rf": "true", "levelOfDetail": "DecisionTree"}, help="Weighted random forest parameters")
-    parser.add_argument("--random_forest", type=json.loads, default={"balanced_rf": "true"}, help="Random forest parameters")
     parser.add_argument("--n_feats", type=int, default=0, help="Number of features")
     parser.add_argument("--n_out", type=int, default=0, help="Number of outputs")
 # *******************************************************************************************
