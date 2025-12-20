@@ -31,6 +31,8 @@ if __name__ == "__main__":
     parser.add_argument("--train_labels", type=str, nargs='+', default=None, help="Dataloader to use")
     parser.add_argument("--target_label", type=str, nargs='+', default=None, help="Dataloader to use")
     parser.add_argument("--train_size", type=float, default=0.8, help="Fraction of dataset to use for training. [0,1)")
+    parser.add_argument("--validation_size", type=float, default=0.8, help="Fraction of dataset to use for validation. [0,1)")
+    parser.add_argument("--test_size", type=float, default=0.8, help="Fraction of dataset to use for testing. [0,1)")
     # Variables training related
     parser.add_argument("--num_rounds", type=int, default=50, help="Number of federated iterations")
     parser.add_argument("--lr", type=float, default=1e-3, help="Learning rate when needed")    
