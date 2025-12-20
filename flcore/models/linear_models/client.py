@@ -20,6 +20,7 @@ from sklearn.preprocessing import StandardScaler
 # Define Flower client
 class MnistClient(fl.client.NumPyClient):
     def __init__(self, data,config):
+        self.config = config
         self.node_name = config["node_name"]
         # Load data
         (self.X_train, self.y_train), (self.X_test, self.y_test) = data
@@ -98,17 +99,36 @@ class MnistClient(fl.client.NumPyClient):
         utils.set_model_params(self.model, parameters)
 
         # Calculate validation set metrics
-        y_pred = self.model.predict(self.X_val)
+        pred = self.model.predict(self.X_val)
+        if self.config["model"] == "logistic_regression": # buscar modelos compatibles
+            y_pred = pred
+        elif self.config["model"] == "linear_regression": # idem
+            y_pred = pred[:,0]    
+        print("CLIENT::EVALUATE::Y VAL, Y PRED", self.y_val, y_pred)
         val_metrics = calculate_metrics(self.y_val, y_pred)
 
         y_pred = self.model.predict(self.X_test)
         # y_pred = self.model.predict(self.X_test.loc[:, parameters[2].astype(bool)])
 
+# .............................................................................................
+        if self.config["model"] == "logistic_regression": # buscar modelos compatibles
+            loss = log_loss(self.y_test, self.model.predict_proba(self.X_test), labels=[0, 1])
+        elif self.config["model"] == "linear_regression": # idem
+            # queda escoger la loss
+            pass
+        elif self.config["model"] in ["lsvc","svm"]:
+            loss = 1.0
+        elif config["model"] in ["svm", "svr"]:
+            # escoger loss:
+            pass
+        else:
+            pass
+# .............................................................................................
         if(isinstance(self.model, SGDClassifier)):
             loss = 1.0
         else:
             loss = log_loss(self.y_test, self.model.predict_proba(self.X_test), labels=[0, 1])
-       
+# .............................................................................................       
         metrics = calculate_metrics(self.y_test, y_pred)
         metrics["round_time [s]"] = self.round_time
         metrics["client_id"] = self.node_name
