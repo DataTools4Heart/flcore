@@ -627,7 +627,7 @@ def load_dt4h(config,id):
 
     dat_shuffled = dat.sample(frac=1).reset_index(drop=True)
 
-    target_labels = config["target_label"]
+    target_labels = config["target_labels"]
     train_labels = config["train_labels"]
     data_train = dat_shuffled[train_labels] #.to_numpy()
     data_target = dat_shuffled[target_labels] #.to_numpy()

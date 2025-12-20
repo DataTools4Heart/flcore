@@ -172,13 +172,13 @@ def CheckClientConfig(config):
         sys.exit()
 
     new = []        
-    for i in config["target_label"]:
+    for i in config["target_labels"]:
         parsed = i.replace("]", "").replace("[", "").replace(",", "")
         new.append(parsed)
     config["target_labels"] = new
 
     config["n_feats"] = len(config["train_labels"])
-    config["n_out"] = len(config["target_label"])
+    config["n_out"] = len(config["target_labels"])
     return config
 
 
