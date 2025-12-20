@@ -8,7 +8,7 @@ from sklearn.svm import SVR
 XY = Tuple[np.ndarray, np.ndarray]
 Dataset = Tuple[XY, XY]
 LinearMLParams = Union[XY, Tuple[np.ndarray]]
-LinearClassifier = Union[LogisticRegression, SGDClassifier]
+#LinearClassifier = Union[LogisticRegression, SGDClassifier]
 XYList = List[XY]
 
 def get_model(config):
@@ -96,12 +96,12 @@ def get_model(config):
                 max_iter=config["max_iter"])
     else:
         # Invalid combinations: already managed by sanity check
-        #print("COMBINACIóN NO VÁLIDA: no debió llegar aquí")
+        print("COMBINACIóN NO VÁLIDA: no debió llegar aquí")
         pass
 
     return model
 
-def get_model_parameters(model: LinearClassifier) -> LinearMLParams:
+def get_model_parameters(model):
     """Returns the paramters of a sklearn LogisticRegression model."""
     if model.fit_intercept:
         params = [
@@ -117,9 +117,7 @@ def get_model_parameters(model: LinearClassifier) -> LinearMLParams:
     return params
 
 
-def set_model_params(
-    model: LinearClassifier, params: LinearMLParams
-) -> LinearClassifier:
+def set_model_params(model, params):
     """Sets the parameters of a sklean LogisticRegression model."""
     model.coef_ = params[0]
     if model.fit_intercept:
@@ -129,7 +127,7 @@ def set_model_params(
     return model
 
 
-def set_initial_params(model: LinearClassifier,config):
+def set_initial_params(model,config):
     """Sets initial parameters as zeros Required since model params are
     uninitialized until model.fit is called.
     But server asks for initial parameters from clients at launch. Refer
