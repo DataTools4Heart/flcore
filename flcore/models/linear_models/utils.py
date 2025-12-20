@@ -3,8 +3,7 @@ from typing import Tuple, Union, List
 from sklearn.linear_model import LogisticRegression,SGDClassifier
 from sklearn.linear_model import LinearRegression, ElasticNet
 from sklearn.linear_model import Lasso, Ridge
-from sklearn.svm import SVR
-
+from sklearn.svm import SVR, LinearSVR
 XY = Tuple[np.ndarray, np.ndarray]
 Dataset = Tuple[XY, XY]
 LinearMLParams = Union[XY, Tuple[np.ndarray]]
@@ -81,19 +80,33 @@ def get_model(config):
             elif config["penalty"] == "none" or config["penalty"] == None: 
                 model = LinearRegression()
         elif config["model"] in ["svm", "svr"]:
-            # Añadir el support vector regression
-            model = SVR(
-                kernel=config["max_iter"],
-                degree=3,
-                gamma=config["gamma"],
-                coef0=0.0,
+            if config["kernel"] == "linear":
+                model = LinearSVR(
+                epsilon=0.0,
                 tol=config["tol"],
                 C=1.0,
-                epsilon=0.1,
-                shrinking=True,
-                cache_size=200,
-                verbose=False,
+                loss='epsilon_insensitive',
+                fit_intercept=True,
+                intercept_scaling=1.0,
+                dual='auto',
+                verbose=0,
+                random_state=None,
                 max_iter=config["max_iter"])
+            else:
+                model = SVR(
+                    #kernel{‘linear’, ‘poly’, ‘rbf’, ‘sigmoid’, ‘precomputed’} or callable, default=’rbf’
+                    kernel=config["kernel"],
+                    degree=3,
+                    gamma=config["gamma"],
+                    coef0=0.0,
+                    tol=config["tol"],
+                    C=1.0,
+                    epsilon=0.1,
+                    shrinking=True,
+                    cache_size=200,
+                    verbose=False,
+                    max_iter=config["max_iter"])
+            
     else:
         # Invalid combinations: already managed by sanity check
         print("COMBINACIóN NO VÁLIDA: no debió llegar aquí")
@@ -103,6 +116,8 @@ def get_model(config):
 
 def get_model_parameters(model):
     """Returns the paramters of a sklearn LogisticRegression model."""
+    # AQUI DEBE DEVOLVER TAMBIEN PARA EL linear regression y los demas
+    # AQUI FALLA POR ESO
     if model.fit_intercept:
         params = [
             model.coef_,
@@ -119,6 +134,7 @@ def get_model_parameters(model):
 
 def set_model_params(model, params):
     """Sets the parameters of a sklean LogisticRegression model."""
+    # SUPONGO QUE AQUI TAMBIEN
     model.coef_ = params[0]
     if model.fit_intercept:
         model.intercept_ = params[1]
@@ -140,18 +156,35 @@ def set_initial_params(model,config):
     #n_features = 9  # Number of features in dataset
     model.classes_ = np.array([i for i in range(n_classes)])
 
-# .............................................................................................
     if config["model"] == "logistic_regression": # buscar modelos compatibles
         model.coef_ = np.zeros((n_classes, n_features))
         if model.fit_intercept:
             model.intercept_ = np.zeros((n_classes,))
     elif config["model"] == "linear_regression": # idem
-        pass
-    elif config["model"] in ["lsvc","svm"]:
-        model.coef_ = np.zeros((1, n_features))
+        model.coef_ = np.zeros((n_classes,n_features))
+        if model.fit_intercept:
+            model.intercept_ = np.zeros((n_classes,))
+# .............................................................................................
+    elif config["model"] in ["lsvc","svm","svr"]:
+        if config["task"] == "classification":
+            model.coef_ = np.zeros((n_classes, n_features))
+            if model.fit_intercept:
+                model.intercept_ = 0 
+        elif config["task"] == "regression":
+            if config["kernel"] == "linear":
+                model.coef_ = np.zeros((n_classes, n_features))
+                if model.fit_intercept:
+                    model.intercept_ = 0 
+            else:
+                model.coef_ = np.zeros((1, n_features))
+                if model.fit_intercept:
+                    model.intercept_ = 0 
+
+        #coef_ : of shape (1, n_features) if n_classes == 2 else (n_classes, n_features)
+        model.coef_ = np.zeros((n_classes, n_features))
         if model.fit_intercept:
             model.intercept_ = 0 
-    elif config["model"] in ["svm", "svr"]:
+    elif config["model"] in ["svm", ]:
         # parece que no encuentra los parametros:
         # 2025-12-20 15:21:35,575 - STDERR - ERROR - can't set attribute 'coef_'
 

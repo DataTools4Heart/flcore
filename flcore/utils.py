@@ -179,6 +179,12 @@ def CheckClientConfig(config):
 
     config["n_feats"] = len(config["train_labels"])
     config["n_out"] = len(config["target_labels"])
+
+    if config["model"] in ["svm","svr","lsvr"]:
+        if config["task"] == "regression":
+            if config["kernel"] in ["poly", "rbf", "sigmoid", "precomputed"] and config["n_out"] > 1:
+                print("Those kernels only support 1-variable as output")
+                sys.exit()
     return config
 
 

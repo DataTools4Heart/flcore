@@ -57,6 +57,7 @@ if __name__ == "__main__":
     parser.add_argument("--max_iter", type=int, default=100000, help="Max iterations of optimizer")
     parser.add_argument("--tol", type=str, default="0.001", help="Gamma for SVR")
     parser.add_argument("--kernel", type=str, default="rbf", help="Kernel of SVR")
+    #kernel{‘linear’, ‘poly’, ‘rbf’, ‘sigmoid’, ‘precomputed’} or callable, default=’rbf’
     parser.add_argument("--degree", type=int, default=3, help="Degree of polinonial")
     parser.add_argument("--gamma", type=str, default="scale", help="Gamma for SVR")
     # # Random forest
