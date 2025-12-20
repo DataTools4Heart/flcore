@@ -13,6 +13,7 @@ from flcore.metrics import calculate_metrics
 import time
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import mean_squared_error
 
 
 
@@ -112,23 +113,21 @@ class MnistClient(fl.client.NumPyClient):
 
 # .............................................................................................
         if self.config["model"] == "logistic_regression": # buscar modelos compatibles
-            loss = log_loss(self.y_test, self.model.predict_proba(self.X_test), labels=[0, 1])
+            loss = log_loss(
+                self.y_test,
+                self.model.predict_proba(self.X_test),
+                labels=[0, 1]) # NECESITARIAMOS AÑADIR LAS DEMAS CLASES
         elif self.config["model"] == "linear_regression": # idem
-            # queda escoger la loss
-            pass
+            loss = mean_squared_error(self.y_test,
+                self.model.predict(self.X_test))
         elif self.config["model"] in ["lsvc","svm"]:
             loss = 1.0
         elif config["model"] in ["svm", "svr"]:
-            # escoger loss:
-            pass
+            loss = mean_squared_error(self.y_test,
+                    self.model.predict(self.X_test))
         else:
             pass
 # .............................................................................................
-        if(isinstance(self.model, SGDClassifier)):
-            loss = 1.0
-        else:
-            loss = log_loss(self.y_test, self.model.predict_proba(self.X_test), labels=[0, 1])
-# .............................................................................................       
         metrics = calculate_metrics(self.y_test, y_pred)
         metrics["round_time [s]"] = self.round_time
         metrics["client_id"] = self.node_name

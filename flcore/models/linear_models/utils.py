@@ -140,15 +140,25 @@ def set_initial_params(model,config):
     #n_features = 9  # Number of features in dataset
     model.classes_ = np.array([i for i in range(n_classes)])
 
-    if(isinstance(model,SGDClassifier)==True):
-        model.coef_ = np.zeros((1, n_features))
-        if model.fit_intercept:
-            model.intercept_ = 0 
-    else:
+# .............................................................................................
+    if config["model"] == "logistic_regression": # buscar modelos compatibles
         model.coef_ = np.zeros((n_classes, n_features))
         if model.fit_intercept:
             model.intercept_ = np.zeros((n_classes,))
+    elif config["model"] == "linear_regression": # idem
+        pass
+    elif config["model"] in ["lsvc","svm"]:
+        model.coef_ = np.zeros((1, n_features))
+        if model.fit_intercept:
+            model.intercept_ = 0 
+    elif config["model"] in ["svm", "svr"]:
+        # parece que no encuentra los parametros:
+        # 2025-12-20 15:21:35,575 - STDERR - ERROR - can't set attribute 'coef_'
 
+        pass
+    else:
+        pass
+# .............................................................................................
 
 #Evaluate in the aggregations evaluation with
 #the client using client data and combine
