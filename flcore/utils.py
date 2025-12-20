@@ -18,9 +18,9 @@ import flcore.models.linear_models.server as linear_models_server
 import flcore.models.weighted_random_forest.server as weighted_random_forest_server
 import flcore.models.nn.server as nn_server
 
-linear_models_list = ["logistic_regression", "linear_regression", "lsvc",
+linear_models_list = ["logistic_regression", "linear_regression", "lsvc", "svr", "svm"
                       "lasso_regression", "ridge_regression","logistic_regression_elasticnet"]
-linear_regression_models_list = ["linear_regression","lasso_regression",
+linear_regression_models_list = ["linear_regression","lasso_regression", "svr", "svm"
                         "ridge_regression","linear_regression_elasticnet"]
 
 
