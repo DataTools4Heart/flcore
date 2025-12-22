@@ -28,7 +28,7 @@ def get_model(config):
 
         elif config["model"] == "logistic_regression":
                 model = LogisticRegression(
-                    penalty=config["penalty"],
+#                    penalty=config["penalty"],
                     solver=config["solver"], #necessary param for elasticnet otherwise error
                     l1_ratio=config["l1_ratio"],#necessary param for elasticnet otherwise error
                     #max_iter=1,  # local epoch ==>> it doesn't work

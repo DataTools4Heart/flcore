@@ -79,7 +79,12 @@ def CheckClientConfig(config):
         if (config["task"] == "classification" or config["task"].lower() == "none"):
             if config["task"].lower() == "none":
                 print("Since this model only supports classification assigning task automatically to classification")
-            if config["penalty"] == "elasticnet":
+                config["task"] = "classification"
+            if config["penalty"] == "none":
+                print("LogisticRegression requieres a penalty and no input given, setting penalty to default L2")
+                config["penalty"] = "l2"
+                config["l1_ratio"] = 0
+            elif config["penalty"] == "elasticnet":
                 if config["solver"] != "saga":
                     config["solver"] = "saga"
                 if config["l1_ratio"] == 0:
@@ -177,6 +182,7 @@ def CheckClientConfig(config):
         new.append(parsed)
     config["target_labels"] = new
 
+    # VERIFICAR EL TASK SI HACE FALTA CAMBIARLO SEGUN EL NUMERO DE LABELS, binario bmulticlase¿?¿?¿?¿?
     config["n_feats"] = len(config["train_labels"])
     config["n_out"] = len(config["target_labels"])
 
