@@ -2,6 +2,7 @@
 from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import log_loss
 import time
+import numpy as np
 from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.model_selection import KFold, StratifiedShuffleSplit, train_test_split
 import warnings
@@ -74,7 +75,7 @@ class MnistClient(fl.client.NumPyClient):
             # y_pred = self.model.predict(self.X_test.loc[:, parameters[2].astype(bool)])
             y_pred = self.model.predict(self.X_test)
 
-            metrics = calculate_metrics(self.y_test, y_pred)
+            metrics = calculate_metrics(self.y_test, y_pred,config)
             print(f"Client {self.node_name} Evaluation just after local training: {metrics['balanced_accuracy']}")
             # Add 'personalized' to the metrics to identify them
             metrics = {f"personalized {key}": metrics[key] for key in metrics}
@@ -88,7 +89,7 @@ class MnistClient(fl.client.NumPyClient):
             utils.set_initial_params(self.model, config)
             local_model.fit(self.X_train, self.y_train)
             y_pred = local_model.predict(self.X_test)
-            local_metrics = calculate_metrics(self.y_test, y_pred)
+            local_metrics = calculate_metrics(self.y_test, y_pred,config)
             #Add 'local' to the metrics to identify them
             local_metrics = {f"local {key}": local_metrics[key] for key in local_metrics}
             metrics.update(local_metrics)
@@ -96,7 +97,7 @@ class MnistClient(fl.client.NumPyClient):
 
         return utils.get_model_parameters(self.model), len(self.X_train), metrics
 
-    def evaluate(self, parameters, config):  # type: ignore
+    def evaluate(self, parameters, config):
         utils.set_model_params(self.model, parameters)
 
         # Calculate validation set metrics
@@ -106,12 +107,9 @@ class MnistClient(fl.client.NumPyClient):
         elif self.config["model"] == "linear_regression": # idem
             y_pred = pred[:,0]    
         print("CLIENT::EVALUATE::Y VAL, Y PRED", self.y_val, y_pred)
-        val_metrics = calculate_metrics(self.y_val, y_pred)
+        metrics = calculate_metrics(self.y_val, y_pred, config)
 
-        y_pred = self.model.predict(self.X_test)
-        # y_pred = self.model.predict(self.X_test.loc[:, parameters[2].astype(bool)])
-
-# .............................................................................................
+        """
         if self.config["model"] == "logistic_regression": # buscar modelos compatibles
             loss = log_loss(
                 self.y_test,
@@ -127,13 +125,55 @@ class MnistClient(fl.client.NumPyClient):
                     self.model.predict(self.X_test))
         else:
             pass
+        """
 # .............................................................................................
-        metrics = calculate_metrics(self.y_test, y_pred)
+        if config["task"] == "classification":
+            if config["n_out"] > 1: # Multivariable
+                losses = []
+
+                if hasattr(self.model, "predict_proba"):
+                    y_score = self.model.predict_proba(self.X_test)
+
+                    for m in range(self.y_test.shape[1]):
+                        losses.append(
+                            log_loss(
+                                self.y_test[:, m],
+                                y_score[:, m]
+                            )
+                        )
+                else:
+                    print("PREDICT PROBA NO DISPONIBLE")
+                    """
+                    for m in range(self.y_test.shape[1]):
+                        losses.append(
+                            1.0 - accuracy_score(
+                                self.y_test[:, m],
+                                y_pred[:, m]
+                            )
+                        )
+                    """
+            elif config["n_out"] == 1: # Binario
+                if hasattr(self.model, "predict_proba"):
+                    loss = log_loss(
+                        self.y_test,
+                        self.model.predict_proba(self.X_test)
+                    )
+                else:
+                    print("PREDICT PROBA NO DISPONIBLE")
+                    """
+                    loss = 1.0 - accuracy_score(
+                        self.y_test,
+                        y_test_pred
+                    )
+                    """
+
+        elif config["task"] == "regression":
+            loss = mean_squared_error(self.y_test, y_pred)
+
         metrics["round_time [s]"] = self.round_time
         metrics["client_id"] = self.node_name
 
         print(f"Client {self.node_name} Evaluation after aggregated model: {metrics['balanced_accuracy']}")
-
 
         # Add validation metrics to the evaluation metrics with a prefix
         val_metrics = {f"val {key}": val_metrics[key] for key in val_metrics}
