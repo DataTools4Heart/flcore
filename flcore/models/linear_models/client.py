@@ -107,37 +107,19 @@ class MnistClient(fl.client.NumPyClient):
         elif self.config["model"] == "linear_regression": # idem
             y_pred = pred[:,0]    
         print("CLIENT::EVALUATE::Y VAL, Y PRED", self.y_val, y_pred)
-        metrics = calculate_metrics(self.y_val, y_pred, config)
+        metrics = calculate_metrics(self.y_val, y_pred, self.config)
 
-        """
-        if self.config["model"] == "logistic_regression": # buscar modelos compatibles
-            loss = log_loss(
-                self.y_test,
-                self.model.predict_proba(self.X_test),
-                labels=[0, 1]) # NECESITARIAMOS AÑADIR LAS DEMAS CLASES
-        elif self.config["model"] == "linear_regression": # idem
-            loss = mean_squared_error(self.y_test,
-                self.model.predict(self.X_test))
-        elif self.config["model"] in ["lsvc","svm"]:
-            loss = 1.0
-        elif config["model"] in ["svm", "svr"]:
-            loss = mean_squared_error(self.y_test,
-                    self.model.predict(self.X_test))
-        else:
-            pass
-        """
-# .............................................................................................
-        if config["task"] == "classification":
-            if config["n_out"] > 1: # Multivariable
+        if self.config["task"] == "classification":
+            if self.config["n_out"] > 1: # Multivariable
                 losses = []
 
                 if hasattr(self.model, "predict_proba"):
-                    y_score = self.model.predict_proba(self.X_test)
+                    y_score = self.model.predict_proba(self.X_val)
 
-                    for m in range(self.y_test.shape[1]):
+                    for m in range(self.y_val.shape[1]):
                         losses.append(
                             log_loss(
-                                self.y_test[:, m],
+                                self.y_val[:, m],
                                 y_score[:, m]
                             )
                         )
@@ -152,11 +134,11 @@ class MnistClient(fl.client.NumPyClient):
                             )
                         )
                     """
-            elif config["n_out"] == 1: # Binario
+            elif self.config["n_out"] == 1: # Binario
                 if hasattr(self.model, "predict_proba"):
                     loss = log_loss(
-                        self.y_test,
-                        self.model.predict_proba(self.X_test)
+                        self.y_val,
+                        self.model.predict_proba(self.X_val)
                     )
                 else:
                     print("PREDICT PROBA NO DISPONIBLE")
@@ -167,18 +149,17 @@ class MnistClient(fl.client.NumPyClient):
                     )
                     """
 
-        elif config["task"] == "regression":
-            loss = mean_squared_error(self.y_test, y_pred)
+        elif self.config["task"] == "regression":
+            loss = mean_squared_error(self.y_val, y_pred)
 
         metrics["round_time [s]"] = self.round_time
         metrics["client_id"] = self.node_name
 
-        print(f"Client {self.node_name} Evaluation after aggregated model: {metrics['balanced_accuracy']}")
+#        print(f"Client {self.node_name} Evaluation after aggregated model: {metrics['balanced_accuracy']}")
 
         # Add validation metrics to the evaluation metrics with a prefix
-        val_metrics = {f"val {key}": val_metrics[key] for key in val_metrics}
+        val_metrics = {f"val {key}": metrics[key] for key in metrics}
         metrics.update(val_metrics)
-
 
         return loss, len(y_pred),  metrics
 
