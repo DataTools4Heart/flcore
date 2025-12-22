@@ -75,21 +75,18 @@ class MnistClient(fl.client.NumPyClient):
             # y_pred = self.model.predict(self.X_test.loc[:, parameters[2].astype(bool)])
             y_pred = self.model.predict(self.X_test)
 
-            metrics = calculate_metrics(self.y_test, y_pred,config)
-            print(f"Client {self.node_name} Evaluation just after local training: {metrics['balanced_accuracy']}")
+            metrics = calculate_metrics(self.y_test, y_pred,self.config)
             # Add 'personalized' to the metrics to identify them
             metrics = {f"personalized {key}": metrics[key] for key in metrics}
             self.round_time = (time.time() - start_time)
             metrics["running_time"] = self.round_time
 
-        print(f"Training finished for round {config['server_round']}")
-
         if self.first_round:
-            local_model = utils.get_model(config)
-            utils.set_initial_params(self.model, config)
+            local_model = utils.get_model(self.config)
+            utils.set_initial_params(self.model, self.config)
             local_model.fit(self.X_train, self.y_train)
             y_pred = local_model.predict(self.X_test)
-            local_metrics = calculate_metrics(self.y_test, y_pred,config)
+            local_metrics = calculate_metrics(self.y_test, y_pred,self.config)
             #Add 'local' to the metrics to identify them
             local_metrics = {f"local {key}": local_metrics[key] for key in local_metrics}
             metrics.update(local_metrics)

@@ -71,9 +71,6 @@ class StreamToLogger:
 
 def CheckClientConfig(config):
     # Compaibilidad de logistic regression y elastic net con sus parámetros
-    if config["task"].lower() == "none":
-        print("Task not assigned. The  ML model  selection requieres a task to perform")
-        sys.exit()  
 
     if config["model"] == "logistic_regression":
         if (config["task"] == "classification" or config["task"].lower() == "none"):
@@ -191,6 +188,11 @@ def CheckClientConfig(config):
             if config["kernel"] in ["poly", "rbf", "sigmoid", "precomputed"] and config["n_out"] > 1:
                 print("Those kernels only support 1-variable as output")
                 sys.exit()
+
+    if config["task"].lower() == "none":
+        print("Task not assigned. The  ML model  selection requieres a task to perform")
+        sys.exit()  
+
     return config
 
 
