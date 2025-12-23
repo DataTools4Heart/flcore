@@ -8,6 +8,8 @@ from flcore.serialization_funs import serialize_RF, deserialize_RF
 import flcore.models.random_forest.utils as utils
 from flcore.performance import measurements_metrics
 from flcore.metrics import calculate_metrics
+from sklearn.metrics import mean_squared_error
+
 from flwr.common import (
     Code,
     EvaluateIns,
@@ -109,31 +111,71 @@ class MnistClient(fl.client.Client):
         #Deserialize to get the real parameters
         parameters = deserialize_RF(parameters)
         utils.set_model_params(self.model, parameters)
-        y_pred_prob = self.model.predict_proba(self.X_test)
-        loss = log_loss(self.y_test, y_pred_prob)
-        # accuracy,specificity,sensitivity,balanced_accuracy, precision, F1_score = \
-        # measurements_metrics(self.model,self.X_test, self.y_test)
-        y_pred = self.model.predict(self.X_test)
-        metrics = calculate_metrics(self.y_test, y_pred, self.config)
-        # print(f"Accuracy client in evaluate:  {accuracy}")
-        # print(f"Sensitivity client in evaluate:  {sensitivity}")
-        # print(f"Specificity client in evaluate:  {specificity}")
-        # print(f"Balanced_accuracy in evaluate:  {balanced_accuracy}")
-        # print(f"precision in evaluate:  {precision}")
-        # print(f"F1_score in evaluate:  {F1_score}")
+                
+        ## AQUI TAMBIEN TENDRIAMOS QUE ADAPTAR PARA REGRESOR/CLASIFICADOR
+        if self.config["task"] == "classification":
+            if self.config["n_out"] == 1: # Binario
+                y_pred_prob = self.model.predict_proba(self.X_test)
+                loss = log_loss(self.y_test, y_pred_prob)
+                # accuracy,specificity,sensitivity,balanced_accuracy, precision, F1_score = \
+                # measurements_metrics(self.model,self.X_test, self.y_test)
+                y_pred = self.model.predict(self.X_test)
+                metrics = calculate_metrics(self.y_test, y_pred, self.config)
+                # print(f"Accuracy client in evaluate:  {accuracy}")
+                # print(f"Sensitivity client in evaluate:  {sensitivity}")
+                # print(f"Specificity client in evaluate:  {specificity}")
+                # print(f"Balanced_accuracy in evaluate:  {balanced_accuracy}")
+                # print(f"precision in evaluate:  {precision}")
+                # print(f"F1_score in evaluate:  {F1_score}")
 
-        # Serialize to send it to the server
-        #params = get_model_parameters(model)
-        #parameters_updated = serialize_RF(params)
-        # Build and return response
-        status = Status(code=Code.OK, message="Success")
-        return EvaluateRes(
-            status=status,
-            loss=float(loss),
-            num_examples=len(self.X_test),
-            metrics=metrics,
-        )
+                # Serialize to send it to the server
+                #params = get_model_parameters(model)
+                #parameters_updated = serialize_RF(params)
+                # Build and return response
+                status = Status(code=Code.OK, message="Success")
+                return EvaluateRes(
+                    status=status,
+                    loss=float(loss),
+                    num_examples=len(self.X_test),
+                    metrics=metrics,
+                )
+            if self.config["n_out"] > 1: # Multivariable
+                # ************************************************** CORREGIR ADAPTAR
+                # ************************************* Por ahora idéntico al binario
+                y_pred_prob = self.model.predict_proba(self.X_test)
+                loss = log_loss(self.y_test, y_pred_prob)
+                # accuracy,specificity,sensitivity,balanced_accuracy, precision, F1_score = \
+                # measurements_metrics(self.model,self.X_test, self.y_test)
+                y_pred = self.model.predict(self.X_test)
+                metrics = calculate_metrics(self.y_test, y_pred, self.config)
+                # Serialize to send it to the server
+                #params = get_model_parameters(model)
+                #parameters_updated = serialize_RF(params)
+                # Build and return response
+                status = Status(code=Code.OK, message="Success")
+                return EvaluateRes(
+                    status=status,
+                    loss=float(loss),
+                    num_examples=len(self.X_test),
+                    metrics=metrics,
+                )
 
+                # ************************************************** CORREGIR ADAPTAR
+        elif self.config["task"] == "regression":
+                y_pred = self.model.predict(self.X_val)
+                loss = mean_squared_error(self.y_val, y_pred)
+                metrics = calculate_metrics(self.y_val, y_pred, self.config)
+                # Serialize to send it to the server
+                #params = get_model_parameters(model)
+                #parameters_updated = serialize_RF(params)
+                # Build and return response
+                status = Status(code=Code.OK, message="Success")
+                return EvaluateRes(
+                    status=status,
+                    loss=float(loss),
+                    num_examples=len(self.X_val),
+                    metrics=metrics,
+                )
 
 def get_client(config,data) -> fl.client.Client:
     return MnistClient(data, config)
