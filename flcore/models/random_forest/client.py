@@ -24,15 +24,23 @@ import time
 # Define Flower client
 class MnistClient(fl.client.Client):
     def __init__(self, data, config):
+        self.config = config
         self.node_name = config["node_name"]
         n_folds_out= config['num_rounds']
-        seed=config["seed"]
         # Load data
         (self.X_train, self.y_train), (self.X_test, self.y_test) = data
-        self.splits_nested  = datasets.split_partitions(n_folds_out,0.2, seed, self.X_train, self.y_train)
+        self.splits_nested  = datasets.split_partitions(
+                # ¿Qué es esto de folds?
+                n_folds_out,
+                config["test_size"],
+                config["seed"],
+                self.X_train,
+                self.y_train)
         self.model = utils.get_model(config)
         # Setting initial parameters, akin to model.compile for keras models
+        # AQUI DEBERIA INICIALIZAR CON 0, ya que está en fit, que haga 1 iteración
         utils.set_initial_params_client(self.model,self.X_train, self.y_train)
+
     def get_parameters(self, ins: GetParametersIns):  # , config type: ignore
         params = utils.get_model_parameters(self.model)
 
@@ -67,7 +75,7 @@ class MnistClient(fl.client.Client):
             # accuracy,specificity,sensitivity,balanced_accuracy, precision, F1_score = \
             # measurements_metrics(self.model,X_val, y_val)
             y_pred = self.model.predict(X_val)
-            metrics = calculate_metrics(y_val, y_pred)
+            metrics = calculate_metrics(y_val, y_pred, self.config)
             # print(f"Accuracy client in fit:  {accuracy}")
             # print(f"Sensitivity client in fit:  {sensitivity}")
             # print(f"Specificity client in fit:  {specificity}")
@@ -106,7 +114,7 @@ class MnistClient(fl.client.Client):
         # accuracy,specificity,sensitivity,balanced_accuracy, precision, F1_score = \
         # measurements_metrics(self.model,self.X_test, self.y_test)
         y_pred = self.model.predict(self.X_test)
-        metrics = calculate_metrics(self.y_test, y_pred)
+        metrics = calculate_metrics(self.y_test, y_pred, self.config)
         # print(f"Accuracy client in evaluate:  {accuracy}")
         # print(f"Sensitivity client in evaluate:  {sensitivity}")
         # print(f"Specificity client in evaluate:  {specificity}")
