@@ -36,7 +36,7 @@ if __name__ == "__main__":
     parser.add_argument("--dropout_percentage", type=float, default=0.0, help="Ratio of dropout nodes")
     parser.add_argument("--checkpoint_selection_metric", type=str, default="precision", help="Metric used for checkpoints")
     parser.add_argument("--metrics_aggregation", type=str, default="weighted_average",  help="Metrics")
-    parser.add_argument("--experiment_dir", type=str, default="experiment_1", help="Experiment directory")
+    parser.add_argument("--experiment_name", type=str, default="experiment_1", help="Experiment directory")
 
     # Model specific settings
     parser.add_argument("--balanced", type=str, default=None, help="Random forest balanced")
@@ -114,6 +114,17 @@ if __name__ == "__main__":
         central_ip = "LOCALHOST"
         central_port = config["local_port"]
         certificates = None
+
+
+    # Create experiment directory
+    experiment_dir = Path(os.path.join(config["sandbox_path"],config["experiment_name"]))
+    experiment_dir.mkdir(parents=True, exist_ok=True)
+    config["experiment_dir"] = experiment_dir
+
+    # Checkpoint directory for saving the model
+    checkpoint_dir = experiment_dir / "checkpoints"
+    checkpoint_dir.mkdir(parents=True, exist_ok=True)
+
 
     # Checkpoint directory for saving the model
     #checkpoint_dir = config["experiment_dir"] + "/checkpoints"
