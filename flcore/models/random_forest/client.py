@@ -162,9 +162,9 @@ class MnistClient(fl.client.Client):
 
                 # ************************************************** CORREGIR ADAPTAR
         elif self.config["task"] == "regression":
-                y_pred = self.model.predict(self.X_val)
-                loss = mean_squared_error(self.y_val, y_pred)
-                metrics = calculate_metrics(self.y_val, y_pred, self.config)
+                y_pred = self.model.predict(self.X_test)
+                loss = mean_squared_error(self.X_test, y_pred)
+                metrics = calculate_metrics(self.X_test, y_pred, self.config)
                 # Serialize to send it to the server
                 #params = get_model_parameters(model)
                 #parameters_updated = serialize_RF(params)
@@ -173,7 +173,7 @@ class MnistClient(fl.client.Client):
                 return EvaluateRes(
                     status=status,
                     loss=float(loss),
-                    num_examples=len(self.X_val),
+                    num_examples=len(self.X_test),
                     metrics=metrics,
                 )
 
