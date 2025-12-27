@@ -39,16 +39,16 @@ def get_server_and_strategy(config):
 
     # Pass parameters to the Strategy for server-side parameter initialization
     #strategy = fl.server.strategy.FedAvg(
-    strategy = FedCustom(   
+    strategy = FedCustom(
+        config = config,
         #Have running the same number of clients otherwise it does not run the federated
         min_available_clients = config['min_available_clients'],
         min_fit_clients = config['min_fit_clients'],
         min_evaluate_clients = config['min_evaluate_clients'],
-
         #enable evaluate_fn  if we have data to evaluate in the server
         #evaluate_fn           = utils_RF.get_evaluate_fn( model ), #no data in server
         evaluate_metrics_aggregation_fn = metrics_aggregation_fn,
-        on_fit_config_fn      = fit_round      
+        on_fit_config_fn      = fit_round 
     )
     #Select normal RF or Balanced RF from config
     strategy.bal_RF= config['balanced']

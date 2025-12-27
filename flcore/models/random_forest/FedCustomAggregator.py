@@ -42,19 +42,20 @@ than or equal to the values of `min_fit_clients` and `min_evaluate_clients`.
 
 
 class FedCustom(fl.server.strategy.FedAvg):
-    """Configurable FedAvg strategy implementation."""
-    #DropOut center variable to get the initial execution time of the first round
-    clients_first_round_time = {}
-    clients_num_examples = {}
-    server_estimators = []
-    time_server_round = time.time()
-    bal_RF = None
-    dropout_method = None
-    server_estimators = []
-    server_estimators_weights = []
-    accum_time = 0
-    # pylint: disable=too-many-arguments,too-many-instance-attributes,line-too-long
-    
+    def __init__(self,config,*args,**kwargs):
+        super().__init__(*args, **kwargs)
+        """Configurable FedAvg strategy implementation."""
+        self.config = config
+        self.clients_first_round_time = {}
+        self.clients_num_examples = {}
+        self.server_estimators = []
+        self.server_estimators_weights = []
+        self.time_server_round = time.time()
+        self.bal_RF = config["balanced"]
+        self.accept_failures = True
+        self.dropout_method = config["dropout_method"]
+        self.accum_time = 0
+
     def configure_fit(
         self, server_round: int, parameters: Parameters, client_manager: ClientManager
     ) -> List[Tuple[ClientProxy, FitIns]]:
@@ -121,10 +122,12 @@ class FedCustom(fl.server.strategy.FedAvg):
         ]
 
         if(server_round == 1):
-            aggregation_result,self.server_estimators,self.server_estimators_weights = aggregateRFwithSizeCenterProbs(weights_results,self.bal_RF,self.smoothing_method,self.smoothing_strenght)
+#            aggregation_result,self.server_estimators,self.server_estimators_weights = aggregateRFwithSizeCenterProbs(weights_results,self.bal_RF,self.smoothing_method,self.smoothing_strenght)
+            aggregation_result,self.server_estimators,self.server_estimators_weights = aggregateRFwithSizeCenterProbs(weights_results,self.config)
             #aggregation_result,self.server_estimators = aggregateRF(weights_results,self.bal_RF)
         else:
-            aggregation_result,self.server_estimators,self.server_estimators_weights = aggregateRFwithSizeCenterProbs_withprevious(weights_results,self.bal_RF,self.server_estimators,self.server_estimators_weights,self.smoothing_method,self.smoothing_strenght)
+#            aggregation_result,self.server_estimators,self.server_estimators_weights = aggregateRFwithSizeCenterProbs_withprevious(weights_results,self.bal_RF,self.server_estimators,self.server_estimators_weights,self.smoothing_method,self.smoothing_strenght)
+            aggregation_result,self.server_estimators,self.server_estimators_weights = aggregateRFwithSizeCenterProbs_withprevious(weights_results,self.server_estimators,self.server_estimators_weights,self.config)
             #aggregation_result,self.server_estimators = aggregateRF_withprevious(weights_results,self.server_estimators,self.bal_RF)
 
         #ndarrays_to_parameters necessary to send the message
