@@ -150,13 +150,10 @@ class MnistClient(fl.client.NumPyClient):
             loss = mean_squared_error(self.y_val, y_pred)
 
         metrics["round_time [s]"] = self.round_time
-        metrics["client_id"] = self.node_name
+        # No tiene sentido agregar el client ID
+        # metrics["client_id"] = self.node_name
 
 #        print(f"Client {self.node_name} Evaluation after aggregated model: {metrics['balanced_accuracy']}")
-
-        # Add validation metrics to the evaluation metrics with a prefix
-        val_metrics = {f"val {key}": metrics[key] for key in metrics}
-        metrics.update(val_metrics)
 
         return loss, len(y_pred),  metrics
 
