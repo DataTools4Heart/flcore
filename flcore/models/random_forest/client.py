@@ -62,6 +62,7 @@ class MnistClient(fl.client.Client):
         #Deserialize to get the real parameters
         parameters = deserialize_RF(parameters)
         utils.set_model_params(self.model, parameters)
+
         # Ignore convergence failure due to low local epochs
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
@@ -76,8 +77,12 @@ class MnistClient(fl.client.Client):
             #accuracy = model.score( X_test, y_test )
             # accuracy,specificity,sensitivity,balanced_accuracy, precision, F1_score = \
             # measurements_metrics(self.model,X_val, y_val)
-            y_pred = self.model.predict(X_val)
-            metrics = calculate_metrics(y_val, y_pred, self.config)
+            # ______________________________________________________________________________________
+            # ESTO o se cambia para que sea consistente entre clasificación/regresión o se elimina
+            #y_pred = self.model.predict(X_val)
+            #metrics = calculate_metrics(y_val, y_pred, self.config)
+            # ______________________________________________________________________________________
+
             # print(f"Accuracy client in fit:  {accuracy}")
             # print(f"Sensitivity client in fit:  {sensitivity}")
             # print(f"Specificity client in fit:  {specificity}")

@@ -63,14 +63,15 @@ def get_model_parameters(model):
     
     return params
 
-
 def set_model_params(model, params):
-    """Sets the parameters of a sklean LogisticRegression model."""
     ## AQUI HAY QUE QUITAR EL HARDCODEADO DE ESTO
-    model.n_classes_ =2
+    ## ESTO TENDRIA QUE SOPORTAR MULTIPLES CATEGORIAS
+    #'n_features_in_': 3, '_n_features': 3, 'n_outputs_': 1, 'classes_': array([0, 1]), 'n_classes_': 2,
+    #model.n_classes_ =2
     model.estimators_ = params[0]
-    model.classes_ = np.array([i for i in range(model.n_classes_)])
-    model.n_outputs_ = 1
+    #model.classes_ = np.array([i for i in range(model.n_classes_)])
+    #model.n_outputs_ = 1
+    # _________________________________________________
     return model
 
 
@@ -83,6 +84,7 @@ def set_initial_params_server(model):
 
 
 def set_initial_params_client(model,X_train, y_train):
+    # ¿¿?¿?¿?¿?¿?¿?¿?¿?¿?¿??
     """Sets initial parameters as zeros Required since model params are
     uninitialized until model.fit is called.
     But server asks for initial parameters from clients at launch.
