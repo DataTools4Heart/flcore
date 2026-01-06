@@ -151,7 +151,11 @@ class FlowerClient(fl.client.NumPyClient):
         self.set_parameters(parameters)
 # ****** * * * * *  * *  *  *   *   *    *    *  * * * * * * * * ********
         self.model.eval()
-        total_loss, correct, total = 0, 0, 0
+        if self.config["dropout_p"] > 0.0:
+            metrics = uncertainty_metrics(self.model, self.val_loader, device=self.device, T=int(self.config["T"]))
+        else:
+            y_pred = self.model(self.X_test)
+            metrics = calculate_metrics(self.y_test, y_pred, self.config)
 
         for X, y in self.test_loader:
             X, y = X.to(self.device), y.to(self.device)
@@ -175,22 +179,11 @@ class FlowerClient(fl.client.NumPyClient):
             correct += (preds == y).sum().item()
             total += y.size(0)
 
-            # métricas de incertidumbre en validación
-            if self.config["dropout_p"] > 0.0:
-                # importante: el servidor usará 'entropy' y 'val_accuracy'
-                metrics = uncertainty_metrics(self.model, self.val_loader, device=self.device, T=int(self.config["T"]))
-            else:
-                pass
-                metrics = calculate_metrics(self.y_val, y_pred, self.config)
-
-                    # metrics normales: verifica que existan
-
         test_loss = total_loss / total
-        acc = correct / total
         dataset_len = self.y_test.shape[0]
 
 #        return total_loss / total, correct / total
-        return float(total_loss), dataset_len, {"accuracy": float(acc)}
+        return float(test_loss), dataset_len, metrics
 
 def get_client(config,data) -> fl.client.Client:
 #    client = FlowerClient(params).to_client()
