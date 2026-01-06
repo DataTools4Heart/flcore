@@ -42,13 +42,13 @@ from flcore.models.nn.utils import uncertainty_metrics
 
 class FlowerClient(fl.client.NumPyClient):
     def __init__(self, config, data):
-        self.params = config
+        self.config = config
         self.batch_size = config["batch_size"]
         self.lr = config["lr"]
         self.epochs = config["local_epochs"]
 
         print("MODELS::NN:CLIENT::INIT")
-        if torch.cuda.is_available() and self.params["device"] == 'cuda':
+        if torch.cuda.is_available() and self.config["device"] == 'cuda':
             self.device = torch.device('cuda')
         else:
             self.device = torch.device("cpu")
@@ -67,23 +67,29 @@ class FlowerClient(fl.client.NumPyClient):
         self.val_loader = DataLoader(test_ds, batch_size=self.batch_size, shuffle=False)
 
         self.model = BasicNN( config["n_feats"], config["n_out"], config["dropout_p"] ).to(self.device)
-#        self.criterion = nn.CrossEntropyLoss()
-        self.criterion = nn.BCEWithLogitsLoss()
         self.optimizer = optim.Adam(self.model.parameters(), lr=self.lr)
 
-        if config["n_out"] == 1:  # Binario
-            self.criterion = nn.BCEWithLogitsLoss()
-            #loss = F.binary_cross_entropy_with_logits(logits.squeeze(1), y)
-            """
-            probs = torch.sigmoid(logits.squeeze(1))
-            preds = (probs > 0.5).long()"""
-        else:           # Multiclase
-            self.criterion = nn.CrossEntropyLoss()
-            self.y_train = self.y_train.long()
-            self.y_test = self.y_test.long()
-            #loss = F.cross_entropy(logits, y)
-            #preds = torch.argmax(logits, dim=1)
-        #return loss, preds
+        if self.config["task"] == "classification":
+            if config["n_out"] == 1:  # Binario
+                self.criterion = nn.BCEWithLogitsLoss()
+                #loss = F.binary_cross_entropy_with_logits(logits.squeeze(1), y)
+                """
+                probs = torch.sigmoid(logits.squeeze(1))
+                preds = (probs > 0.5).long()"""
+            else:           # Multiclase
+                self.criterion = nn.CrossEntropyLoss()
+                self.y_train = self.y_train.long()
+                self.y_test = self.y_test.long()
+                #loss = F.cross_entropy(logits, y)
+                #preds = torch.argmax(logits, dim=1)
+            #return loss, preds
+        elif self.config["task"] == "regression":
+            if self.config["penalty"] == "l1":
+                self.criterion = nn.L1Loss()
+            elif self.config["penalty"] == "l2":
+                self.criterion = nn.MSELoss()
+            elif self.config["penalty"].lower() in ["smooth","smooth_l1","smoothl1"]:
+                self.criterion = nn.SmoothL1Loss()
 
     def get_parameters(self, config): # config not needed at all
         return [val.cpu().numpy() for _, val in self.model.state_dict().items()]
@@ -107,22 +113,23 @@ class FlowerClient(fl.client.NumPyClient):
 
             for X, y in self.train_loader:
                 X, y = X.to(self.device), y.to(self.device)
-                logits = self.model(X)
-
-                if self.params["n_out"] == 1:  # Binario
-                    loss = F.binary_cross_entropy_with_logits(logits.squeeze(1), y)
-                    probs = torch.sigmoid(logits.squeeze(1))
-                    preds = (probs > 0.5).long()
-                else:           # Multiclase
-                    loss = F.cross_entropy(logits, y)
-                    preds = torch.argmax(logits, dim=1)
+                if self.config["task"] == "classification":
+                    logits = self.model(X)
+                    if self.config["n_out"] == 1:  # Binario
+                        loss = F.binary_cross_entropy_with_logits(logits.squeeze(1), y)
+                        probs = torch.sigmoid(logits.squeeze(1))
+                        preds = (probs > 0.5).long()
+                    else:           # Multiclase
+                        loss = F.cross_entropy(logits, y)
+                        preds = torch.argmax(logits, dim=1)
+                elif self.config["task"] == "regression":
+                    preds = self.model(X)
+                    loss = F.mse_loss(preds, y)
 
                 self.optimizer.zero_grad()
                 loss.backward()
                 self.optimizer.step()
-                # métricas de incertidumbre en validación
-                metrics = uncertainty_metrics(self.model, self.val_loader, device=self.device, T=int(self.params["T"]))
-                # importante: el servidor usará 'entropy' y 'val_accuracy'
+
                 total_loss += loss.item() * X.size(0)
                 correct += (preds == y).sum().item()
                 total += y.size(0)
@@ -148,19 +155,35 @@ class FlowerClient(fl.client.NumPyClient):
 
         for X, y in self.test_loader:
             X, y = X.to(self.device), y.to(self.device)
-            logits = self.model(X)
-            if self.params["n_out"] == 1:  # Binario
-                loss = F.binary_cross_entropy_with_logits(logits.squeeze(1), y)
-                probs = torch.sigmoid(logits.squeeze(1))
-                preds = (probs > 0.5).long()
-            else:           # Multiclase
-                loss = F.cross_entropy(logits, y)
-                preds = torch.argmax(logits, dim=1)
+
+            if self.config["task"] == "classification":
+                logits = self.model(X)
+                if self.config["n_out"] == 1:  # Binario
+                    loss = F.binary_cross_entropy_with_logits(logits.squeeze(1), y)
+                    probs = torch.sigmoid(logits.squeeze(1))
+                    preds = (probs > 0.5).long()
+                else:           # Multiclase
+                    loss = F.cross_entropy(logits, y)
+                    preds = torch.argmax(logits, dim=1)
+            elif self.config["task"] == "regression":
+                preds = self.model(X)
+                loss = F.mse_loss(preds, y)
+                #loss = F.l1_loss(preds, y)
 
             total_loss += loss.item() * X.size(0)
             preds = torch.argmax(logits, dim=1)
             correct += (preds == y).sum().item()
             total += y.size(0)
+
+            # métricas de incertidumbre en validación
+            if self.config["dropout_p"] > 0.0:
+                # importante: el servidor usará 'entropy' y 'val_accuracy'
+                metrics = uncertainty_metrics(self.model, self.val_loader, device=self.device, T=int(self.config["T"]))
+            else:
+                pass
+                metrics = calculate_metrics(self.y_val, y_pred, self.config)
+
+                    # metrics normales: verifica que existan
 
         test_loss = total_loss / total
         acc = correct / total

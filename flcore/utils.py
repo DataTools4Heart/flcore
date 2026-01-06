@@ -193,6 +193,17 @@ def CheckClientConfig(config):
         print("Task not assigned. The  ML model  selection requieres a task to perform")
         sys.exit()  
 
+    if config["penalty"] != "none":
+        valid_values = ["l1", "l2"]
+        if config["model"] in linear_models_list:
+            valid_values.append("elasticnet")
+        elif config["model"] == "nn":
+            valid_values.append("SmoothL1Loss")
+        elif config["model"] == "random_forest":
+            print("Random forest does not admit L1, L2 or ElasticNet regularization ... ignoring this variable")
+            sys.exit()
+        assert config["penalty"] in valid_values, "Penalty is not valid"
+
     return config
 
 
@@ -225,7 +236,15 @@ def CheckServerConfig(config):
     if config["model"] == "random_forest":
         assert isinstance(config['balanced'], str), 'Balanced is a parameter required when random forest model is used '
         assert config["balanced"].lower() == "true" or config["balanced"].lower() == "false", "Balanced is required to be True or False "
-
+        assert isinstance(config["task"], str), "Task is a parameter required when random forest model is used"
+    """
+    Se tendrían que añadir también
+    parser.add_argument("--n_estimators", type=int, default=100, help="Number of estimators")
+    parser.add_argument("--max_depth", type=int, default=2, help="Max depth")
+    parser.add_argument("--class_weight", type=str, default="balanced", help="Class weight")
+    parser.add_argument("--levelOfDetail", type=str, default="DecisionTree", help="Level of detail")
+    parser.add_argument("--regression_criterion", type=str, default="squared_error", help="Criterion for training")
+    """
     if config["strategy"] == "UncertaintyWeighted":
         if config["model"] == "nn":
             pass
@@ -234,4 +253,5 @@ def CheckServerConfig(config):
            print("Changing strategy to FedAvg")
            config["strategy"] = "FedAvg"
 
+# Tendriamos que añadir que se verifique que las tasks sean consistentes con los label y el tipo de dato
     return config

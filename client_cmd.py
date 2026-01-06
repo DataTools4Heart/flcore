@@ -48,10 +48,10 @@ if __name__ == "__main__":
     parser.add_argument("--device", type=str, default="cpu", help="Device for training, CPU, GPU")
     parser.add_argument("--local_epochs", type=int, default=10, help="Number of local epochs to train in each round")
     parser.add_argument("--batch_size", type=int, default=8, help="Batch size to train")
+    parser.add_argument("--penalty", type=str, default="none", help="Penalties: none, l1, l2, elasticnet, smooth l1")
 
     # Specific variables model related
     # # Linear models
-    parser.add_argument("--penalty", type=str, default="none", help="Penalties: none, l1, l2, elasticnet")
     parser.add_argument("--solver", type=str, default="saga", help="Numerical solver of optimization method")
     parser.add_argument("--l1_ratio", type=str, default=0.5, help="L1-L2 Ratio, necessary for ElasticNet, 0 -> L1 ; 1 -> L2")
     parser.add_argument("--max_iter", type=int, default=100000, help="Max iterations of optimizer")
@@ -69,7 +69,7 @@ if __name__ == "__main__":
     parser.add_argument("--regression_criterion", type=str, default="squared_error", help="Criterion for training")
     # # Neural networks
     # params : type: "nn", "BNN" Bayesiana, otros
-    parser.add_argument("--dropout_p", type=int, default=0.2, help="Montecarlo dropout rate")
+    parser.add_argument("--dropout_p", type=int, default=0.0, help="Montecarlo dropout rate")
     parser.add_argument("--T", type=int, default=20, help="Samples of MC dropout")
     """
     parser.add_argument("--model", type=str, default="random_forest", help="Model to train")
