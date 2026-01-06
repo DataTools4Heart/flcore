@@ -154,9 +154,11 @@ class FlowerClient(fl.client.NumPyClient):
         if self.config["dropout_p"] > 0.0:
             metrics = uncertainty_metrics(self.model, self.val_loader, device=self.device, T=int(self.config["T"]))
         else:
-            y_pred = self.model(self.X_test)
+            pred = self.model(self.X_test)
+            y_pred = pred[:,0]
             metrics = calculate_metrics(self.y_test, y_pred, self.config)
 
+        total_loss, correct, total = 0, 0, 0
         for X, y in self.test_loader:
             X, y = X.to(self.device), y.to(self.device)
 
@@ -169,14 +171,13 @@ class FlowerClient(fl.client.NumPyClient):
                 else:           # Multiclase
                     loss = F.cross_entropy(logits, y)
                     preds = torch.argmax(logits, dim=1)
+                correct += (preds == y).sum().item()
             elif self.config["task"] == "regression":
                 preds = self.model(X)
                 loss = F.mse_loss(preds, y)
                 #loss = F.l1_loss(preds, y)
 
             total_loss += loss.item() * X.size(0)
-            preds = torch.argmax(logits, dim=1)
-            correct += (preds == y).sum().item()
             total += y.size(0)
 
         test_loss = total_loss / total
