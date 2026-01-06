@@ -18,7 +18,6 @@ import flwr as fl
 import flcore.models.linear_models.utils as utils
 from flcore.metrics import metrics_aggregation_fn
 from sklearn.metrics import log_loss
-from typing import Dict
 import joblib
 from flcore.models.nn.FedCustomAggregator import UncertaintyWeightedFedAvg
 from flcore.metrics import calculate_metrics
@@ -26,13 +25,40 @@ from flcore.models.nn.basic_nn import BasicNN
 import torch
 
 def weighted_average(metrics: List[Tuple[int, Metrics]]) -> Metrics:
-    accuracies = [num_examples * m["accuracy"] for num_examples, m in metrics]
-    examples = [num_examples for num_examples, _ in metrics]
-    return {"accuracy": sum(accuracies) / sum(examples)}
+    if not metrics:
+        return {}
+
+    total_examples = sum(num_examples for num_examples, _ in metrics)
+
+    metric_keys = metrics[0][1].keys()
+
+    weighted_metrics = {}
+    for key in metric_keys:
+        weighted_sum = sum(
+            num_examples * m[key] for num_examples, m in metrics
+        )
+        weighted_metrics[key] = weighted_sum / total_examples
+
+    return weighted_metrics
 
 def equal_average(metrics: List[Tuple[int, Metrics]]) -> Metrics:
-    accuracies = [ m["accuracy"] for num_examples, m in metrics]
-    return {"accuracy": sum(accuracies) }
+    if not metrics:
+        return {}
+
+    # Número de clientes
+    num_clients = len(metrics)
+
+    # Asumimos que todas las métricas tienen las mismas keys
+    metric_keys = metrics[0][1].keys()
+
+    equal_metrics = {}
+    for key in metric_keys:
+        equal_sum = sum(
+            m[key] for _, m in metrics
+        )
+        equal_metrics[key] = equal_sum / num_clients
+
+    return equal_metrics
 
 
 def get_server_and_strategy(config):
