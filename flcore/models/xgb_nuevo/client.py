@@ -144,7 +144,6 @@ class XGBFlowerClient(fl.client.NumPyClient):
         elif self.config["task"] == "regression":
                 y_pred = self.bst.predict(self.dtest)
                 loss = mean_squared_error(self.y_test, y_pred)
-        y_pred = self.model.predict(self.X_test)
 
         metrics = calculate_metrics(self.y_test, y_pred, self.config)
         status = Status(code=Code.OK, message="Success")
