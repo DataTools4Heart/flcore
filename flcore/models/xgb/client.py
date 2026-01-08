@@ -1,10 +1,22 @@
-## Create Flower custom client
+# ********* * * * * *  *  *   *   *    *   *  *  *  * * * * *
+# XGBoost Client for Flower
+# Author: Jorge Fabila Fabian
+# Fecha: January 2025
+# Project: DT4H
+# ********* * * * * *  *  *   *   *    *   *  *  *  * * * * *
 
-from typing import List, Tuple, Union
-import time
+import warnings
+from typing import List, Tuple, Dict
+
 import flwr as fl
 import numpy as np
-import torch
+import xgboost as xgb
+
+from flwr.common import Parameters
+from sklearn.metrics import log_loss
+from flcore.metrics import calculate_metrics
+from sklearn.metrics import mean_squared_error
+from xgboost_comprehensive.task import load_data, replace_keys
 from flwr.common import (
     Code,
     EvaluateIns,
@@ -13,255 +25,131 @@ from flwr.common import (
     FitRes,
     GetParametersIns,
     GetParametersRes,
-    GetPropertiesIns,
-    GetPropertiesRes,
     Status,
-    ndarrays_to_parameters,
-    parameters_to_ndarrays,
-)
-from flwr.common.typing import Parameters
-from torch.utils.data import DataLoader
-from xgboost import XGBClassifier, XGBRegressor
-
-from flcore.models.xgb.cnn import CNN, test, train
-from flcore.models.xgb.utils import (
-    NumpyEncoder,
-    TreeDataset,
-    construct_tree_from_loader,
-    get_dataloader,
-    parameters_to_objects,
-    serialize_objects_to_parameters,
-    tree_encoding_loader,
-    train_test
 )
 
+warnings.filterwarnings("ignore", category=UserWarning)
 
-class FL_Client(fl.client.Client):
-    def __init__(
-        self,
-        task_type: str,
-        trainloader: DataLoader,
-        valloader: DataLoader,
-        client_tree_num: int,
-        client_num: int,
-        cid: str,
-        log_progress: bool = False,
-    ):
-        """
-        Creates a client for training `network.Net` on tabular dataset.
-        """
-        self.task_type = task_type
-        self.cid = cid
-        self.tree = construct_tree_from_loader(trainloader, client_tree_num, task_type)
-        self.trainloader_original = trainloader
-        self.valloader_original = valloader
-        self.trainloader = None
-        self.valloader = None
-        self.client_tree_num = client_tree_num
-        self.client_num = client_num
-        self.properties = {"tensor_type": "numpy.ndarray"}
-        self.log_progress = log_progress
-        self.tree_config_dict = {
-            "client_tree_num": self.client_tree_num,
-            "task_type": self.task_type,
-        }
-        self.tmp_dir = ""
+def _local_boost(bst_input, num_local_round, train_dmatrix, train_method):
+    for _ in range(num_local_round):
+        bst_input.update(train_dmatrix, bst_input.num_boosted_rounds())
 
-        # instantiate model
-        self.net = CNN(client_num=client_num, client_tree_num=client_tree_num)
+    if train_method == "bagging":
+        bst = bst_input[
+            bst_input.num_boosted_rounds() - num_local_round :
+            bst_input.num_boosted_rounds()
+        ]
+    else:  # cyclic
+        bst = bst_input
 
-        # determine device
-        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        self.round_time = -1
+    return bst
 
-    def get_properties(self, ins: GetPropertiesIns) -> GetPropertiesRes:
-        return GetPropertiesRes(properties=self.properties)
+class XGBFlowerClient(fl.client.NumPyClient):
+    def __init__(self, data, config):
+        self.config = config
 
-    def get_parameters(
-        self, ins: GetParametersIns
-    ) -> Tuple[
-        GetParametersRes, Union[Tuple[XGBClassifier, int], Tuple[XGBRegressor, int]]
-    ]:
-        net_params = self.net.get_weights()
-        parameters = serialize_objects_to_parameters(
-            [net_params, (self.tree, self.cid)], self.tmp_dir
-        )
+        self.train_method = config["train_method"]
+        self.seed = config["seed"]
+        self.test_fraction = config["test_fraction"]
+        self.num_local_round = config["local_epochs"]
 
-        return GetParametersRes(
-            status=Status(Code.OK, ""),
-            parameters=parameters,
-        )
+        self.bst = None
 
-    def set_parameters(
-        self,
-        parameters: Tuple[
-            Parameters,
-            Union[
-                Tuple[XGBClassifier, int],
-                Tuple[XGBRegressor, int],
-                List[Union[Tuple[XGBClassifier, int], Tuple[XGBRegressor, int]]],
-            ],
-        ],
-    ) -> Union[
-        Tuple[XGBClassifier, int],
-        Tuple[XGBRegressor, int],
-        List[Union[Tuple[XGBClassifier, int], Tuple[XGBRegressor, int]]],
-    ]:
-        self.net.set_weights(parameters_to_ndarrays(parameters[0]))
-        return parameters[1]
+        (self.X_train, self.y_train), (self.X_test, self.y_test) = data
 
-    def fit(self, fit_params: FitIns) -> FitRes:
-        # Process incoming request to train
-        num_iterations = fit_params.config["num_iterations"]
-        batch_size = fit_params.config["batch_size"]
+        self.dtrain = xgb.DMatrix(self.X_train, label=self.y_train)
+        self.dtest = xgb.DMatrix(self.X_test, label=self.y_test)
 
-        objects = parameters_to_objects(
-            fit_params.parameters, self.tree_config_dict, self.tmp_dir
-        )
+        if self.config["task"] == "classification":
+            if self.config["n_out"] == 1: # Binario
+                config["params"] = {
+                    "objective": "binary:logistic",
+                    "eval_metric": "logloss",
+                    "max_depth": config["max_depth"],
+                    "eta": config["eta"],
+                    "tree_method": config["tree_method"],
+                    "subsample": config["test_size"],
+                    "colsample_bytree": 0.8,
+                    "tree_method": config["tree_method"],
+                    "seed": config["seed"],
+                }
+            elif self.config["n_out"] > 1: # Multivariable
+                config["params"] = {
+                    "objective": "multi:softprob",
+                    "num_class": config["n_out"],
+                    "eval_metric": "mlogloss", # podria ser logloss
+                    "max_depth": config["max_depth"],
+                    "eta": config["eta"],
+                    "tree_method": config["tree_method"],
+                }
 
-        aggregated_trees = self.set_parameters(objects)
+        elif self.config["task"] == "regression":
+                config["params"] = {
+                    "objective": "reg:squarederror",
+                    "eval_metric": "rmse",
+                    "max_depth": config["max_depth"],
+                    "eta": config["eta"],
+                    "tree_method": config["tree_method"],
+                }
 
-        if type(aggregated_trees) is list:
-            print("Client " + self.cid + ": recieved", len(aggregated_trees), "trees")
+    def get_parameters(self, config):
+        if self.bst is None:
+            return []
+        raw = self.bst.save_raw("json")
+        return [np.frombuffer(raw, dtype=np.uint8)]
+
+    def set_parameters(self, parameters: List[np.ndarray]):
+        if not parameters:
+            return
+        self.bst = xgb.Booster(params=self.params)
+        raw = bytearray(parameters[0].tobytes())
+        self.bst.load_model(raw)
+
+
+    def fit(self, parameters, config):
+        server_round = config.get("server_round", 1)
+
+        if server_round == 1 or not parameters:
+            self.bst = xgb.train(
+                self.params,
+                self.dtrain,
+                num_boost_round=self.num_local_round,
+            )
         else:
-            print("Client " + self.cid + ": only had its own tree")
-        self.trainloader = tree_encoding_loader(
-            self.trainloader_original,
-            batch_size,
-            aggregated_trees,
-            self.client_tree_num,
-            self.client_num,
-        )
-        self.valloader = tree_encoding_loader(
-            self.valloader_original,
-            batch_size,
-            aggregated_trees,
-            self.client_tree_num,
-            self.client_num,
-        )
+            self.set_parameters(parameters)
 
-        # num_iterations = None special behaviour: train(...) runs for a single epoch, however many updates it may be
-        num_iterations = num_iterations or len(self.trainloader)
-
-        # Train the model
-        print(f"Client {self.cid}: training for {num_iterations} iterations/updates")
-        start_time = time.time()
-        self.net.to(self.device)
-        train_loss, train_result, num_examples = train(
-            self.task_type,
-            self.net,
-            self.trainloader,
-            device=self.device,
-            num_iterations=num_iterations,
-            log_progress=self.log_progress,
-        )
-        print(
-            f"Client {self.cid}: training round complete, {num_examples} examples processed"
-        )
-        
-        self.round_time = (time.time() - start_time)
-
-        # Return training information: model, number of examples processed and metrics
-        if self.task_type == "BINARY":
-            return FitRes(
-                status=Status(Code.OK, ""),
-                # parameters=self.get_parameters(fit_params.config),
-                parameters=self.get_parameters(fit_params.config).parameters,
-                num_examples=num_examples,
-                metrics={"loss": train_loss, "accuracy": train_result, "running_time":self.round_time},
-            )
-        elif self.task_type == "REG":
-            return FitRes(
-                status=Status(Code.OK, ""),
-                parameters=self.get_parameters(fit_params.config),
-                num_examples=num_examples,
-                metrics={"loss": train_loss, "mse": train_result, "running_time":self.round_time},
+            self.bst = _local_boost(
+                self.bst,
+                self.num_local_round,
+                self.dtrain,
+                self.train_method,
             )
 
-    def evaluate(self, eval_params: EvaluateIns) -> EvaluateRes:
+        params = self.get_parameters({})
+        metrics = {"num_examples": len(self.y_train)}
 
-        print(
-            f"Client {self.cid}: Start evaluation round"
+        return params, len(self.y_train), metrics
+
+    def evaluate(self, parameters, config):
+        self.set_parameters(parameters)
+        if self.config["task"] == "classification":
+            if self.config["n_out"] == 1: # Binario
+                y_pred_prob = self.bst.predict(self.dtest)
+                y_pred = (y_pred_prob > 0.5).astype(int)
+                loss = log_loss(self.y_test, y_pred_prob)
+            elif self.config["n_out"] > 1: # Multivariable
+                y_pred_prob = self.bst.predict(self.dtest)
+                y_pred = y_pred_prob.argmax(axis=1)
+                loss = log_loss(self.y_test, y_pred_prob)
+        elif self.config["task"] == "regression":
+                y_pred = self.bst.predict(self.dtest)
+                loss = mean_squared_error(self.y_test, y_pred)
+
+        metrics = calculate_metrics(self.y_test, y_pred, self.config)
+        status = Status(code=Code.OK, message="Success")
+        return EvaluateRes(
+            status=status,
+            loss=float(loss),
+            num_examples=len(self.X_test),
+            metrics=metrics,
         )
-        # Process incoming request to evaluate
-        objects = parameters_to_objects(
-            eval_params.parameters, self.tree_config_dict, self.tmp_dir
-        )
-        self.set_parameters(objects)
-
-        # Evaluate the model
-        self.net.to(self.device)
-        loss, result, num_examples = test(
-            self.task_type,
-            self.net,
-            self.valloader,
-            device=self.device,
-            log_progress=self.log_progress,
-        )
-
-        metrics = result
-        metrics["client_id"] = int(self.cid)
-        metrics["round_time [s]"] = self.round_time
-
-        # Return evaluation information
-        if self.task_type == "BINARY":
-            accuracy = metrics["accuracy"]
-            print(
-                f"Client {self.cid}: evaluation on {num_examples} examples: loss={loss:.4f}, accuracy={accuracy:.4f}"
-            )
-            return EvaluateRes(
-                status=Status(Code.OK, ""),
-                loss=loss,
-                num_examples=num_examples,
-                # metrics={"accuracy": result},
-                metrics=metrics,
-            )
-        elif self.task_type == "REG":
-            print(
-                f"Client {self.cid}: evaluation on {num_examples} examples: loss={loss:.4f}, mse={result:.4f}"
-            )
-            return EvaluateRes(
-                status=Status(Code.OK, ""),
-                loss=loss,
-                num_examples=num_examples,
-                metrics=metrics,
-            )
-
-
-def get_client(config, data, client_id) -> fl.client.Client:
-    (X_train, y_train), (X_test, y_test) = data
-    task_type = config["xgb"]["task_type"]
-    client_num = config["num_clients"]
-    client_tree_num = config["xgb"]["tree_num"] // client_num
-    batch_size = "whole"
-    cid = str(client_id)
-    trainset = TreeDataset(np.array(X_train, copy=True), np.array(y_train, copy=True))
-    valset = TreeDataset(np.array(X_test, copy=True), np.array(y_test, copy=True))
-    trainloader = get_dataloader(trainset, "train", batch_size)
-    valloader = get_dataloader(valset, "test", batch_size)
-
-    metrics = train_test(data, client_tree_num)
-    from flcore import datasets
-    if client_id == 1:
-        cross_id = 2
-    else:
-        cross_id = 1
-    _, (X_test, y_test) = datasets.load_dataset(config, cross_id)
-
-    data = (X_train, y_train), (X_test, y_test)
-    metrics_cross = train_test(data, client_tree_num)
-    print("Client " + cid + " non-federated training results:")
-    print(metrics)
-    print("Cross testing model on client " + str(cross_id) + ":")
-    print(metrics_cross)
-
-    client = FL_Client(
-        task_type,
-        trainloader,
-        valloader,
-        client_tree_num,
-        client_num,
-        cid,
-        log_progress=False,
-    )
-    return client
