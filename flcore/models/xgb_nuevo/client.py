@@ -12,8 +12,21 @@ import flwr as fl
 import numpy as np
 import xgboost as xgb
 
-from xgboost_comprehensive.task import load_data, replace_keys
 from flwr.common import Parameters
+from sklearn.metrics import log_loss
+from flcore.metrics import calculate_metrics
+from sklearn.metrics import mean_squared_error
+from xgboost_comprehensive.task import load_data, replace_keys
+from flwr.common import (
+    Code,
+    EvaluateIns,
+    EvaluateRes,
+    FitIns,
+    FitRes,
+    GetParametersIns,
+    GetParametersRes,
+    Status,
+)
 
 warnings.filterwarnings("ignore", category=UserWarning)
 
@@ -117,42 +130,27 @@ class XGBFlowerClient(fl.client.NumPyClient):
 
         return params, len(self.y_train), metrics
 
-
-
     def evaluate(self, parameters, config):
         self.set_parameters(parameters)
-
-        eval_str = self.bst.eval_set(
-            evals=[(self.dtest, "test")],
-            iteration=self.bst.num_boosted_rounds() - 1,
-        )
-
-        metric_value = float(eval_str.split("\t")[1].split(":")[1])
-
-        metrics = {
-            "metric": metric_value,
-            "num_examples": len(self.y_test),
-        }
-
-        loss = metric_value
-        return loss, len(self.y_test), metrics
-
         if self.config["task"] == "classification":
             if self.config["n_out"] == 1: # Binario
-                y_pred_prob = self.model.predict_proba(self.X_test)
-                loss = log_loss(self.y_test, y_pred_prob)    
-            elif self.config["n_out"] > 1: # Multivariable
-                y_pred_prob = self.model.predict_proba(self.X_test)
+                y_pred_prob = self.bst.predict(self.dtest)
+                y_pred = (y_pred_prob > 0.5).astype(int)
                 loss = log_loss(self.y_test, y_pred_prob)
-                
+            elif self.config["n_out"] > 1: # Multivariable
+                y_pred_prob = self.bst.predict(self.dtest)
+                y_pred = y_pred_prob.argmax(axis=1)
+                loss = log_loss(self.y_test, y_pred_prob)
         elif self.config["task"] == "regression":
-                y_pred = self.model.predict(self.X_test)
+                y_pred = self.bst.predict(self.dtest)
                 loss = mean_squared_error(self.y_test, y_pred)
-
         y_pred = self.model.predict(self.X_test)
+
         metrics = calculate_metrics(self.y_test, y_pred, self.config)
-        # Serialize to send it to the server
-        #params = get_model_parameters(model)
-        #parameters_updated = serialize_RF(params)
-        # Build and return response
         status = Status(code=Code.OK, message="Success")
+        return EvaluateRes(
+            status=status,
+            loss=float(loss),
+            num_examples=len(self.X_test),
+            metrics=metrics,
+        )
