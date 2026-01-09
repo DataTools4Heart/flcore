@@ -36,14 +36,16 @@ class FedXgbStrategy(fl.server.strategy.Strategy):
         self,
         params: Dict,
         train_method: str,
-        fraction_train: float,
-        fraction_evaluate: float,
+        min_available_clients: int,
+        #fraction_train: float,
+        #fraction_evaluate: float,
         test_dmatrix=None,
     ):
         self.params = params
         self.train_method = train_method
-        self.fraction_train = fraction_train
-        self.fraction_evaluate = fraction_evaluate
+        self.min_available_clients = min_available_clients
+        #self.fraction_train = fraction_train
+        #self.fraction_evaluate = fraction_evaluate
         self.test_dmatrix = test_dmatrix
 
         self.global_bst: Optional[xgb.Booster] = None
@@ -53,9 +55,10 @@ class FedXgbStrategy(fl.server.strategy.Strategy):
         return empty_parameters()
 
     def configure_fit(self, server_round, parameters, client_manager):
-        num_clients = max(
-            1, int(self.fraction_train * client_manager.num_available())
-        )
+        num_clients = self.min_available_clients
+        #num_clients = max(
+        #    1, int(self.fraction_train * client_manager.num_available())
+        #)
         clients = client_manager.sample(num_clients)
 
         config = {"server-round": server_round}
@@ -99,7 +102,6 @@ class FedXgbStrategy(fl.server.strategy.Strategy):
 
         return booster_to_parameters(self.global_bst), {}
 
-    # -------------------------------------------------
     def configure_evaluate(self, server_round, parameters, client_manager):
         if self.test_dmatrix is None:
             num_clients = max(
@@ -155,7 +157,7 @@ def get_server_and_strategy(config):
                 "max_depth": config["max_depth"],
                 "eta": config["eta"],
                 "tree_method": config["tree_method"],
-                "subsample": config["test_size"],
+#                "subsample": config["test_size"],
                 "colsample_bytree": 0.8,
                 "tree_method": config["tree_method"],
                 "seed": config["seed"],
@@ -169,6 +171,8 @@ def get_server_and_strategy(config):
                 "eta": config["eta"],
                 "tree_method": config["tree_method"],
             }
+        else:
+            print("NO LABELS WERE GIVEN")
 
     elif config["task"] == "regression":
             config["params"] = {
@@ -182,8 +186,9 @@ def get_server_and_strategy(config):
     strategy = FedXgbStrategy(
         params = config["params"],
         train_method = config["train_method"],
-        fraction_train = config["train_size"],
-        fraction_evaluate = config["validation_size"],
+        min_available_clients = config['min_available_clients'],
+        #fraction_train = config["train_size"],
+        #fraction_evaluate = config["validation_size"],
         test_dmatrix=None,
     )
     """
