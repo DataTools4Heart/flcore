@@ -16,7 +16,6 @@ from flwr.common import Parameters
 from sklearn.metrics import log_loss
 from flcore.metrics import calculate_metrics
 from sklearn.metrics import mean_squared_error
-from xgboost_comprehensive.task import load_data, replace_keys
 from flwr.common import (
     Code,
     EvaluateIns,
@@ -153,3 +152,6 @@ class XGBFlowerClient(fl.client.NumPyClient):
             num_examples=len(self.X_test),
             metrics=metrics,
         )
+
+def get_client(config, data):
+    print("GET CLIENT")
