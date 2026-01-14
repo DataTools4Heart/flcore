@@ -164,7 +164,6 @@ def set_initial_params(model,config):
         model.coef_ = np.zeros((n_classes,n_features))
         if model.fit_intercept:
             model.intercept_ = np.zeros((n_classes,))
-# .............................................................................................
     elif config["model"] in ["lsvc","svm","svr"]:
         if config["task"] == "classification":
             model.coef_ = np.zeros((n_classes, n_features))
@@ -174,24 +173,7 @@ def set_initial_params(model,config):
             if config["kernel"] == "linear":
                 model.coef_ = np.zeros((n_classes, n_features))
                 if model.fit_intercept:
-                    model.intercept_ = 0 
-            else:
-                model.coef_ = np.zeros((1, n_features))
-                if model.fit_intercept:
-                    model.intercept_ = 0 
-
-        #coef_ : of shape (1, n_features) if n_classes == 2 else (n_classes, n_features)
-        model.coef_ = np.zeros((n_classes, n_features))
-        if model.fit_intercept:
-            model.intercept_ = 0 
-    elif config["model"] in ["svm", ]:
-        # parece que no encuentra los parametros:
-        # 2025-12-20 15:21:35,575 - STDERR - ERROR - can't set attribute 'coef_'
-
-        pass
-    else:
-        pass
-# .............................................................................................
+                    model.intercept_ = 0
 
 #Evaluate in the aggregations evaluation with
 #the client using client data and combine
