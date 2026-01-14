@@ -30,9 +30,9 @@ if __name__ == "__main__":
     parser.add_argument("--normalization_method",type=str, default="IQR", help="Type of normalization: IQR STD MIN_MAX")
     parser.add_argument("--train_labels", type=str, nargs='+', default=None, help="Dataloader to use")
     parser.add_argument("--target_labels", type=str, nargs='+', default=None, help="Dataloader to use")
-    parser.add_argument("--train_size", type=float, default=0.8, help="Fraction of dataset to use for training. [0,1)")
-    parser.add_argument("--validation_size", type=float, default=0.8, help="Fraction of dataset to use for validation. [0,1)")
-    parser.add_argument("--test_size", type=float, default=0.8, help="Fraction of dataset to use for testing. [0,1)")
+    parser.add_argument("--train_size", type=float, default=0.7, help="Fraction of dataset to use for training. [0,1)")
+    parser.add_argument("--validation_size", type=float, default=0.2, help="Fraction of dataset to use for validation. [0,1)")
+    parser.add_argument("--test_size", type=float, default=0.1, help="Fraction of dataset to use for testing. [0,1)")
     # Variables training related
     parser.add_argument("--num_rounds", type=int, default=50, help="Number of federated iterations")
     parser.add_argument("--lr", type=float, default=1e-3, help="Learning rate when needed")    
@@ -55,8 +55,8 @@ if __name__ == "__main__":
     parser.add_argument("--solver", type=str, default="saga", help="Numerical solver of optimization method")
     parser.add_argument("--l1_ratio", type=str, default=0.5, help="L1-L2 Ratio, necessary for ElasticNet, 0 -> L1 ; 1 -> L2")
     parser.add_argument("--max_iter", type=int, default=100000, help="Max iterations of optimizer")
-    parser.add_argument("--tol", type=str, default="0.001", help="Gamma for SVR")
-    parser.add_argument("--kernel", type=str, default="rbf", help="Kernel of SVR")
+    parser.add_argument("--tol", type=float, default=0.001, help="Gamma for SVR")
+    parser.add_argument("--kernel", type=str, default="linear", help="Kernel of SVR")
     #kernel{‘linear’, ‘poly’, ‘rbf’, ‘sigmoid’, ‘precomputed’} or callable, default=’rbf’
     parser.add_argument("--degree", type=int, default=3, help="Degree of polinonial")
     parser.add_argument("--gamma", type=str, default="scale", help="Gamma for SVR")
@@ -78,10 +78,12 @@ if __name__ == "__main__":
     parser.add_argument("--model", type=str, default="random_forest", help="Model to train")
     """
     # # XGB
-    ##############################################################################
-    parser.add_argument("--xgb", type=json.loads, default={"batch_size": 32,"num_iterations": 100,"task_type": "BINARY","tree_num": 500}, help="XGB parameters")
-    ##############################################################################
-    parser.add_argument("--tree_num", type=int, default=100, help="Number of trees")
+    parser.add_argument("--booster", type=str, default="gbtree", help="Booster to use: gbtree, gblinear or dart")
+    parser.add_argument("--tree_method", type=str, default="hist", help="Tree method: exact, approx hist")
+    parser.add_argument("--train_method", type=str, default="bagging", help="Train method: bagging, cyclic")
+    parser.add_argument("--eta", type=float, default=0.1, help="ETA value")
+    #parser.add_argument("--", type=, default=, help="")
+
     """
     parser.add_argument("--model", type=str, default="random_forest", help="Model to train")
     parser.add_argument("--model", type=str, default="random_forest", help="Model to train")
