@@ -101,7 +101,7 @@ def calculate_metrics(y_true, y_pred, config):
         y_true = torch.tensor(y_true.tolist())
     if not torch.is_tensor(y_pred):
         y_pred = torch.tensor(y_pred.tolist())
-    metrics_collection.update(y_pred, y_true)
+    metrics_collection.update(y_pred.view(-1), y_true)
 
     metrics = metrics_collection.compute()
     metrics = {k: v.item() for k, v in metrics.items()}

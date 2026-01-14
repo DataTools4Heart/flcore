@@ -102,7 +102,7 @@ class MnistClient(fl.client.NumPyClient):
         if self.config["model"] == "logistic_regression": # buscar modelos compatibles
             y_pred = pred
         elif self.config["model"] == "linear_regression": # idem
-            y_pred = pred[:,0]    
+            y_pred = pred #[:,0]    
         print("CLIENT::EVALUATE::Y VAL, Y PRED", self.y_val, y_pred)
         metrics = calculate_metrics(self.y_val, y_pred, self.config)
 
