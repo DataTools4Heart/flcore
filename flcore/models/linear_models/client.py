@@ -15,8 +15,7 @@ import time
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import mean_squared_error
-
-
+from sklearn.metrics import accuracy_score
 
 
 # Define Flower client
@@ -99,11 +98,7 @@ class MnistClient(fl.client.NumPyClient):
 
         # Calculate validation set metrics
         pred = self.model.predict(self.X_val)
-        if self.config["model"] == "logistic_regression": # buscar modelos compatibles
-            y_pred = pred
-        elif self.config["model"] == "linear_regression": # idem
-            y_pred = pred #[:,0]    
-        print("CLIENT::EVALUATE::Y VAL, Y PRED", self.y_val, y_pred)
+        y_pred = pred
         metrics = calculate_metrics(self.y_val, y_pred, self.config)
 
         if self.config["task"] == "classification":
@@ -138,13 +133,10 @@ class MnistClient(fl.client.NumPyClient):
                         self.model.predict_proba(self.X_val)
                     )
                 else:
-                    print("PREDICT PROBA NO DISPONIBLE")
-                    """
                     loss = 1.0 - accuracy_score(
-                        self.y_test,
-                        y_test_pred
+                        self.y_val,
+                        y_pred
                     )
-                    """
 
         elif self.config["task"] == "regression":
             loss = mean_squared_error(self.y_val, y_pred)
