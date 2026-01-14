@@ -108,7 +108,7 @@ def CheckClientConfig(config):
             print("The nature of the selected ML models does not allow to perform regression")
             sys.exit()
     elif config["model"] in linear_regression_models_list:
-        if config["task"] == "classification":
+        if config["task"] == "classification" and config["model"] != "svm":
             print("The nature of the selected ML model does not allow to perform classification")
             print("if you want to perform classification with a linear model you can change to logistic_regression")
             sys.exit()
@@ -125,6 +125,11 @@ def CheckClientConfig(config):
             elif config["model"] == "linear_regression_elasticnet":
                 config["model"] == "linear_regression"
                 config["penalty"] = "elasticnet"
+            elif config["model"] == "svm":
+                if config["kernel"] != "linear":
+                    print("The fit time complexity is more than quadratic with the number of samples which makes it hard to scale to datasets")
+                    print("with more than a couple of 10000 samples. Changing kernel for linear")
+                    config["kernel"] = "linear"
     elif config["model"] == "logistic_regression_elasticnet":
         if (config["task"] == "classification"  or config["task"].lower() == "none"):
             if config["task"].lower() == "none":
