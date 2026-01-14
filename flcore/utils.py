@@ -18,9 +18,9 @@ import flcore.models.linear_models.server as linear_models_server
 import flcore.models.weighted_random_forest.server as weighted_random_forest_server
 import flcore.models.nn.server as nn_server
 
-linear_models_list = ["logistic_regression", "linear_regression", "lsvc", "svr", "svm"
+linear_models_list = ["logistic_regression", "linear_regression", "lsvc", "svr", "svm",
                       "lasso_regression", "ridge_regression","logistic_regression_elasticnet"]
-linear_regression_models_list = ["linear_regression","lasso_regression", "svr", "svm"
+linear_regression_models_list = ["linear_regression","lasso_regression", "svr", "svm",
                         "ridge_regression","linear_regression_elasticnet"]
 
 
@@ -71,6 +71,7 @@ class StreamToLogger:
 
 def CheckClientConfig(config):
     # Compaibilidad de logistic regression y elastic net con sus parámetros
+    assert config["task"] in ["classification","regression","none"], "Task not valid"
 
     if config["model"] == "logistic_regression":
         if (config["task"] == "classification" or config["task"].lower() == "none"):
@@ -202,8 +203,7 @@ def CheckClientConfig(config):
         elif config["model"] == "random_forest":
             print("Random forest does not admit L1, L2 or ElasticNet regularization ... ignoring this variable")
             sys.exit()
-        assert config["penalty"] in valid_values, "Penalty is not valid"
-
+        assert config["penalty"] in valid_values, "Penalty is not valid or available for the selected model"
     return config
 
 
@@ -253,5 +253,6 @@ def CheckServerConfig(config):
            print("Changing strategy to FedAvg")
            config["strategy"] = "FedAvg"
 
+    # si XGB train_method debe ser bagging o cyclic
 # Tendriamos que añadir que se verifique que las tasks sean consistentes con los label y el tipo de dato
     return config
