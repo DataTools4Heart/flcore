@@ -69,7 +69,7 @@ if __name__ == "__main__":
     parser.add_argument("--regression_criterion", type=str, default="squared_error", help="Criterion for training")
     # # Neural networks
     # params : type: "nn", "BNN" Bayesiana, otros
-    parser.add_argument("--dropout_p", type=int, default=0.0, help="Montecarlo dropout rate")
+    parser.add_argument("--dropout_p", type=float, default=0.0, help="Montecarlo dropout rate")
     parser.add_argument("--T", type=int, default=20, help="Samples of MC dropout")
     """
     parser.add_argument("--model", type=str, default="random_forest", help="Model to train")
