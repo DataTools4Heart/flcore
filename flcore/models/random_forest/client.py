@@ -62,7 +62,7 @@ class MnistClient(fl.client.Client):
         #Deserialize to get the real parameters
         parameters = deserialize_RF(parameters)
         utils.set_model_params(self.model, parameters)
-
+        metrics = {}
         # Ignore convergence failure due to low local epochs
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
@@ -89,7 +89,6 @@ class MnistClient(fl.client.Client):
             # print(f"Balanced_accuracy in fit:  {balanced_accuracy}")
             # print(f"precision in fit:  {precision}")
             # print(f"F1_score in fit:  {F1_score}")
-    
             elapsed_time = (time.time() - start_time)
             metrics["running_time"] = elapsed_time
 
@@ -144,7 +143,7 @@ class MnistClient(fl.client.Client):
                     num_examples=len(self.X_test),
                     metrics=metrics,
                 )
-            if self.config["n_out"] > 1: # Multivariable
+            elif self.config["n_out"] > 1: # Multivariable
                 # ************************************************** CORREGIR ADAPTAR
                 # ************************************* Por ahora idéntico al binario
                 y_pred_prob = self.model.predict_proba(self.X_test)
