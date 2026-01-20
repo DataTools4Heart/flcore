@@ -18,7 +18,7 @@ from sklearn.utils import shuffle
 from sklearn.feature_selection import SelectKBest, f_classif
 
 
-from flcore.models.xgb.utils import TreeDataset, do_fl_partitioning, get_dataloader
+#from flcore.models.xgb.utils import TreeDataset, do_fl_partitioning, get_dataloader
 
 XY = Tuple[np.ndarray, np.ndarray]
 Dataset = Tuple[XY, XY]
@@ -404,7 +404,7 @@ def load_kaggle_hf(data_path, center_id, config) -> Dataset:
     # xx
     return (X_train, y_train), (X_test, y_test)
 
-
+"""
 def load_libsvm(config, center_id=None, task_type="BINARY"):
     # ## Manually download and load the tabular dataset from LIBSVM data
     # Datasets can be downloaded from LIBSVM Data: https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/
@@ -542,6 +542,7 @@ def load_libsvm(config, center_id=None, task_type="BINARY"):
     # print(train_max_acc)
     # print(test_max_acc)
     return (X_train, y_train), (X_test, y_test)
+"""
 
 def std_normalize(col, mean, std):
     return (col - mean) / std
@@ -696,7 +697,8 @@ def load_dataset(config, id=None):
     elif config["dataset"] == "kaggle_hf":
         return load_kaggle_hf(config["data_path"], id, config)
     elif config["dataset"] == "libsvm":
-        return load_libsvm(config, id)
+        pass
+#        return load_libsvm(config, id)
     elif config["dataset"] == "dt4h_format":
         return load_dt4h(config, id)
     else:
