@@ -49,8 +49,12 @@ if __name__ == "__main__":
     parser.add_argument("--regression_criterion", type=str, default="squared_error", help="Criterion for training")
 
     # Model specifc XGB settings
-    parser.add_argument("--train_method", type=str, default="bagging", help="Type of training, bagging or cyclic, default: bagging")
-# *******************************************************************************************
+    parser.add_argument("--booster", type=str, default="gbtree", help="Booster to use: gbtree, gblinear or dart")
+    parser.add_argument("--tree_method", type=str, default="hist", help="Tree method: exact, approx hist")
+    parser.add_argument("--train_method", type=str, default="bagging", help="Train method: bagging, cyclic")
+    parser.add_argument("--eta", type=float, default=0.1, help="ETA value")
+    # *******************************************************************************************
+    parser.add_argument("--n_features", type=int, default=0, help="Number of features")
     parser.add_argument("--n_feats", type=int, default=0, help="Number of features")
     parser.add_argument("--n_out", type=int, default=0, help="Number of outputs")
 # *******************************************************************************************
