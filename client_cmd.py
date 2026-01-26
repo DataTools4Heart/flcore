@@ -71,25 +71,15 @@ if __name__ == "__main__":
     # params : type: "nn", "BNN" Bayesiana, otros
     parser.add_argument("--dropout_p", type=float, default=0.0, help="Montecarlo dropout rate")
     parser.add_argument("--T", type=int, default=20, help="Samples of MC dropout")
-    """
-    parser.add_argument("--model", type=str, default="random_forest", help="Model to train")
-    parser.add_argument("--model", type=str, default="random_forest", help="Model to train")
-    parser.add_argument("--model", type=str, default="random_forest", help="Model to train")
-    parser.add_argument("--model", type=str, default="random_forest", help="Model to train")
-    """
     # # XGB
     parser.add_argument("--booster", type=str, default="gbtree", help="Booster to use: gbtree, gblinear or dart")
     parser.add_argument("--tree_method", type=str, default="hist", help="Tree method: exact, approx hist")
     parser.add_argument("--train_method", type=str, default="bagging", help="Train method: bagging, cyclic")
     parser.add_argument("--eta", type=float, default=0.1, help="ETA value")
-    #parser.add_argument("--", type=, default=, help="")
-
-    """
-    parser.add_argument("--model", type=str, default="random_forest", help="Model to train")
-    parser.add_argument("--model", type=str, default="random_forest", help="Model to train")
-    parser.add_argument("--model", type=str, default="random_forest", help="Model to train")
-    parser.add_argument("--model", type=str, default="random_forest", help="Model to train")
-    """
+    # # Survival
+    parser.add_argument("--time_col", type=str, default="time", help="")
+    parser.add_argument("--event_col", type=str, default="event", help="")
+    parser.add_argument("--negative_duration_strategy", type=str, default="clip", help="")
 
     args = parser.parse_args()
     config = vars(args)
