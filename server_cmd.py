@@ -25,7 +25,7 @@ if __name__ == "__main__":
     parser.add_argument("--min_available_clients", type=int, default=0, help="Minimum number of available clients")
     parser.add_argument("--seed", type=int, default=42, help="Seed")
 
-    parser.add_argument("--sandbox_path", type=str, default="./sandbox", help="Sandbox path to use")
+    parser.add_argument("--sandbox_path", type=str, default="/sandbox", help="Sandbox path to use")
     parser.add_argument("--local_port", type=int, default=8081, help="Local port")
     parser.add_argument("--production_mode", type=str, default="True",  help="Production mode")
     #parser.add_argument("--certs_path", type=str, default="./", help="Certificates path")
@@ -65,7 +65,8 @@ if __name__ == "__main__":
 
     # Create sandbox log file path
 # Originalmente estaba asi:
-#    sandbox_log_file = Path(os.path.join("./sandbox", "log_server.txt"))
+#    sandbox_log_file = Path(os.path.join("/sandbox", "log_server.txt"))
+# Modificado
     sandbox_log_file = Path(os.path.join(config["sandbox_path"], "log_server.txt"))
 
     # Set up the file handler (writes to file)

@@ -44,12 +44,12 @@ def _local_boost(bst_input, num_local_round, train_dmatrix, train_method):
     return bst
 
 class XGBFlowerClient(fl.client.NumPyClient):
-    def __init__(self, data, config):
+    def __init__(self, config, data):
         self.config = config
 
         self.train_method = config["train_method"]
         self.seed = config["seed"]
-        self.test_fraction = config["test_fraction"]
+        self.test_fraction = config["test_size"]
         self.num_local_round = config["local_epochs"]
 
         self.bst = None
@@ -59,9 +59,9 @@ class XGBFlowerClient(fl.client.NumPyClient):
         self.dtrain = xgb.DMatrix(self.X_train, label=self.y_train)
         self.dtest = xgb.DMatrix(self.X_test, label=self.y_test)
 
-        if self.config["task"] == "classification":
-            if self.config["n_out"] == 1: # Binario
-                config["params"] = {
+        if config["task"] == "classification":
+            if config["n_out"] == 1: # Binario
+                self.config["params"] = {
                     "objective": "binary:logistic",
                     "eval_metric": "logloss",
                     "max_depth": config["max_depth"],
@@ -72,8 +72,8 @@ class XGBFlowerClient(fl.client.NumPyClient):
                     "tree_method": config["tree_method"],
                     "seed": config["seed"],
                 }
-            elif self.config["n_out"] > 1: # Multivariable
-                config["params"] = {
+            elif config["n_out"] > 1: # Multivariable
+                self.config["params"] = {
                     "objective": "multi:softprob",
                     "num_class": config["n_out"],
                     "eval_metric": "mlogloss", # podria ser logloss
@@ -82,8 +82,8 @@ class XGBFlowerClient(fl.client.NumPyClient):
                     "tree_method": config["tree_method"],
                 }
 
-        elif self.config["task"] == "regression":
-                config["params"] = {
+        elif config["task"] == "regression":
+                self.config["params"] = {
                     "objective": "reg:squarederror",
                     "eval_metric": "rmse",
                     "max_depth": config["max_depth"],
@@ -100,7 +100,7 @@ class XGBFlowerClient(fl.client.NumPyClient):
     def set_parameters(self, parameters: List[np.ndarray]):
         if not parameters:
             return
-        self.bst = xgb.Booster(params=self.params)
+        self.bst = xgb.Booster(params=self.config["params"])
         raw = bytearray(parameters[0].tobytes())
         self.bst.load_model(raw)
 
@@ -110,7 +110,7 @@ class XGBFlowerClient(fl.client.NumPyClient):
 
         if server_round == 1 or not parameters:
             self.bst = xgb.train(
-                self.params,
+                self.config["params"],
                 self.dtrain,
                 num_boost_round=self.num_local_round,
             )
@@ -154,4 +154,4 @@ class XGBFlowerClient(fl.client.NumPyClient):
         )
 
 def get_client(config, data):
-    print("GET CLIENT")
+    return XGBFlowerClient(config,data)

@@ -20,7 +20,7 @@ if __name__ == "__main__":
     # Variables node settings
     parser.add_argument("--node_name", type=str, default="./", help="Node name for certificates")
     parser.add_argument("--local_port", type=int, default=8081, help="Local port")
-    parser.add_argument("--sandbox_path", type=str, default="./sandbox", help="Sandbox path to use")
+    parser.add_argument("--sandbox_path", type=str, default="/sandbox", help="Sandbox path to use")
     parser.add_argument("--certs_path", type=str, default="/certs", help="Certificates path")
     parser.add_argument("--data_path", type=str, default="/data", help="Data path")
     parser.add_argument("--production_mode", type=str, default="True",  help="Production mode") # ¿Should exist?
