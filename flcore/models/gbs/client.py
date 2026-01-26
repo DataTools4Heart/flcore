@@ -82,7 +82,7 @@ class FLClient(fl.client.NumPyClient):
 
 
 
-def get_client(config, data, client_id) -> fl.client.Client:
+def get_client(config, data, client_id="client") -> fl.client.Client:
     (X_train, y_train), (X_test, y_test), time, event = data
     local_data = get_numpy(X_train, y_train, X_test, y_test, time, event)
     return FLClient(local_data, client_id=client_id, saving_path=config["experiment_dir"])

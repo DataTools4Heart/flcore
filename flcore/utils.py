@@ -44,11 +44,11 @@ def GetModelClient(config, data):
     elif model == "nn":
         client = nn.client.get_client(config, data)
     elif model == "cox":
-        client = cox.client.get_client(config, data, client_id)
+        client = cox.client.get_client(config, data)
     elif model == "rsf":
-        client = rsf.client.get_client(config, data, client_id)
+        client = rsf.client.get_client(config, data)
     elif model == "gbs":
-        client = gbs.client.get_client(config, data, client_id)
+        client = gbs.client.get_client(config, data)
     else:
         raise ValueError(f"Unknown model: {model}")
     return client
