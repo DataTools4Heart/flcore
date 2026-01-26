@@ -17,6 +17,13 @@ import flcore.models.random_forest.server as random_forest_server
 import flcore.models.linear_models.server as linear_models_server
 import flcore.models.weighted_random_forest.server as weighted_random_forest_server
 import flcore.models.nn.server as nn_server
+import flcore.models.cox.server as cox_server
+import flcore.models.rsf.server as rsf_server
+import flcore.models.gbs.server as gbs_server
+
+import flcore.models.cox as cox
+import flcore.models.rsf as rsf
+import flcore.models.gbs as gbs
 
 linear_models_list = ["logistic_regression", "linear_regression", "lsvc", "svr", "svm",
                       "lasso_regression", "ridge_regression","logistic_regression_elasticnet"]
@@ -36,6 +43,12 @@ def GetModelClient(config, data):
         client = xgb.client.get_client(config, data)
     elif model == "nn":
         client = nn.client.get_client(config, data)
+    elif model == "cox":
+        client = cox.client.get_client(config, data, client_id)
+    elif model == "rsf":
+        client = rsf.client.get_client(config, data, client_id)
+    elif model == "gbs":
+        client = gbs.client.get_client(config, data, client_id)
     else:
         raise ValueError(f"Unknown model: {model}")
     return client
@@ -52,6 +65,12 @@ def GetModelServerStrategy(config):
         server, strategy = xgb_server.get_server_and_strategy(config) #, data)
     elif model == "nn":
         server, strategy = nn_server.get_server_and_strategy(config)
+    elif model == "cox":
+        server, strategy = cox_server.get_server_and_strategy(config)
+    elif model == "rsf":
+        server, strategy = rsf_server.get_server_and_strategy(config)
+    elif model == "gbs":
+        server, strategy = gbs_server.get_server_and_strategy(config)
     else:
         raise ValueError(f"Unknown model: {model}")
 
