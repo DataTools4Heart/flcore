@@ -10,6 +10,7 @@ import openml
 #import torch
 from pathlib import Path
 import pandas as pd
+import random
 
 from sklearn.datasets import load_svmlight_file
 from sklearn.preprocessing import OrdinalEncoder, MinMaxScaler,StandardScaler
@@ -640,6 +641,74 @@ def load_dt4h(config,id):
     y_test = data_target[int(dat_len*config["train_size"]):].iloc[:, 0]
     return (X_train, y_train), (X_test, y_test)
 
+def load_survival(config):
+    # ********* * * * * *  *  *   *   *    *   *  *  *  * * * * *
+    # Survival model
+    # Author: Iratxe Moya
+    # Date: January 2026
+    # Project: AI4HF
+    # ********* * * * * *  *  *   *   *    *   *  *  *  * * * * *
+
+    from sksurv.util import Surv
+    metadata_file = Path(config['metadata_file'])
+    metadata = pd.read_json(metadata_file)
+    features = [mdt['name'] for mdt in metadata['entity']['features']]
+    nominal_features = [mdt['name'] for mdt in metadata['entity']['features'] if mdt['dataType'] == 'NOMINAL']
+    data_file = Path(config['data_file'])
+
+    time_col = config['survival']['time_col']
+    event_col = config['survival']['event_col']
+
+    if time_col is None or event_col is None:
+        if 'outcomes' in metadata['entity'].keys():
+            outcomes = metadata['entity']['outcomes']
+        elif 'foutcomes' in metadata['entity'].keys():
+            outcomes = metadata['entity']['foutcomes']
+        else:
+            raise KeyError("outcomes/foutcomes key not found in metadata")
+        
+        if time_col is None:
+            time_feature_candidates = [outcome['name'] for outcome in outcomes
+                                    if outcome['dataType'] == 'NUMERIC']
+            time_col = random.sample(time_feature_candidates, 1)[0]
+
+        if event_col is None:
+            event_feature_candidates = [outcome['name'] for outcome in outcomes
+                                    if outcome['dataType'] == 'BOOLEAN']
+            event_col = random.sample(event_feature_candidates, 1)[0]
+
+    df = pd.read_parquet(data_file)[[*features, time_col, event_col]]
+    df[features[0]] *= random.uniform(0.7, 1.4)  #! slight random change to CHECK
+
+    df_clean = df.replace({None: np.nan}).dropna()
+    if config['survival']['negative_duration_strategy'] == "remove":
+        df_clean = df_clean[df_clean[time_col] >= 0].copy()
+    elif config['survival']['negative_duration_strategy'] == "shift":
+        min_time = df_clean[time_col].min()
+        if min_time < 0:
+            df_clean[time_col] = df_clean[time_col] - min_time
+    elif config['survival']['negative_duration_strategy'] == "clip":
+        df_clean[time_col] = df_clean[time_col].clip(lower=0)
+    else:
+        raise ValueError(f"Unknown negative_duration_strategy: {config['survival']['negative_duration_strategy']}")
+    df_clean = df_clean.reset_index(drop=True)
+    
+    X = df_clean.drop(columns=[time_col, event_col])
+    X = X.copy()
+    X[nominal_features] = X[nominal_features].fillna("missing")
+    X_encoded = pd.get_dummies(X, columns=nominal_features, drop_first=True)
+    #! SAFEGUARD: Ensure all data is numeric after encoding
+    X_encoded = X_encoded.apply(pd.to_numeric, errors="coerce")
+    if X_encoded.isna().any().any():
+        print("Numeric coercion introduced NaNs:")
+        print(X_encoded.isna().sum()[X_encoded.isna().sum() > 0])
+    y_struct = Surv.from_dataframe(event_col, time_col, df_clean)
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X_encoded, y_struct, test_size=1 - config['train_size']
+    )
+
+    return (X_train, y_train), (X_test, y_test), time_col, event_col
 
 def cvd_to_torch(config):
     pass
@@ -701,6 +770,8 @@ def load_dataset(config, id=None):
 #        return load_libsvm(config, id)
     elif config["dataset"] == "dt4h_format":
         return load_dt4h(config, id)
+    elif config["dataset"] == "survival":
+        return load_survival(config, id)
     else:
         raise ValueError("Invalid dataset name")
 
