@@ -29,7 +29,7 @@ linear_models_list = ["logistic_regression", "linear_regression", "lsvc", "svr",
                       "lasso_regression", "ridge_regression","logistic_regression_elasticnet"]
 linear_regression_models_list = ["linear_regression","lasso_regression", "svr", "svm",
                         "ridge_regression","linear_regression_elasticnet"]
-
+survival_models_list = ["cox","rsf","gbs"]
 
 def GetModelClient(config, data):
     model = config["model"]
@@ -165,6 +165,8 @@ def CheckClientConfig(config):
         config["n_out"] = 1 # Quizás añadir como parámetro también
     elif config["model"] == "xgb":
         pass
+    elif config["model"] in survival_models_list:
+        config["dataset"] = "survival"
 
     est = config["data_id"]
     id = est.split("/")[-1]
@@ -213,6 +215,23 @@ def CheckClientConfig(config):
             if config["kernel"] in ["poly", "rbf", "sigmoid", "precomputed"] and config["n_out"] > 1:
                 print("Those kernels only support 1-variable as output")
                 sys.exit()
+
+    if config["model"] in survival_models_list:
+        if config["time_col"] == "None" or config["event_col"] == "None":
+            print("Time col and Event col needed when survival model is choosen")
+            sys.exit()
+        else:
+            config["survival"] = {}
+            config["survival"]["time_col"] = config["time_col"]
+            config["survival"]["event_col"] = config["event_col"]
+            config['survival']['negative_duration_strategy'] = config["negative_duration_strategy"]
+
+    # Create experiment directory
+    experiment_dir = Path(os.path.join(config["sandbox_path"],config["experiment_name"]))
+    experiment_dir.mkdir(parents=True, exist_ok=True)
+    config["experiment_dir"] = experiment_dir
+
+# CUANDO SURVIVAL MODEL TASK NO ES NECESAIRO
 
     if config["task"].lower() == "none":
         print("Task not assigned. The  ML model  selection requieres a task to perform")
