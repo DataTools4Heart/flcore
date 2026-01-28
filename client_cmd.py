@@ -12,7 +12,7 @@ import logging
 #import grpc
 
 import flcore.datasets as datasets
-from flcore.utils import StreamToLogger, GetModelClient, CheckClientConfig
+from flcore.utils import StreamToLogger, GetModelClient, CheckClientConfig, survival_models_list
 
 if __name__ == "__main__":
 
@@ -24,6 +24,7 @@ if __name__ == "__main__":
     parser.add_argument("--certs_path", type=str, default="/certs", help="Certificates path")
     parser.add_argument("--data_path", type=str, default="/data", help="Data path")
     parser.add_argument("--production_mode", type=str, default="True",  help="Production mode") # ¿Should exist?
+    parser.add_argument("--experiment_name", type=str, default="experiment_1", help="Experiment directory")
     # Variables dataset related
     parser.add_argument("--dataset", type=str, default="dt4h_format", help="Dataloader to use")
     parser.add_argument("--data_id", type=str, default="data_id.parquet" , help="Dataset ID")
@@ -160,8 +161,7 @@ if __name__ == "__main__":
 # *******************************************************************************************
 # Aquí lo correcto es cargar todo como instancias de dataloader de torch
 num_client = 0 # config["client_id"]
-(X_train, y_train), (X_test, y_test) = datasets.load_dataset(config, num_client)
-data = (X_train, y_train), (X_test, y_test)
+data = datasets.load_dataset(config, num_client)
 client = GetModelClient(config, data)
 # *******************************************************************************************
 for attempt in range(3):

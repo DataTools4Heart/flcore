@@ -554,7 +554,7 @@ def iqr_normalize(col, Q1, Q2, Q3):
 def min_max_normalize(col, min_val, max_val):
     return (col - min_val) / (max_val - min_val)
 
-def load_dt4h(config,id):
+def load_dt4h(config):
     metadata = Path(config['metadata_file'])
     with open(metadata, 'r') as file:
         metadata = json.load(file)
@@ -771,7 +771,7 @@ def load_dataset(config, id=None):
     elif config["dataset"] == "dt4h_format":
         return load_dt4h(config, id)
     elif config["dataset"] == "survival":
-        return load_survival(config, id)
+        return load_survival(config)
     else:
         raise ValueError("Invalid dataset name")
 

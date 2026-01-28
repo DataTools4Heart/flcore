@@ -53,6 +53,10 @@ if __name__ == "__main__":
     parser.add_argument("--tree_method", type=str, default="hist", help="Tree method: exact, approx hist")
     parser.add_argument("--train_method", type=str, default="bagging", help="Train method: bagging, cyclic")
     parser.add_argument("--eta", type=float, default=0.1, help="ETA value")
+
+    # Model specifc Cox settings
+    parser.add_argument("--l1_penalty", type=float, default=0.0, help="L1 Penalty")
+
     # *******************************************************************************************
     parser.add_argument("--n_features", type=int, default=0, help="Number of features")
     parser.add_argument("--n_feats", type=int, default=0, help="Number of features")
