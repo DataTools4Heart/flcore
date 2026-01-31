@@ -296,6 +296,9 @@ def CheckServerConfig(config):
            print("Changing strategy to FedAvg")
            config["strategy"] = "FedAvg"
 
-    # si XGB train_method debe ser bagging o cyclic
+    # si XGB train_method debe ser bagging o cyclicç    
+    if config["model"] == "xgb":
+        if config["strategy"] != "bagging":
+            config["strategy"] = "bagging"
 # Tendriamos que añadir que se verifique que las tasks sean consistentes con los label y el tipo de dato
     return config
