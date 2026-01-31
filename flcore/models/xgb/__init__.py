@@ -1,9 +1,9 @@
 # ********* * * * * *  *  *   *   *    *   *  *  *  * * * * *
-# XGB FL
-# Author: Jorge Fabila Fabian
-# Fecha: September 2025
+# XGBoost
+# Author: Iratxe Moya
+# Date: January 2026
 # Project: DT4H
 # ********* * * * * *  *  *   *   *    *   *  *  *  * * * * *
 
-import flcore.models.xgb.client
-import flcore.models.xgb.server
+import flcore.models.xgb_irh.client
+import flcore.models.xgb_irh.server
