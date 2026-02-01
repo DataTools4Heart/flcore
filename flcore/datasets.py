@@ -769,7 +769,7 @@ def load_dataset(config, id=None):
         pass
 #        return load_libsvm(config, id)
     elif config["dataset"] == "dt4h_format":
-        return load_dt4h(config, id)
+        return load_dt4h(config)
     elif config["dataset"] == "survival":
         return load_survival(config)
     else:
