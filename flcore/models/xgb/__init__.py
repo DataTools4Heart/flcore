@@ -5,5 +5,5 @@
 # Project: DT4H
 # ********* * * * * *  *  *   *   *    *   *  *  *  * * * * *
 
-import flcore.models.xgb_irh.client
-import flcore.models.xgb_irh.server
+import flcore.models.xgb.client
+import flcore.models.xgb.server
