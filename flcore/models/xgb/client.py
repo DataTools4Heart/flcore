@@ -25,7 +25,6 @@ class XGBoostClient(fl.client.NumPyClient):
     def __init__(
         self,
         local_data: Dict,
-        client_id: str = "client",
         saving_path: str = "/sandbox/",
     ):
         """
@@ -37,11 +36,9 @@ class XGBoostClient(fl.client.NumPyClient):
                 - y_train: Training labels
                 - X_test: Test features
                 - y_test: Test labels
-            client_id: Unique identifier for this client
             saving_path: Path to save local models and logs
         """
         self.local_data = local_data
-        self.client_id = client_id
         self.saving_path = Path(saving_path)
         self.saving_path.mkdir(parents=True, exist_ok=True)
         
@@ -59,9 +56,9 @@ class XGBoostClient(fl.client.NumPyClient):
         # Prepare data
         self._prepare_data()
         
-        print(f"[Client {self.client_id}] Initialized")
-        print(f"[Client {self.client_id}] Training samples: {len(self.local_data['X_train'])}")
-        print(f"[Client {self.client_id}] Test samples: {len(self.local_data['X_test'])}")
+        print(f"[Client] Initialized")
+        print(f"[Client] Training samples: {len(self.local_data['X_train'])}")
+        print(f"[Client] Test samples: {len(self.local_data['X_test'])}")
     
     def _prepare_data(self):
         """Convert data to DMatrix format for XGBoost."""
@@ -73,7 +70,7 @@ class XGBoostClient(fl.client.NumPyClient):
         # Handle categorical labels (for multiclass classification)
         # XGBoost requires numeric labels, not strings
         if hasattr(y_train, 'dtype') and y_train.dtype == 'object':
-            print(f"[Client {self.client_id}] Detected categorical labels, encoding...")
+            print(f"[Client] Detected categorical labels, encoding...")
             from sklearn.preprocessing import LabelEncoder
             
             self.label_encoder = LabelEncoder()
@@ -84,8 +81,8 @@ class XGBoostClient(fl.client.NumPyClient):
             self.local_data['y_train'] = y_train
             self.local_data['y_test'] = y_test
             
-            print(f"[Client {self.client_id}] Label mapping: {dict(enumerate(self.label_encoder.classes_))}")
-            print(f"[Client {self.client_id}] Encoded labels - Train: {np.unique(y_train)}, Test: {np.unique(y_test)}")
+            print(f"[Client] Label mapping: {dict(enumerate(self.label_encoder.classes_))}")
+            print(f"[Client] Encoded labels - Train: {np.unique(y_train)}, Test: {np.unique(y_test)}")
         else:
             self.label_encoder = None
         
@@ -93,7 +90,7 @@ class XGBoostClient(fl.client.NumPyClient):
         self.dtrain = xgb.DMatrix(X_train, label=y_train)
         self.dtest = xgb.DMatrix(X_test, label=y_test)
         
-        print(f"[Client {self.client_id}] Data prepared as DMatrix")
+        print(f"[Client] Data prepared as DMatrix")
     
     def get_parameters(self, config: Dict[str, Scalar] = None) -> NDArrays:
         """Return current model parameters."""
@@ -117,7 +114,7 @@ class XGBoostClient(fl.client.NumPyClient):
         self.bst = xgb.Booster(params=self.xgb_params)
         self.bst.load_model(model_bytes)
         
-        print(f"[Client {self.client_id}] Loaded global model with {self.bst.num_boosted_rounds()} trees")
+        print(f"[Client] Loaded global model with {self.bst.num_boosted_rounds()} trees")
     
     def fit(
         self,
@@ -145,13 +142,13 @@ class XGBoostClient(fl.client.NumPyClient):
             if k not in ["server_round", "num_local_rounds", "train_method"]
         }
         
-        print(f"\n[Client {self.client_id}] === Round {server_round} - FIT ===")
-        print(f"[Client {self.client_id}] Method: {train_method}")
-        print(f"[Client {self.client_id}] Local rounds: {num_local_rounds}")
+        print(f"\n[Client] === Round {server_round} - FIT ===")
+        print(f"[Client] Method: {train_method}")
+        print(f"[Client] Local rounds: {num_local_rounds}")
         
         if server_round == 1:
             # First round: train from scratch
-            print(f"[Client {self.client_id}] Training from scratch...")
+            print(f"[Client] Training from scratch...")
             self.bst = xgb.train(
                 self.xgb_params,
                 self.dtrain,
@@ -163,7 +160,7 @@ class XGBoostClient(fl.client.NumPyClient):
             
             if self.bst is None:
                 # Fallback: train from scratch if loading failed
-                print(f"[Client {self.client_id}] Warning: Could not load model, training from scratch")
+                print(f"[Client] Warning: Could not load model, training from scratch")
                 self.bst = xgb.train(
                     self.xgb_params,
                     self.dtrain,
@@ -171,7 +168,7 @@ class XGBoostClient(fl.client.NumPyClient):
                 )
             else:
                 # Continue training
-                print(f"[Client {self.client_id}] Continuing training from global model...")
+                print(f"[Client] Continuing training from global model...")
                 initial_trees = self.bst.num_boosted_rounds()
                 
                 # Update trees based on local training data
@@ -179,9 +176,9 @@ class XGBoostClient(fl.client.NumPyClient):
                     self.bst.update(self.dtrain, self.bst.num_boosted_rounds())
                 
                 final_trees = self.bst.num_boosted_rounds()
-                print(f"[Client {self.client_id}] Trained {final_trees - initial_trees} new trees (total: {final_trees})")
+                print(f"[Client] Trained {final_trees - initial_trees} new trees (total: {final_trees})")
         
-        print(f"[Client {self.client_id}] Total trees in model: {self.bst.num_boosted_rounds()}")
+        print(f"[Client] Total trees in model: {self.bst.num_boosted_rounds()}")
         
         # For bagging: return only the last N trees
         # For cyclic: return the entire model
@@ -191,14 +188,14 @@ class XGBoostClient(fl.client.NumPyClient):
             if num_trees > num_local_rounds:
                 # Slice to get last num_local_rounds trees
                 model_to_send = self.bst[num_trees - num_local_rounds : num_trees]
-                print(f"[Client {self.client_id}] Sending last {num_local_rounds} trees (bagging mode)")
+                print(f"[Client] Sending last {num_local_rounds} trees (bagging mode)")
             else:
                 model_to_send = self.bst
-                print(f"[Client {self.client_id}] Sending all {num_trees} trees")
+                print(f"[Client] Sending all {num_trees} trees")
         else:
             # Cyclic: send entire model
             model_to_send = self.bst
-            print(f"[Client {self.client_id}] Sending entire model (cyclic mode)")
+            print(f"[Client] Sending entire model (cyclic mode)")
         
         # Serialize model
         model_bytes = model_to_send.save_raw("json")
@@ -214,9 +211,9 @@ class XGBoostClient(fl.client.NumPyClient):
         }
         
         # Save local model
-        local_model_path = self.saving_path / "models" / f"xgboost_client_{self.client_id}_round_{server_round}.json"
+        local_model_path = self.saving_path / "models" / f"xgboost_client__round_{server_round}.json"
         self.bst.save_model(str(local_model_path))
-        print(f"[Client {self.client_id}] Saved local model to {local_model_path}")
+        print(f"[Client] Saved local model to {local_model_path}")
         
         return [model_array], num_examples, metrics
     
@@ -237,7 +234,7 @@ class XGBoostClient(fl.client.NumPyClient):
         
         server_round = int(config.get("server_round", 0))
         
-        print(f"\n[Client {self.client_id}] === Round {server_round} - EVALUATE ===")
+        print(f"\n[Client] === Round {server_round} - EVALUATE ===")
         
         # Update XGBoost parameters
         self.xgb_params = {
@@ -249,7 +246,7 @@ class XGBoostClient(fl.client.NumPyClient):
         self.set_parameters(parameters)
         
         if self.bst is None:
-            print(f"[Client {self.client_id}] Warning: No model to evaluate")
+            print(f"[Client] Warning: No model to evaluate")
             return 0.0, 0, {}
         
         # Evaluate on test set
@@ -258,7 +255,7 @@ class XGBoostClient(fl.client.NumPyClient):
             iteration=self.bst.num_boosted_rounds() - 1,
         )
         
-        print(f"[Client {self.client_id}] Evaluation results: {eval_results}")
+        print(f"[Client] Evaluation results: {eval_results}")
         
         # Parse evaluation results
         # Format: "[0]\ttest-auc:0.85123"
@@ -270,12 +267,8 @@ class XGBoostClient(fl.client.NumPyClient):
                 metric_name = metric_name.replace("test-", "")
                 metrics[metric_name] = float(metric_value)
         except Exception as e:
-            print(f"[Client {self.client_id}] Warning: Could not parse metrics: {e}")
+            print(f"[Client] Warning: Could not parse metrics: {e}")
         
-        # Add client ID to metrics
-        # Note: We don't include client_id in metrics as it's a string
-        # and would cause issues during aggregation
-        # metrics['client_id'] = self.client_id
         
         # Get predictions for additional metrics
         y_pred = self.bst.predict(self.dtest)
@@ -328,8 +321,8 @@ class XGBoostClient(fl.client.NumPyClient):
         
         num_examples = len(self.local_data['X_test'])
         
-        print(f"[Client {self.client_id}] Metrics: {metrics}")
-        print(f"[Client {self.client_id}] Loss: {loss:.4f}")
+        print(f"[Client] Metrics: {metrics}")
+        print(f"[Client] Loss: {loss:.4f}")
         
         return loss, num_examples, metrics
 
@@ -368,27 +361,25 @@ def get_numpy(X_train, y_train, X_test, y_test, time_col=None, event_col=None) -
     }
 
 
-def get_client(config: Dict, data: Tuple, client_id: str) -> fl.client.Client:
+def get_client(config: Dict, data: Tuple) -> fl.client.Client:
     """Create and return XGBoost federated learning client.
     
     Args:
         config: Configuration dictionary containing experiment settings
         data: Tuple of ((X_train, y_train), (X_test, y_test), time_col, event_col)
-        client_id: Unique identifier for this client
     
     Returns:
         Initialized XGBoostClient
     """
     
-    (X_train, y_train), (X_test, y_test), time_col, event_col = data
+    (X_train, y_train), (X_test, y_test) = data
     
     # Convert to format expected by client
-    local_data = get_numpy(X_train, y_train, X_test, y_test, time_col, event_col)
+    local_data = get_numpy(X_train, y_train, X_test, y_test)
     
     # Create client
     client = XGBoostClient(
         local_data=local_data,
-        client_id=str(client_id),
         saving_path=config.get("experiment_dir", "/sandbox/"),
     )
     
