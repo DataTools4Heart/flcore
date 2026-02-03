@@ -44,7 +44,7 @@ class MnistClient(fl.client.NumPyClient):
         self.first_round = True
         self.personalize = True
         # Setting initial parameters, akin to model.compile for keras models
-        utils.set_initial_params(self.model,self.n_features)
+        utils.set_initial_params(self.model, (self.X_train, self.y_train), self.n_features)
     
     def get_parameters(self, config):  # type: ignore
         #compute the feature selection
@@ -67,9 +67,8 @@ class MnistClient(fl.client.NumPyClient):
             self.model.fit(self.X_train, self.y_train)
             # self.model.fit(self.X_train.loc[:, parameters[2].astype(bool)], self.y_train)
             # y_pred = self.model.predict(self.X_test.loc[:, parameters[2].astype(bool)])
-            y_pred = self.model.predict(self.X_test)
-
-            metrics = calculate_metrics(self.y_test, y_pred)
+            y_pred_proba = self.model.predict_proba(self.X_test)
+            metrics = calculate_metrics(self.y_test, y_pred_proba)
             print(f"Client {self.client_id} Evaluation just after local training: {metrics['balanced_accuracy']}")
             # Add 'personalized' to the metrics to identify them
             metrics = {f"personalized {key}": metrics[key] for key in metrics}
@@ -81,10 +80,10 @@ class MnistClient(fl.client.NumPyClient):
 
         if self.first_round:
             local_model = utils.get_model(self.model_name, local=True)
-            utils.set_initial_params(local_model,self.n_features)
+            # utils.set_initial_params(local_model,self.n_features)
             local_model.fit(self.X_train, self.y_train)
-            y_pred = local_model.predict(self.X_test)
-            local_metrics = calculate_metrics(self.y_test, y_pred)
+            y_pred_proba = local_model.predict_proba(self.X_test)
+            local_metrics = calculate_metrics(self.y_test, y_pred_proba)
             #Add 'local' to the metrics to identify them
             local_metrics = {f"local {key}": local_metrics[key] for key in local_metrics}
             metrics.update(local_metrics)
@@ -96,10 +95,10 @@ class MnistClient(fl.client.NumPyClient):
         utils.set_model_params(self.model, parameters)
 
         # Calculate validation set metrics
-        y_pred = self.model.predict(self.X_val)
-        val_metrics = calculate_metrics(self.y_val, y_pred)
+        y_pred_proba = self.model.predict_proba(self.X_val)
+        val_metrics = calculate_metrics(self.y_val, y_pred_proba)
 
-        y_pred = self.model.predict(self.X_test)
+        y_pred_proba = self.model.predict_proba(self.X_test)
         # y_pred = self.model.predict(self.X_test.loc[:, parameters[2].astype(bool)])
 
         if(isinstance(self.model, SGDClassifier)):
@@ -107,7 +106,7 @@ class MnistClient(fl.client.NumPyClient):
         else:
             loss = log_loss(self.y_test, self.model.predict_proba(self.X_test), labels=[0, 1])
        
-        metrics = calculate_metrics(self.y_test, y_pred)
+        metrics = calculate_metrics(self.y_test, y_pred_proba)
         metrics["round_time [s]"] = self.round_time
         metrics["client_id"] = self.client_id
 
@@ -119,7 +118,7 @@ class MnistClient(fl.client.NumPyClient):
         metrics.update(val_metrics)
 
 
-        return loss, len(y_pred),  metrics
+        return loss, len(y_pred_proba),  metrics
 
 
 def get_client(config,data,client_id) -> fl.client.Client:

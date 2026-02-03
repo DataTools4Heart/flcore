@@ -8,6 +8,7 @@ from torchmetrics.classification import (
     BinaryPrecision,
     BinaryRecall,
     BinarySpecificity,
+    BinaryAUROC,
 )
 
 from torchmetrics.functional.classification.precision_recall import (
@@ -43,17 +44,18 @@ class BinaryBalancedAccuracy(BinaryStatScores):
         return (recall + specificity) / 2
 
 
-def get_metrics_collection(task_type="binary", device="cpu"):
+def get_metrics_collection(task_type="binary", device="cpu", threshold=0.5):
 
     if task_type.lower() == "binary":
         return MetricCollection(
             {
-                "accuracy": BinaryAccuracy().to(device),
-                "precision": BinaryPrecision().to(device),
-                "recall": BinaryRecall().to(device),
-                "specificity": BinarySpecificity().to(device),
-                "f1": BinaryF1Score().to(device),
-                "balanced_accuracy": BinaryBalancedAccuracy().to(device),
+                "accuracy": BinaryAccuracy(threshold=threshold).to(device),
+                "precision": BinaryPrecision(threshold=threshold).to(device),
+                "recall": BinaryRecall(threshold=threshold).to(device),
+                "specificity": BinarySpecificity(threshold=threshold).to(device),
+                "f1": BinaryF1Score(threshold=threshold).to(device),
+                "balanced_accuracy": BinaryBalancedAccuracy(threshold=threshold).to(device),
+                "auroc": BinaryAUROC().to(device),
             }
         )
     elif task_type.lower() == "reg":
@@ -61,13 +63,18 @@ def get_metrics_collection(task_type="binary", device="cpu"):
             "mse": MeanSquaredError().to(device),
         })
 
-def calculate_metrics(y_true, y_pred, task_type="binary"):
-    metrics_collection = get_metrics_collection(task_type)
+
+def calculate_metrics(y_true, y_pred_proba, task_type="binary", threshold=0.5):
+    metrics_collection = get_metrics_collection(task_type, threshold=threshold)
     if not torch.is_tensor(y_true):
         y_true = torch.tensor(y_true.tolist())
-    if not torch.is_tensor(y_pred):
-        y_pred = torch.tensor(y_pred.tolist())
-    metrics_collection.update(y_pred, y_true)
+    if not torch.is_tensor(y_pred_proba):
+        y_pred_proba = torch.tensor(y_pred_proba.tolist())
+    
+    # Extract probabilities for the positive class
+    y_pred_proba = y_pred_proba[:, 1]
+
+    metrics_collection.update(y_pred_proba, y_true)
 
     metrics = metrics_collection.compute()
     metrics = {k: v.item() for k, v in metrics.items()}

@@ -138,9 +138,9 @@ def evaluate_held_out(
 
 def get_server_and_strategy(config):
     model_type = config['model']
-    model = get_model(model_type)
+    # model = get_model(model_type)
     n_features = config['linear_models']['n_features']
-    utils.set_initial_params(model, n_features)
+    # utils.set_initial_params(model, n_features)
 
     # Pass parameters to the Strategy for server-side parameter initialization
     #strategy = fl.server.strategy.FedAvg(

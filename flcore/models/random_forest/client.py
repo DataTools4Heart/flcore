@@ -69,8 +69,8 @@ class MnistClient(fl.client.Client):
             #accuracy = model.score( X_test, y_test )
             # accuracy,specificity,sensitivity,balanced_accuracy, precision, F1_score = \
             # measurements_metrics(self.model,X_val, y_val)
-            y_pred = self.model.predict(X_val)
-            metrics = calculate_metrics(y_val, y_pred)
+            y_pred_proba = self.model.predict_proba(X_val)
+            metrics = calculate_metrics(y_val, y_pred_proba)
             # print(f"Accuracy client in fit:  {accuracy}")
             # print(f"Sensitivity client in fit:  {sensitivity}")
             # print(f"Specificity client in fit:  {specificity}")
@@ -108,8 +108,8 @@ class MnistClient(fl.client.Client):
         loss = log_loss(self.y_test, y_pred_prob)
         # accuracy,specificity,sensitivity,balanced_accuracy, precision, F1_score = \
         # measurements_metrics(self.model,self.X_test, self.y_test)
-        y_pred = self.model.predict(self.X_test)
-        metrics = calculate_metrics(self.y_test, y_pred)
+        # y_pred = self.model.predict(self.X_test)
+        metrics = calculate_metrics(self.y_test, y_pred_prob)
         metrics["round_time [s]"] = self.round_time
         metrics["client_id"] = self.client_id
         # print(f"Accuracy client in evaluate:  {accuracy}")

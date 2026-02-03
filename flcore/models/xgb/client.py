@@ -125,6 +125,10 @@ class FL_Client(fl.client.Client):
             print("Client " + self.cid + ": recieved", len(aggregated_trees), "trees")
         else:
             print("Client " + self.cid + ": only had its own tree")
+
+        # Don't prepare dataloaders if they number of clients didn't change
+        # if type(aggregated_trees) is list and len(aggregated_trees) != self.client_num or self.trainloader is None:
+
         self.trainloader = tree_encoding_loader(
             self.trainloader_original,
             batch_size,
@@ -139,6 +143,8 @@ class FL_Client(fl.client.Client):
             self.client_tree_num,
             self.client_num,
         )
+        # else:
+            # print("Client " + self.cid + ": reusing existing dataloaders")
 
         # num_iterations = None special behaviour: train(...) runs for a single epoch, however many updates it may be
         num_iterations = num_iterations or len(self.trainloader)
@@ -235,25 +241,32 @@ def get_client(config, data, client_id) -> fl.client.Client:
     client_tree_num = config["xgb"]["tree_num"] // client_num
     batch_size = "whole"
     cid = str(client_id)
+    #measure time for client data loading
+    time_start = time.time()
     trainset = TreeDataset(np.array(X_train, copy=True), np.array(y_train, copy=True))
     valset = TreeDataset(np.array(X_test, copy=True), np.array(y_test, copy=True))
+    time_end = time.time()
+    print(f"Client {cid}: Data loading time: {time_end - time_start} seconds")
+    time_start = time.time()
     trainloader = get_dataloader(trainset, "train", batch_size)
     valloader = get_dataloader(valset, "test", batch_size)
+    time_end = time.time()
+    print(f"Client {cid}: Dataloader creation time: {time_end - time_start} seconds")
 
-    metrics = train_test(data, client_tree_num)
-    from flcore import datasets
-    if client_id == 1:
-        cross_id = 2
-    else:
-        cross_id = 1
-    _, (X_test, y_test) = datasets.load_dataset(config, cross_id)
+    # metrics = train_test(data, client_tree_num)
+    # from flcore import datasets
+    # if client_id == 1:
+    #     cross_id = 2
+    # else:
+    #     cross_id = 1
+    # _, (X_test, y_test) = datasets.load_dataset(config, cross_id)
 
-    data = (X_train, y_train), (X_test, y_test)
-    metrics_cross = train_test(data, client_tree_num)
-    print("Client " + cid + " non-federated training results:")
-    print(metrics)
-    print("Cross testing model on client " + str(cross_id) + ":")
-    print(metrics_cross)
+    # data = (X_train, y_train), (X_test, y_test)
+    # metrics_cross = train_test(data, client_tree_num)
+    # print("Client " + cid + " non-federated training results:")
+    # print(metrics)
+    # print("Cross testing model on client " + str(cross_id) + ":")
+    # print(metrics_cross)
 
     client = FL_Client(
         task_type,
