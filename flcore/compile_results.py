@@ -21,6 +21,8 @@ def compile_results(experiment_dir: str):
 
     elif config['dataset'] == 'kaggle_hf':
         center_names = ['Cleveland',  'Hungary', 'VA', 'Switzerland']
+    else:
+        center_names = [f"center_{i+1}" for i in range(config['num_clients'])]
 
     writer = open(f"{experiment_dir}/metrics.txt", "w")
 
@@ -47,7 +49,8 @@ def compile_results(experiment_dir: str):
             # Read history.yaml
             history = yaml.safe_load(open(os.path.join(fold_dir, "history.yaml"), "r"))
             
-            selection_metric = 'val '+ config['checkpoint_selection_metric']
+            # selection_metric = 'val '+ config['checkpoint_selection_metric']
+            selection_metric = config['checkpoint_selection_metric']
             best_round= int(np.argmax(history['metrics_distributed'][selection_metric]))
             # client_order = history['metrics_distributed']['per client client_id'][best_round]
             client_order = history['metrics_distributed']['per client n samples'][best_round]
@@ -98,7 +101,8 @@ def compile_results(experiment_dir: str):
                                     fit_metrics[metric] = np.vstack((fit_metrics[metric], values_history[best_round]))
                         
                         
-    execution_stats = ['client_id', 'round_time [s]', 'n samples', 'training_time [s]']
+    # execution_stats = ['client_id', 'round_time [s]', 'n samples', 'training_time [s]']
+    execution_stats = ['client_id', 'round_time [s]', 'n samples']
     # Calculate mean and std for per client metrics
     writer.write(f"{'Evaluation':.^100} \n\n")
     writer.write(f"\n{'Test set:'} \n")
@@ -161,25 +165,25 @@ def compile_results(experiment_dir: str):
             centralized_metrics[metric] = held_out_metrics[metric]
             held_out_metrics.pop(metric, None)
 
-    writer.write(f"\n{'Held out set evaluation':.^100} \n\n")
-    for metric in held_out_metrics:
-        center = int(held_out_metrics['client_id'][0])
-        center = center_names[center]+' (held out)'
-        mean = np.average(held_out_metrics[metric])
-        std = np.std(held_out_metrics[metric])
+    # writer.write(f"\n{'Held out set evaluation':.^100} \n\n")
+    # for metric in held_out_metrics:
+    #     center = int(held_out_metrics['client_id'][0])
+    #     center = center_names[center]+' (held out)'
+    #     mean = np.average(held_out_metrics[metric])
+    #     std = np.std(held_out_metrics[metric])
 
-        writer.write(f"{metric:<30}: {mean:<6.3f}  ±{std:<6.3f}\n")
-        if center not in csv_dict:
-            csv_dict[center] = {}
-        csv_dict[center][metric] = mean
-        csv_dict[center][metric+'_std'] = std
+    #     writer.write(f"{metric:<30}: {mean:<6.3f}  ±{std:<6.3f}\n")
+    #     if center not in csv_dict:
+    #         csv_dict[center] = {}
+    #     csv_dict[center][metric] = mean
+    #     csv_dict[center][metric+'_std'] = std
 
-    # Calculate mean and std for centralized metrics
-    writer.write(f"\n{'Centralized evaluation':.^100} \n\n")
-    for metric in centralized_metrics:
-        mean = np.average(centralized_metrics[metric])
-        std = np.std(centralized_metrics[metric])
-        writer.write(f"{metric:<30}: {mean:<6.3f}  ±{std:<6.3f}\n")
+    # # Calculate mean and std for centralized metrics
+    # writer.write(f"\n{'Centralized evaluation':.^100} \n\n")
+    # for metric in centralized_metrics:
+    #     mean = np.average(centralized_metrics[metric])
+    #     std = np.std(centralized_metrics[metric])
+    #     writer.write(f"{metric:<30}: {mean:<6.3f}  ±{std:<6.3f}\n")
 
     writer.close()
 
@@ -194,7 +198,7 @@ def compile_results(experiment_dir: str):
     # Write to csv
     df.to_csv(f"{experiment_dir}/per_center_results.csv", index=True)
 
-    generate_report(experiment_dir)
+    # generate_report(experiment_dir)
 
 
 if __name__ == "__main__":

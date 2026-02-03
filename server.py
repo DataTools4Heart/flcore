@@ -103,8 +103,17 @@ if __name__ == "__main__":
         # selection_metric = 'val ' + config['checkpoint_selection_metric']
         selection_metric = config['checkpoint_selection_metric']
         # Get index of tuple of the best round
-        best_round = int(numpy.argmax([round[1] for round in history.metrics_distributed[selection_metric]]))
-        training_time = history.metrics_distributed_fit['training_time [s]'][-1][1]
+        # best_round = int(numpy.argmax([round[1] for round in history.metrics_distributed[selection_metric]])) 
+        # Use the last round as final checkpoint, since no validation set is used
+        best_round = -1
+        print(history)
+        # check if history has attribute metrics_distributed_fit
+        if hasattr(history, 'metrics_distributed_fit') and 'training_time [s]' in history.metrics_distributed_fit:
+            # check if training_time is in metrics_distributed_fit
+            training_time = history.metrics_distributed_fit['training_time [s]'][-1][1]
+        else:
+            training_time = 0.0
+        
         f.write(f"Total training time: {training_time:.2f} [s] \n")
         f.write(f"Best checkpoint based on {selection_metric} after round: {best_round}\n\n")
         print(f"Best checkpoint based on {selection_metric} after round: {best_round}\n\n")
