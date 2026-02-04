@@ -40,7 +40,13 @@ class TestFLCoreModels:
         with open("config.yaml", "r") as f:
             self.config = yaml.safe_load(f)
 
-        self.num_clients = 3
+        self.config["num_clients"] = 3
+        self.config["num_rounds"] = 2
+
+        # To speed up tests, reduce number of trees in xgboost and random forest
+        self.config["random_forest"]["tree_num"] = 5
+        self.config["xgb"]["tree_num"] = 5
+        self.config["xgb"]["num_iterations"] = 2
 
 
     @pytest.mark.parametrize(

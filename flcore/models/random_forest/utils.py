@@ -21,11 +21,11 @@ NDArrays = List[NDArray]
 from typing import cast
 
 
-def get_model(bal_RF):
+def get_model(bal_RF, tree_num) -> RandomForestClassifier:
     if(bal_RF == True):
-        model = BalancedRandomForestClassifier(n_estimators=300,max_depth=10)
+        model = BalancedRandomForestClassifier(n_estimators=tree_num,max_depth=10)
     else:
-        model = RandomForestClassifier(n_estimators=300,max_depth=10,class_weight= "balanced_subsample")
+        model = RandomForestClassifier(n_estimators=tree_num,max_depth=10,class_weight= "balanced_subsample")
     
     return model
 

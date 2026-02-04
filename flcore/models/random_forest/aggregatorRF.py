@@ -117,8 +117,8 @@ def aggregateRF_withprevious(rfs,previous_estimators,bal_RF):
 #weigth, we transform into probability /sum(weights)
 #and random choice select according to probability distribution
 def aggregateRFwithSizeCenterProbs(rfs,bal_RF,smoothing_method,smoothing_strenght):
-    rfa= get_model(bal_RF)
     numberTreesperclient = int(len(rfs[0][0][0]))
+    rfa= get_model(bal_RF, numberTreesperclient)
     number_Clients = len(rfs)
     random_select =int(numberTreesperclient/number_Clients)
     list_classifiers = []

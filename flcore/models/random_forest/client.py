@@ -31,7 +31,7 @@ class MnistClient(fl.client.Client):
         (self.X_train, self.y_train), (self.X_test, self.y_test) = data
         self.splits_nested  = datasets.split_partitions(n_folds_out,0.2, seed, self.X_train, self.y_train)
         self.bal_RF = True if config['model'] == 'balanced_random_forest' else False
-        self.model = utils.get_model(self.bal_RF)
+        self.model = utils.get_model(self.bal_RF, config['random_forest']['tree_num'])
         self.round_time = 0 
         # Setting initial parameters, akin to model.compile for keras models
         utils.set_initial_params_client(self.model,self.X_train, self.y_train)
