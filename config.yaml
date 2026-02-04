@@ -73,8 +73,8 @@ experiment:
   # "equal_aggregate" - aggregate parameters from all clients based on mean and voting disregarding center size
   # "weighted_aggregate" - aggregate parameters from all clients based on weighted mean and voting
 
-# data_preprocessing_method: "equal_aggregate"
-data_preprocessing_method: "reference"
+data_preprocessing_method: "equal_aggregate"
+# data_preprocessing_method: "reference"
 
 # Toggle data normalization (Standard scaler) based on largest center (global) or local client
 data_normalization: "local"
