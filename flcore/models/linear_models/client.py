@@ -67,7 +67,11 @@ class MnistClient(fl.client.NumPyClient):
             self.model.fit(self.X_train, self.y_train)
             # self.model.fit(self.X_train.loc[:, parameters[2].astype(bool)], self.y_train)
             # y_pred = self.model.predict(self.X_test.loc[:, parameters[2].astype(bool)])
-            y_pred_proba = self.model.predict_proba(self.X_test)
+            # If LSVC is used, use decision_function instead of predict_proba
+            if self.model_name == 'lsvc':
+                y_pred_proba = self.model.decision_function(self.X_test)
+            else:
+                y_pred_proba = self.model.predict_proba(self.X_test)
             metrics = calculate_metrics(self.y_test, y_pred_proba)
             print(f"Client {self.client_id} Evaluation just after local training: {metrics['balanced_accuracy']}")
             # Add 'personalized' to the metrics to identify them
@@ -82,7 +86,10 @@ class MnistClient(fl.client.NumPyClient):
             local_model = utils.get_model(self.model_name, local=True)
             # utils.set_initial_params(local_model,self.n_features)
             local_model.fit(self.X_train, self.y_train)
-            y_pred_proba = local_model.predict_proba(self.X_test)
+            if self.model_name == 'lsvc':
+                y_pred_proba = self.model.decision_function(self.X_test)
+            else:
+                y_pred_proba = self.model.predict_proba(self.X_test)
             local_metrics = calculate_metrics(self.y_test, y_pred_proba)
             #Add 'local' to the metrics to identify them
             local_metrics = {f"local {key}": local_metrics[key] for key in local_metrics}
@@ -95,10 +102,16 @@ class MnistClient(fl.client.NumPyClient):
         utils.set_model_params(self.model, parameters)
 
         # Calculate validation set metrics
-        y_pred_proba = self.model.predict_proba(self.X_val)
+        if self.model_name == 'lsvc':
+            y_pred_proba = self.model.decision_function(self.X_val)
+        else:
+            y_pred_proba = self.model.predict_proba(self.X_val)
         val_metrics = calculate_metrics(self.y_val, y_pred_proba)
 
-        y_pred_proba = self.model.predict_proba(self.X_test)
+        if self.model_name == 'lsvc':
+            y_pred_proba = self.model.decision_function(self.X_test)
+        else:
+            y_pred_proba = self.model.predict_proba(self.X_test)
         # y_pred = self.model.predict(self.X_test.loc[:, parameters[2].astype(bool)])
 
         if(isinstance(self.model, SGDClassifier)):

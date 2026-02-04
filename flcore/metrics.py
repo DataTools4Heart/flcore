@@ -71,8 +71,9 @@ def calculate_metrics(y_true, y_pred_proba, task_type="binary", threshold=0.5):
     if not torch.is_tensor(y_pred_proba):
         y_pred_proba = torch.tensor(y_pred_proba.tolist())
     
-    # Extract probabilities for the positive class
-    y_pred_proba = y_pred_proba[:, 1]
+    # Extract probabilities for the positive class if shape>1
+    if y_pred_proba.ndim > 1:
+        y_pred_proba = y_pred_proba[:, 1]
 
     metrics_collection.update(y_pred_proba, y_true)
 
