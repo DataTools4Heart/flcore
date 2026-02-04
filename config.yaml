@@ -119,6 +119,7 @@ dirichlet_alpha: Null
 # Random Forest
 random_forest:
   balanced_rf: true
+  tree_num: 300
 
 # Weighted Random Forest
 weighted_random_forest:
