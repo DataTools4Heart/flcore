@@ -244,9 +244,15 @@ def apply_preprocessing(subset_data, preprocessing_params, normalization="global
     
     return data_copy, data_copy.columns.tolist()
 
-def partition_data_dirichlet(labels, num_centers, alpha=1.0):
+def partition_data_dirichlet(labels, num_centers, alpha=1.0, min_samples_per_class=10):
     """
     Partition data among centers using Dirichlet distribution
+    
+    Args:
+        labels: Array of class labels
+        num_centers: Number of centers to partition into
+        alpha: Dirichlet concentration parameter
+        min_samples_per_class: Minimum number of samples per class per center
     """
     unique_labels = np.unique(labels)
     n_samples = len(labels)
@@ -281,10 +287,32 @@ def partition_data_dirichlet(labels, num_centers, alpha=1.0):
             # Calculate number of samples for each center
             center_samples = (proportions * n_class_samples).astype(int)
             
-            # Adjust for rounding errors
-            diff = n_class_samples - center_samples.sum()
+            # Ensure minimum samples per class per center
+            for i in range(num_centers):
+                if center_samples[i] < min_samples_per_class:
+                    center_samples[i] = min(min_samples_per_class, n_class_samples // num_centers)
+            
+            # Adjust for rounding errors and minimum constraints
+            total_assigned = center_samples.sum()
+            diff = n_class_samples - total_assigned
             if diff > 0:
-                center_samples[np.random.choice(num_centers, diff, replace=True)] += 1
+                # Distribute remaining samples
+                available_centers = [i for i in range(num_centers) if center_samples[i] < n_class_samples]
+                if available_centers:
+                    additions = np.random.choice(available_centers, diff, replace=True)
+                    for i in additions:
+                        center_samples[i] += 1
+            elif diff < 0:
+                # Remove excess samples
+                excess_centers = np.argsort(center_samples)[::-1]  # Sort by size descending
+                for i in excess_centers:
+                    if diff >= 0:
+                        break
+                    can_remove = center_samples[i] - min_samples_per_class
+                    if can_remove > 0:
+                        remove = min(can_remove, -diff)
+                        center_samples[i] -= remove
+                        diff += remove
             
             # Shuffle and assign indices
             np.random.shuffle(class_indices)
@@ -448,6 +476,7 @@ def prepare_dataset(X, y, center_id, config, center_indices=None):
     alpha = config.get("dirichlet_alpha", 1.0)
     reference_method = config.get("reference_center_method", "largest")
     preprocessing_method = config.get("data_preprocessing_method", "reference")
+    min_samples_per_class = config.get("min_samples_per_class", 10)
     global_preprocessing_params = None
     n_features = config.get("n_features", 20)
     feature_selection_method = config.get("feature_selection_method", "mutual_info")
@@ -463,7 +492,7 @@ def prepare_dataset(X, y, center_id, config, center_indices=None):
     
     if not center_indices:
         # Partition data using Dirichlet distribution
-        all_center_indices = partition_data_dirichlet(y_binary.values, num_centers, alpha)
+        all_center_indices = partition_data_dirichlet(y_binary.values, num_centers, alpha, min_samples_per_class)
     else:
         all_center_indices = center_indices
 
@@ -475,7 +504,7 @@ def prepare_dataset(X, y, center_id, config, center_indices=None):
             all_center_data.append((X_center, y_binary.iloc[all_center_indices[i]]))
         else:
             all_center_data.append((pd.DataFrame(), pd.Series()))
-    
+
     # Calculate or use global preprocessing parameters
     if global_preprocessing_params is None:
         if preprocessing_method == 'reference':
