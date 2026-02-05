@@ -77,7 +77,7 @@ data_preprocessing_method: "equal_aggregate"
 # data_preprocessing_method: "reference"
 
 # Toggle data normalization (Standard scaler) based on largest center (global) or local client
-data_normalization: "local"
+data_normalization: "global"
 
 # Determine target for feature selection number
 n_features: Null

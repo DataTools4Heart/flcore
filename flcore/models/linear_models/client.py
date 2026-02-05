@@ -9,7 +9,7 @@ import flcore.models.linear_models.utils as utils
 import flwr as fl
 from sklearn.metrics import log_loss
 from flcore.performance import measurements_metrics, get_metrics
-from flcore.metrics import calculate_metrics
+from flcore.metrics import calculate_metrics, find_best_threshold
 import time
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
@@ -86,11 +86,17 @@ class MnistClient(fl.client.NumPyClient):
             local_model = utils.get_model(self.model_name, local=True)
             # utils.set_initial_params(local_model,self.n_features)
             local_model.fit(self.X_train, self.y_train)
+            # Calculate validation set metrics
+            if self.model_name == 'lsvc':
+                y_pred_proba = self.model.decision_function(self.X_val)
+            else:
+                y_pred_proba = self.model.predict_proba(self.X_val)
+            best_threshold = find_best_threshold(self.y_val, y_pred_proba, metric="balanced_accuracy")
             if self.model_name == 'lsvc':
                 y_pred_proba = self.model.decision_function(self.X_test)
             else:
                 y_pred_proba = self.model.predict_proba(self.X_test)
-            local_metrics = calculate_metrics(self.y_test, y_pred_proba)
+            local_metrics = calculate_metrics(self.y_test, y_pred_proba, threshold=best_threshold)
             #Add 'local' to the metrics to identify them
             local_metrics = {f"local {key}": local_metrics[key] for key in local_metrics}
             metrics.update(local_metrics)
@@ -106,7 +112,8 @@ class MnistClient(fl.client.NumPyClient):
             y_pred_proba = self.model.decision_function(self.X_val)
         else:
             y_pred_proba = self.model.predict_proba(self.X_val)
-        val_metrics = calculate_metrics(self.y_val, y_pred_proba)
+        best_threshold = find_best_threshold(self.y_val, y_pred_proba, metric="balanced_accuracy")
+        val_metrics = calculate_metrics(self.y_val, y_pred_proba, threshold=best_threshold)
 
         if self.model_name == 'lsvc':
             y_pred_proba = self.model.decision_function(self.X_test)
@@ -119,12 +126,12 @@ class MnistClient(fl.client.NumPyClient):
         else:
             loss = log_loss(self.y_test, self.model.predict_proba(self.X_test), labels=[0, 1])
        
-        metrics = calculate_metrics(self.y_test, y_pred_proba)
+        metrics = calculate_metrics(self.y_test, y_pred_proba, threshold=best_threshold)
+        metrics_not_tuned = calculate_metrics(self.y_test, y_pred_proba, threshold=0.5)
+        metrics_not_tuned = {f"not tuned {key}": metrics_not_tuned[key] for key in metrics_not_tuned}
+        metrics.update(metrics_not_tuned)
         metrics["round_time [s]"] = self.round_time
         metrics["client_id"] = self.client_id
-
-        print(f"Client {self.client_id} Evaluation after aggregated model: {metrics['balanced_accuracy']}")
-
 
         # Add validation metrics to the evaluation metrics with a prefix
         val_metrics = {f"val {key}": val_metrics[key] for key in val_metrics}

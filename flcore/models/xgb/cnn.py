@@ -13,7 +13,7 @@ import torch.nn as nn
 from sklearn.metrics import accuracy_score, mean_squared_error
 from torch.utils.data import DataLoader
 from torchmetrics import Accuracy, MeanSquaredError
-from flcore.metrics import get_metrics_collection
+from flcore.metrics import calculate_metrics, find_best_threshold
 from tqdm import tqdm
 
 
@@ -147,6 +147,7 @@ def test(
     net: CNN,
     testloader: DataLoader,
     device: torch.device,
+    valloader: DataLoader = None,
     log_progress: bool = True,
 ) -> Tuple[float, float, int]:
     """Evaluates the network on test data."""
@@ -157,39 +158,48 @@ def test(
     elif task_type == "REG":
         criterion = nn.MSELoss()
 
-    total_loss, total_result, n_samples = 0.0, 0.0, 0
-    metrics = get_metrics_collection()
     net.eval()
-    with torch.no_grad():
-        pbar = tqdm(testloader, desc="TEST") if log_progress else testloader
-        for data in pbar:
-            tree_outputs, labels = data[0].to(device), data[1].to(device)
-            outputs = net(tree_outputs)
 
-            # Collected testing loss and accuracy statistics
-            total_loss += criterion(outputs, labels).item()
-            n_samples += labels.size(0)
-            num_classes = np.unique(labels.cpu().numpy()).size
+    # Collect predictions and true labels for the entire test set, to compute metrics at the end of the epoch
 
-            y_pred = outputs.cpu()
-            y_true = labels.cpu()
-            metrics.update(y_pred, y_true)
+    def get_pred_proba(dataloader):
+        y_pred_list = []
+        y_true_list = []
+        total_loss, total_result, n_samples = 0.0, 0.0, 0
+        with torch.no_grad():
+            pbar = tqdm(dataloader, desc="TEST") if log_progress else dataloader
+            for data in pbar:
+                tree_outputs, labels = data[0].to(device), data[1].to(device)
+                outputs = net(tree_outputs)
+                # Collected testing loss and accuracy statistics
+                total_loss += criterion(outputs, labels).item()
+                n_samples += labels.size(0)
+                num_classes = np.unique(labels.cpu().numpy()).size
 
-            # if task_type == "BINARY" or task_type == "MULTICLASS":
-            #     if task_type == "MULTICLASS":
-            #         raise NotImplementedError()
-                
-            #     # acc = Accuracy(task=task_type.lower())(
-            #     #     outputs.cpu(), labels.type(torch.int).cpu())
-            #     # total_result += acc * labels.size(0)
-            # elif task_type == "REG":
-            #     mse = MeanSquaredError()(outputs.cpu(), labels.type(torch.int).cpu())
-            #     total_result += mse * labels.size(0)
-    
-    metrics = metrics.compute()
-    metrics = {k: v.item() for k, v in metrics.items()}
+                y_pred = outputs.cpu()
+                y_true = labels.cpu()
+                y_pred_list.append(y_pred)
+                y_true_list.append(y_true)
 
-    # total_result = total_result.item()
+        return y_true_list, y_pred_list, total_loss, n_samples
+
+    metrics = {}
+    if valloader is not None:
+        y_true_val, y_pred_proba_val, val_loss, val_n_samples = get_pred_proba(valloader)
+        best_threshold = find_best_threshold(y_true_val, y_pred_proba_val, metric="balanced_accuracy")
+        metrics_val = calculate_metrics(y_true_val, y_pred_proba_val, task_type=task_type, threshold=best_threshold)
+        metrics_val = {f"val {key}": metrics_val[key] for key in metrics_val}
+        metrics.update(metrics_val)
+    else:
+        best_threshold = 0.5
+
+    # Add validation metrics to the evaluation metrics with a prefix
+    y_true, y_pred_proba, total_loss, n_samples = get_pred_proba(testloader)
+    metrics_test = calculate_metrics(y_true, y_pred_proba, task_type=task_type, threshold=best_threshold)
+    metrics_not_tuned = calculate_metrics(y_true, y_pred_proba, task_type=task_type, threshold=0.5)
+    metrics_not_tuned = {f"not tuned {key}": metrics_not_tuned[key] for key in metrics_not_tuned}
+    metrics.update(metrics_test)
+    metrics.update(metrics_not_tuned)
 
     if log_progress:
         print("\n")

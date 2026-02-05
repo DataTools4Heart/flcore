@@ -22,6 +22,7 @@ from flwr.common import (
 from flwr.common.typing import Parameters
 from torch.utils.data import DataLoader
 from xgboost import XGBClassifier, XGBRegressor
+from sklearn.model_selection import KFold, StratifiedShuffleSplit, train_test_split
 
 from flcore.models.xgb.cnn import CNN, test, train
 from flcore.models.xgb.utils import (
@@ -34,14 +35,15 @@ from flcore.models.xgb.utils import (
     tree_encoding_loader,
     train_test
 )
+from flcore.metrics import calculate_metrics, find_best_threshold
+
 
 
 class FL_Client(fl.client.Client):
     def __init__(
         self,
         task_type: str,
-        trainloader: DataLoader,
-        valloader: DataLoader,
+        data,
         client_tree_num: int,
         client_num: int,
         cid: str,
@@ -52,9 +54,6 @@ class FL_Client(fl.client.Client):
         """
         self.task_type = task_type
         self.cid = cid
-        self.tree = construct_tree_from_loader(trainloader, client_tree_num, task_type)
-        self.trainloader_original = trainloader
-        self.valloader_original = valloader
         self.trainloader = None
         self.valloader = None
         self.client_tree_num = client_tree_num
@@ -66,13 +65,25 @@ class FL_Client(fl.client.Client):
             "task_type": self.task_type,
         }
         self.tmp_dir = ""
-
         # instantiate model
         self.net = CNN(client_num=client_num, client_tree_num=client_tree_num)
-
         # determine device
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.round_time = -1
+        self.first_round = True
+        batch_size = "whole"
+
+        (self.X_train, self.y_train), (self.X_test, self.y_test) = data
+
+        self.X_train, self.X_val, self.y_train, self.y_val = train_test_split(self.X_train, self.y_train, test_size=0.2, random_state=42, stratify=self.y_train)
+
+        trainset = TreeDataset(np.array(self.X_train, copy=True), np.array(self.y_train, copy=True))
+        valset = TreeDataset(np.array(self.X_val, copy=True), np.array(self.y_val, copy=True))
+        testset = TreeDataset(np.array(self.X_test, copy=True), np.array(self.y_test, copy=True))
+        self.trainloader_original = get_dataloader(trainset, "train", batch_size)
+        self.valloader_original = get_dataloader(valset, "test", batch_size)
+        self.testloader_original = get_dataloader(testset, "test", batch_size)
+        self.tree = construct_tree_from_loader(self.trainloader_original, client_tree_num, task_type)
 
     def get_properties(self, ins: GetPropertiesIns) -> GetPropertiesRes:
         return GetPropertiesRes(properties=self.properties)
@@ -126,7 +137,7 @@ class FL_Client(fl.client.Client):
         else:
             print("Client " + self.cid + ": only had its own tree")
 
-        # Don't prepare dataloaders if they number of clients didn't change
+        # Don't prepare dataloaders if their number of clients didn't change
         # if type(aggregated_trees) is list and len(aggregated_trees) != self.client_num or self.trainloader is None:
 
         self.trainloader = tree_encoding_loader(
@@ -138,6 +149,13 @@ class FL_Client(fl.client.Client):
         )
         self.valloader = tree_encoding_loader(
             self.valloader_original,
+            batch_size,
+            aggregated_trees,
+            self.client_tree_num,
+            self.client_num,
+        )
+        self.testloader = tree_encoding_loader(
+            self.testloader_original,
             batch_size,
             aggregated_trees,
             self.client_tree_num,
@@ -166,6 +184,22 @@ class FL_Client(fl.client.Client):
         )
         
         self.round_time = (time.time() - start_time)
+        metrics = {}
+
+        if self.first_round:
+            #Get best threshold based on validation set
+            y_pred_proba_val = self.tree.predict_proba(self.X_val, device=self.device)
+            best_threshold = find_best_threshold(self.y_val, y_pred_proba_val, metric="balanced_accuracy")
+            y_pred_proba = self.tree.predict_proba(self.X_test)
+            local_metrics = calculate_metrics(self.y_test, y_pred_proba, threshold=best_threshold)
+            #Add 'local' to the metrics to identify them
+            local_metrics = {f"local {key}": local_metrics[key] for key in local_metrics}
+            metrics.update(local_metrics)
+            self.first_round = False
+        
+        metrics.update({
+            "running_time": self.round_time,
+            "train_loss": train_loss})
 
         # Return training information: model, number of examples processed and metrics
         if self.task_type == "BINARY":
@@ -174,7 +208,7 @@ class FL_Client(fl.client.Client):
                 # parameters=self.get_parameters(fit_params.config),
                 parameters=self.get_parameters(fit_params.config).parameters,
                 num_examples=num_examples,
-                metrics={"loss": train_loss, "accuracy": train_result, "running_time":self.round_time},
+                metrics=metrics,
             )
         elif self.task_type == "REG":
             return FitRes(
@@ -200,8 +234,9 @@ class FL_Client(fl.client.Client):
         loss, result, num_examples = test(
             self.task_type,
             self.net,
-            self.valloader,
+            self.testloader,
             device=self.device,
+            valloader=self.valloader,
             log_progress=self.log_progress,
         )
 
@@ -270,8 +305,7 @@ def get_client(config, data, client_id) -> fl.client.Client:
 
     client = FL_Client(
         task_type,
-        trainloader,
-        valloader,
+        data,
         client_tree_num,
         client_num,
         cid,
