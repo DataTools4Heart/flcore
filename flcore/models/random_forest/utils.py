@@ -52,8 +52,7 @@ def get_model(config):
             verbose=0,
             warm_start=False,
             ccp_alpha=0.0,
-            max_samples=None,
-            monotonic_cst=None)
+            max_samples=None)
 
     return model
 
