@@ -20,14 +20,24 @@ def get_model(model_name, local=False):
         case "lsvc":
             #Linear classifiers (SVM, logistic regression, etc.) with SGD training.
             #If we use hinge, it implements SVM
-            model = SGDClassifier(max_iter=max_iter,n_iter_no_change=1000,average=True,random_state=42,class_weight= "balanced",warm_start=True,fit_intercept=True,loss="hinge", learning_rate='optimal')
+            model = SGDClassifier(
+            max_iter=max_iter,
+            n_iter_no_change=1000,
+            average=True,
+            # random_state=42,
+            class_weight= "balanced",
+            warm_start=True,
+            fit_intercept=True,
+            loss="hinge",
+            learning_rate='optimal'
+        )
         case "logistic_regression":
             model = LogisticRegression(
             penalty="l2",
             #max_iter=1,  # local epoch ==>> it doesn't work
             max_iter=max_iter,  # local epoch
             warm_start=True,  # prevent refreshing weights when fitting
-            random_state=42,
+            # random_state=42,
             class_weight= "balanced" #For unbalanced
         )
         case "elastic_net":
@@ -38,7 +48,7 @@ def get_model(model_name, local=False):
             #max_iter=1,  # local epoch ==>> it doesn't work
             max_iter=max_iter,  # local epoch
             warm_start=True,  # prevent refreshing weights when fitting
-            random_state=42,
+            # random_state=42,
             class_weight= "balanced" #For unbalanced
         )
 
@@ -73,7 +83,7 @@ def set_model_params(
     return model
 
 
-def set_initial_params(model: LinearClassifier,n_features):
+def set_initial_params(model: LinearClassifier, data, n_features):
     """Sets initial parameters as zeros Required since model params are
     uninitialized until model.fit is called.
     But server asks for initial parameters from clients at launch. Refer
@@ -82,16 +92,18 @@ def set_initial_params(model: LinearClassifier,n_features):
     """    
     n_classes = 2  # MNIST has 10 classes
     #n_features = 9  # Number of features in dataset
+
+    model.fit(data[0], data[1])
     model.classes_ = np.array([i for i in range(n_classes)])
 
-    if(isinstance(model,SGDClassifier)==True):
-        model.coef_ = np.zeros((1, n_features))
-        if model.fit_intercept:
-            model.intercept_ = 0 
-    else:
-        model.coef_ = np.zeros((n_classes, n_features))
-        if model.fit_intercept:
-            model.intercept_ = np.zeros((n_classes,))
+    # if(isinstance(model,SGDClassifier)==True):
+    #     model.coef_ = np.zeros((1, n_features))
+    #     if model.fit_intercept:
+    #         model.intercept_ = 0 
+    # else:
+    #     model.coef_ = np.zeros((n_classes, n_features))
+    #     if model.fit_intercept:
+    #         model.intercept_ = np.zeros((n_classes,))
 
 
 #Evaluate in the aggregations evaluation with

@@ -10,8 +10,10 @@
 ################################################################################
 
 ##############  Dataset type to use
-# Possible values: , kaggle_hf, mnist, dt4h_format
-dataset: dt4h_format
+# Possible values: , kaggle_hf, diabetes, mnist, dt4h_format
+dataset: kaggle_hf
+# dataset: ukbb_cvd
+# dataset: diabetes
 #custom
 #libsvm
 #kaggle_hf
@@ -33,28 +35,52 @@ train_size: 0.7
 # ****** * * * * * * *  *  *   *    *    *  *  * * * * * * * *******************
 
 ##############  Number of clients (data centers) to use for training
-num_clients: 1
+num_clients: 4
 
 ############## Model type
 # Possible values: logistic_regression, lsvc, elastic_net, random_forest, weighted_random_forest, xgb
 # See README.md for a full list of supported models
-model: random_forest
+# model: xgb
+model: logistic_regression
+# model: random_forest
 #logistic_regression
 #random_forest
 
 ############## Training length
-num_rounds: 50
+num_rounds: 10
 
 ############## Metric to select the best model
 # Possible values: accuracy, balanced_accuracy, f1, precision, recall
-checkpoint_selection_metric:  precision
+# checkpoint_selection_metric:  precision
+checkpoint_selection_metric:  balanced_accuracy
 #balanced_accuracy
 
 ############## Experiment logging
 experiment:
-  name: experiment_1
+  name: experiment_kaggle_standard
   log_path: logs
   debug: true
+
+
+################################################################################
+# Federated Data Preprocessing
+################################################################################
+
+# Strategy to calculate data preprocessing parameters between clients. 
+# It covers missing data imputation, label encoding, normalization and feature selection
+# It can be one of: 
+  # "reference" - use reference center to calculate all parameters (largest or random)
+  # "equal_aggregate" - aggregate parameters from all clients based on mean and voting disregarding center size
+  # "weighted_aggregate" - aggregate parameters from all clients based on weighted mean and voting
+
+data_preprocessing_method: "equal_aggregate"
+# data_preprocessing_method: "reference"
+
+# Toggle data normalization (Standard scaler) based on largest center (global) or local client
+data_normalization: "global"
+
+# Determine target for feature selection number
+n_features: Null
 
 
 ################################################################################
@@ -87,9 +113,13 @@ smoothWeights:
 linear_models:
   n_features: 9
 
+
+dirichlet_alpha: Null
+
 # Random Forest
 random_forest:
   balanced_rf: true
+  tree_num: 300
 
 # Weighted Random Forest
 weighted_random_forest:
@@ -101,7 +131,7 @@ xgb:
   batch_size: 32
   num_iterations: 100
   task_type: BINARY
-  tree_num: 500
+  tree_num: 300
 
 
 held_out_center_id: -1
@@ -113,6 +143,6 @@ seed: 42
 
 local_port: 8081
 
-data_path: dataset/icrc-dataset/
+data_path: dataset/
 
 production_mode: False # Turn on to use environment variables such as data path, server address, certificates etc.

@@ -143,4 +143,10 @@ class FedCustomStrategy(FedXgbNnAvg):
         elif server_round == 1:  # Only log this warning once
             log(WARNING, "No fit_metrics_aggregation_fn provided")
 
+        elapsed_time =  (time.time() - self.time_server_round)
+        self.accum_time = self.accum_time+ elapsed_time
+        self.time_server_round = time.time()
+        print(f"Elapsed time: {elapsed_time} for round {server_round}")
+        metrics_aggregated['training_time [s]'] = self.accum_time
+
         return [parameters_aggregated, trees_aggregated], metrics_aggregated

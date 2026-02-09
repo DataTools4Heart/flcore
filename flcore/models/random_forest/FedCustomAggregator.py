@@ -153,14 +153,6 @@ class FedCustom(fl.server.strategy.FedAvg):
         self.time_server_round = time.time()
         print(f"Elapsed time: {elapsed_time} for round {server_round}")
         metrics_aggregated['training_time [s]'] = self.accum_time
-        
-        filename = 'server_results.txt'
-        with open(
-        filename,
-        "a",
-        ) as f:
-            f.write(f"Accumulated Time: {self.accum_time} for round {server_round}\n")
-
         return parameters_aggregated, metrics_aggregated
     
 
@@ -193,15 +185,6 @@ class FedCustom(fl.server.strategy.FedAvg):
             metrics_aggregated = self.evaluate_metrics_aggregation_fn(eval_metrics)
         elif server_round == 1:  # Only log this warning once
             log(WARNING, "No evaluate_metrics_aggregation_fn provided")
-
-        # filename = 'server_results.txt'
-        # with open(
-        # filename,
-        # "a",
-        # ) as f:
-        #     f.write(f"Accuracy: {metrics_aggregated['accuracy']} \n")
-        #     f.write(f"Sensitivity: {metrics_aggregated['sensitivity']} \n")
-        #     f.write(f"Specificity: {metrics_aggregated['specificity']} \n")
 
         return loss_aggregated, metrics_aggregated
 

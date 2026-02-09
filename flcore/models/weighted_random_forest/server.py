@@ -32,7 +32,7 @@ def fit_round( server_round: int ) -> Dict:
 
 
 def get_server_and_strategy(config):
-    bal_RF = config['weighted_random_forest']['balanced_rf']
+    bal_RF = True if config['model'] == 'balanced_random_forest' else False
     model = get_model(bal_RF) 
     utils.set_initial_params_server( model)
 

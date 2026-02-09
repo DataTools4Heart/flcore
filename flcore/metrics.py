@@ -8,6 +8,7 @@ from torchmetrics.classification import (
     BinaryPrecision,
     BinaryRecall,
     BinarySpecificity,
+    BinaryAUROC,
 )
 
 from torchmetrics.functional.classification.precision_recall import (
@@ -43,17 +44,18 @@ class BinaryBalancedAccuracy(BinaryStatScores):
         return (recall + specificity) / 2
 
 
-def get_metrics_collection(task_type="binary", device="cpu"):
+def get_metrics_collection(task_type="binary", device="cpu", threshold=0.5):
 
     if task_type.lower() == "binary":
         return MetricCollection(
             {
-                "accuracy": BinaryAccuracy().to(device),
-                "precision": BinaryPrecision().to(device),
-                "recall": BinaryRecall().to(device),
-                "specificity": BinarySpecificity().to(device),
-                "f1": BinaryF1Score().to(device),
-                "balanced_accuracy": BinaryBalancedAccuracy().to(device),
+                "accuracy": BinaryAccuracy(threshold=threshold).to(device),
+                "precision": BinaryPrecision(threshold=threshold).to(device),
+                "recall": BinaryRecall(threshold=threshold).to(device),
+                "specificity": BinarySpecificity(threshold=threshold).to(device),
+                "f1": BinaryF1Score(threshold=threshold).to(device),
+                "balanced_accuracy": BinaryBalancedAccuracy(threshold=threshold).to(device),
+                "auroc": BinaryAUROC().to(device),
             }
         )
     elif task_type.lower() == "reg":
@@ -61,13 +63,25 @@ def get_metrics_collection(task_type="binary", device="cpu"):
             "mse": MeanSquaredError().to(device),
         })
 
-def calculate_metrics(y_true, y_pred, task_type="binary"):
-    metrics_collection = get_metrics_collection(task_type)
+
+def calculate_metrics(y_true, y_pred_proba, task_type="binary", threshold=0.5):
+    metrics_collection = get_metrics_collection(task_type, threshold=threshold)
     if not torch.is_tensor(y_true):
-        y_true = torch.tensor(y_true.tolist())
-    if not torch.is_tensor(y_pred):
-        y_pred = torch.tensor(y_pred.tolist())
-    metrics_collection.update(y_pred, y_true)
+        if isinstance(y_true, list):
+            y_true = torch.cat(y_true)
+        else:
+            y_true = torch.tensor(y_true.tolist())
+    if not torch.is_tensor(y_pred_proba):
+        if isinstance(y_pred_proba, list):
+            y_pred_proba = torch.cat(y_pred_proba)
+        else:
+            y_pred_proba = torch.tensor(y_pred_proba.tolist())
+    
+    # Extract probabilities for the positive class if shape>1
+    if y_pred_proba.ndim > 1 and y_pred_proba.shape[1] > 1:
+        y_pred_proba = y_pred_proba[:, 1]
+
+    metrics_collection.update(y_pred_proba, y_true)
 
     metrics = metrics_collection.compute()
     metrics = {k: v.item() for k, v in metrics.items()}
@@ -90,3 +104,15 @@ def metrics_aggregation_fn(distributed_metrics):
     metrics['per client n samples'] = [res[0] for res in distributed_metrics]
 
     return metrics
+
+def find_best_threshold(y_true, y_pred_proba, metric="balanced_accuracy"):
+    best_threshold = 0.5
+    best_metric_value = 0.0
+
+    for threshold in np.arange(0.0, 1.01, 0.01):
+        metrics = calculate_metrics(y_true, y_pred_proba, threshold=threshold)
+        if metrics[metric] > best_metric_value:
+            best_metric_value = metrics[metric]
+            best_threshold = threshold
+
+    return best_threshold

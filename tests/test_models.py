@@ -12,12 +12,18 @@ import pytest
 LOGGING_LEVEL = logging.INFO  # WARNING  # logging.INFO
 
 model_names = [
-#    "logistic_regression",
-#    "elastic_net",
-#    "lsvc",
+   "logistic_regression",
+   "elastic_net",
+   "lsvc",
     "random_forest",
-    # "weighted_random_forest",
-    # "xgb"
+    "balanced_random_forest",
+    # # "weighted_random_forest",
+    "xgb"
+    ]
+
+datasets = [
+    "kaggle_hf",
+    "diabetes",
     ]
 
 def free_port(port):
@@ -34,17 +40,29 @@ class TestFLCoreModels:
         with open("config.yaml", "r") as f:
             self.config = yaml.safe_load(f)
 
-        self.num_clients = 3
+        self.config["num_clients"] = 3
+        self.config["num_rounds"] = 2
+
+        # To speed up tests, reduce number of trees in xgboost and random forest
+        self.config["random_forest"]["tree_num"] = 5
+        self.config["xgb"]["tree_num"] = 5
+        self.config["xgb"]["num_iterations"] = 2
 
 
     @pytest.mark.parametrize(
         "model_name",
-        model_names
+        model_names,
+    )
+    @pytest.mark.parametrize(
+        "dataset_name",
+        datasets,
     )
     def test_get_model_client(
-        self, model_name
+        self, model_name, dataset_name
     ):
         self.config["model"] = model_name
+        self.config['data_path'] = 'dataset/'
+        self.config["dataset"] = dataset_name
         
         from flcore.client_selector import get_model_client
         from flcore.datasets import load_dataset
@@ -57,22 +75,27 @@ class TestFLCoreModels:
 
     @pytest.mark.parametrize(
         "model_name",
-        model_names
+        model_names,
     )
-    def test_run(self, model_name):
+    @pytest.mark.parametrize(
+        "dataset_name",
+        datasets,
+    )
+    def test_run(self, model_name, dataset_name):
 
         self.config["model"] = model_name
+        self.config["dataset"] = dataset_name
         
         with open("config.yaml", "r") as f:
             config = yaml.safe_load(f)
             config = self.config
 
-        with open("config.yaml", "w") as f:
+        with open("tmp_test_config.yaml", "w") as f:
             yaml.dump(config, f)
 
         free_port(config["local_port"])
         run_log = open("run.log", "w")
-        run_process = subprocess.Popen("python run.py", shell=True, stdout=run_log, stderr=run_log)
+        run_process = subprocess.Popen("python run.py tmp_test_config.yaml", shell=True, stdout=run_log, stderr=run_log)
 
         timer = Timer(180, run_process.kill)
         try:
@@ -85,5 +108,8 @@ class TestFLCoreModels:
         run_log.close()
         run_log = open("run.log", "r")
         print(run_log.read())
+
+        # Delete temporary config file
+        os.remove("tmp_test_config.yaml")
         
         assert run_process.returncode == 0

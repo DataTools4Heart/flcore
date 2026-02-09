@@ -33,8 +33,8 @@ def fit_round( server_round: int ) -> Dict:
 
 
 def get_server_and_strategy(config):
-    bal_RF = config['random_forest']['balanced_rf']
-    model = get_model(bal_RF) 
+    bal_RF = True if config['model'] == 'balanced_random_forest' else False
+    model = get_model(bal_RF, config['random_forest']['tree_num']) 
     utils.set_initial_params_server( model)
 
     # Pass parameters to the Strategy for server-side parameter initialization
@@ -46,6 +46,7 @@ def get_server_and_strategy(config):
         min_evaluate_clients = config['num_clients'],
         #enable evaluate_fn  if we have data to evaluate in the server
         #evaluate_fn           = utils_RF.get_evaluate_fn( model ), #no data in server
+        fit_metrics_aggregation_fn=metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn = metrics_aggregation_fn,
         on_fit_config_fn      = fit_round      
     )

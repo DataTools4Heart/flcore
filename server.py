@@ -93,7 +93,7 @@ if __name__ == "__main__":
     # filename = os.path.join( checkpoint_dir, 'final_model.pt' )
     # joblib.dump(model, filename)
     # Save the history as a yaml file
-    print(history)
+    # print(history)
     with open(experiment_dir / "metrics.txt", "w") as f:
         f.write(f"Results of the experiment {config['experiment']['name']}\n")
         f.write(f"Model: {config['model']}\n")
@@ -101,10 +101,19 @@ if __name__ == "__main__":
         f.write(f"Number of clients: {config['num_clients']}\n")
 
         # selection_metric = 'val ' + config['checkpoint_selection_metric']
-        selection_metric = config['checkpoint_selection_metric']
+        selection_metric = "val " + config['checkpoint_selection_metric']
         # Get index of tuple of the best round
-        best_round = int(numpy.argmax([round[1] for round in history.metrics_distributed[selection_metric]]))
-        training_time = history.metrics_distributed_fit['training_time [s]'][-1][1]
+        best_round = int(numpy.argmax([round[1] for round in history.metrics_distributed[selection_metric]])) 
+        # Use the last round as final checkpoint, since no validation set is used
+        # best_round = -1
+        # print(history)
+        # check if history has attribute metrics_distributed_fit
+        if hasattr(history, 'metrics_distributed_fit') and 'training_time [s]' in history.metrics_distributed_fit:
+            # check if training_time is in metrics_distributed_fit
+            training_time = history.metrics_distributed_fit['training_time [s]'][-1][1]
+        else:
+            training_time = 0.0
+        
         f.write(f"Total training time: {training_time:.2f} [s] \n")
         f.write(f"Best checkpoint based on {selection_metric} after round: {best_round}\n\n")
         print(f"Best checkpoint based on {selection_metric} after round: {best_round}\n\n")

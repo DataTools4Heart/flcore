@@ -27,7 +27,8 @@ def generate_report(experiment_path: str):
     df = df.rename(columns={"Unnamed: 0": "center"})
     # Convert metrics columns to 2 decimal places
     df = df.round(2)
-    colors = ['#FF6666', '#FF9999', '#FF3333', '#CC0000', '#990000', '#B22222', '#FF0044', '#960018']
+    colors = ['#FF6666', '#FF9999', '#FF3333', '#CC0000', '#990000', '#B22222', '#FF0044', '#960018', '#FF0000',
+               '#B22222']
 
 
     # print(df.head())
