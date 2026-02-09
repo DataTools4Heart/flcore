@@ -34,8 +34,8 @@ from flcore.smoothWeights import smooth_aggregate,computeSmoothedWeights
 #  AGGREGATOR 1: RANDOM DT  #
 #############################
 
-def aggregateRF_random(rfs,bal_RF):
-    rfa= get_model(bal_RF)
+def aggregateRF_random(rfs,config):
+    rfa= get_model(config)
     number_Clients = len(rfs)
     numberTreesperclient = int(len(rfs[0][0][0]))
     random_select = int(numberTreesperclient/number_Clients)
@@ -50,8 +50,8 @@ def aggregateRF_random(rfs,bal_RF):
     return [rfa],rfa.estimators_
 
 
-def aggregateRF_withprevious_random(rfs,previous_estimators,bal_RF):
-    rfa= get_model(bal_RF)
+def aggregateRF_withprevious_random(rfs,previous_estimators,config):
+    rfa= get_model(config)
     number_Clients = len(rfs)
     numberTreesperclient = int(len(rfs[0][0][0]))
     random_select =int(numberTreesperclient/number_Clients)
@@ -93,8 +93,8 @@ def aggregateRF(rfs,bal_RF):
 
 #We merge all the trees in one RF
 #https://ai.stackexchange.com/questions/34250/random-forests-are-more-estimators-always-better
-def aggregateRF_withprevious(rfs,previous_estimators,bal_RF):
-    rfa= get_model(bal_RF)
+def aggregateRF_withprevious(rfs,previous_estimators,config):
+    rfa= get_model(config)
     #TypeError: 'list' object cannot be interpreted as an integer
     #I need to add double parenthesis for concatenation
     rf0 = np.concatenate(((rfs[0][0][0]), (rfs[1][0][0])))
@@ -116,15 +116,16 @@ def aggregateRF_withprevious(rfs,previous_estimators,bal_RF):
 #In this version of aggregation we weight according to smoothing
 #weigth, we transform into probability /sum(weights)
 #and random choice select according to probability distribution
-def aggregateRFwithSizeCenterProbs(rfs,bal_RF,smoothing_method,smoothing_strenght):
-    rfa= get_model(bal_RF)
+#def aggregateRFwithSizeCenterProbs(rfs,bal_RF,smoothing_method,smoothing_strenght):
+def aggregateRFwithSizeCenterProbs(rfs,config):
+    rfa= get_model(config)
     numberTreesperclient = int(len(rfs[0][0][0]))
     number_Clients = len(rfs)
     random_select =int(numberTreesperclient/number_Clients)
     list_classifiers = []
     weights_classifiers = [] 
-    if(smoothing_method!= 'None'):
-        weights_centers = computeSmoothedWeights(rfs,True,smoothing_strenght)
+    if(config["smooth_method"] != 'None'):
+        weights_centers = computeSmoothedWeights(rfs,config["smooth_method"],config["smoothing_strenght"])
     else:
         #If smooth weights is not available all the trees have the
         #same probability
@@ -146,8 +147,10 @@ def aggregateRFwithSizeCenterProbs(rfs,bal_RF,smoothing_method,smoothing_strengh
 
     return [rfa],rfa.estimators_,weights_selectedTrees
 
-def aggregateRFwithSizeCenterProbs_withprevious(rfs,bal_RF,previous_estimators,previous_estimator_weights,smoothing_method,smoothing_strenght):
-            [rfa],rfa.estimators_,weights_selectedTrees = aggregateRFwithSizeCenterProbs(rfs,bal_RF,smoothing_method,smoothing_strenght)
+#def aggregateRFwithSizeCenterProbs_withprevious(rfs,bal_RF,previous_estimators,previous_estimator_weights,smoothing_method,smoothing_strenght):
+def aggregateRFwithSizeCenterProbs_withprevious(rfs,previous_estimators,previous_estimator_weights,config):
+#            [rfa],rfa.estimators_,weights_selectedTrees = aggregateRFwithSizeCenterProbs(rfs,bal_RF,smoothing_method,smoothing_strenght)
+            [rfa],rfa.estimators_,weights_selectedTrees = aggregateRFwithSizeCenterProbs(rfs,config)
 
             rfa.estimators_= np.concatenate(((previous_estimators), (rfa.estimators_)))
             rfa.estimators_=np.array(rfa.estimators_)

@@ -87,8 +87,8 @@ def ensambleDecisionTrees(parameters):
 
 # Define Flower client
 class MnistClient(fl.client.Client):
-    def __init__(self, data,client_id,config):
-        self.client_id = client_id
+    def __init__(self, data,config):
+        self.node_name = config["node_name"]
         n_folds_out=config['num_rounds']
         seed=42
         # Load data
@@ -143,7 +143,7 @@ class MnistClient(fl.client.Client):
             print(f"F1_score in fit:  {F1_score}")
     
             ellapsed_time = (time.time() - start_time)
-            print(f"num_client {self.client_id} has an ellapsed time {ellapsed_time}")
+            print(f"num_client {self.node_name} has an ellapsed time {ellapsed_time}")
             
         print(f"Training finished for round {ins.config['server_round']}")
 
@@ -212,7 +212,7 @@ class MnistClient(fl.client.Client):
         )
 
 
-def get_client(config,data,client_id) -> fl.client.Client:
-    return MnistClient(data,client_id,config)
+def get_client(config,data) -> fl.client.Client:
+    return MnistClient(data,config)
     # # Start Flower client
     # fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=MnistClient())

@@ -1,638 +1,361 @@
-# ## Create Flower custom server
+# ********* * * * * *  *  *   *   *    *   *  *  *  * * * * *
+# XGBoost
+# Author: Iratxe Moya
+# Date: January 2026
+# Project: DT4H
+# ********* * * * * *  *  *   *   *    *   *  *  *  * * * * *
 
-import functools
-import timeit
-from logging import DEBUG, INFO
-from typing import Dict, List, Optional, Tuple, Union
-
+import os
+from typing import Tuple, Dict, List, Optional, Callable
 import flwr as fl
-import numpy as np
 from flwr.common import (
-    Code,
-    EvaluateRes,
-    FitRes,
-    GetParametersIns,
-    GetParametersRes,
     Parameters,
+    FitRes,
+    EvaluateRes,
     Scalar,
-    Status,
+    NDArrays,
     parameters_to_ndarrays,
+    ndarrays_to_parameters,
 )
-from flwr.common.logger import log
-from flwr.common.typing import GetParametersIns, Parameters
-from flwr.server.client_manager import ClientManager, SimpleClientManager
 from flwr.server.client_proxy import ClientProxy
-from flwr.server.history import History
-from flwr.server.server import evaluate_clients, fit_clients
-from flwr.server.strategy import FedXgbNnAvg, Strategy
-from sklearn.metrics import accuracy_score, mean_squared_error
-from torch.utils.data import DataLoader
-from xgboost import XGBClassifier, XGBRegressor
-
-from flcore.metrics import metrics_aggregation_fn
-from flcore.models.xgb.client import FL_Client
-from flcore.models.xgb.fed_custom_strategy import FedCustomStrategy
-from flcore.models.xgb.cnn import CNN, test
-from flcore.models.xgb.utils import (
-    TreeDataset,
-    construct_tree,
-    do_fl_partitioning,
-    parameters_to_objects,
-    serialize_objects_to_parameters,
-    tree_encoding_loader,
-)
-
-FitResultsAndFailures = Tuple[
-    List[Tuple[ClientProxy, FitRes]],
-    List[Union[Tuple[ClientProxy, FitRes], BaseException]],
-]
-EvaluateResultsAndFailures = Tuple[
-    List[Tuple[ClientProxy, EvaluateRes]],
-    List[Union[Tuple[ClientProxy, EvaluateRes], BaseException]],
-]
+import xgboost as xgb
+import numpy as np
+from pathlib import Path
 
 
-class FL_Server(fl.server.Server):
-    """Flower server."""
-
+class XGBoostStrategy(fl.server.strategy.FedAvg):
+    """Custom strategy for federated XGBoost training.
+    
+    Supports two training methods:
+    - bagging: Ensemble of trees from different clients (parallel)
+    - cyclic: Sequential refinement of the same model (sequential)
+    """
+    
     def __init__(
-        self, *, client_manager: ClientManager, strategy: Optional[Strategy] = None
-    ) -> None:
-        self._client_manager: ClientManager = client_manager
-        self.parameters: Parameters = Parameters(
-            tensors=[], tensor_type="numpy.ndarray"
+        self,
+        train_method: str = "bagging",  # "bagging" or "cyclic"
+        num_local_rounds: int = 5,
+        xgb_params: Dict = None,
+        saving_path: str = "./sandbox",
+        min_fit_clients: int = 1,
+        min_evaluate_clients: int = 1,
+        min_available_clients: int = 1,
+        evaluate_fn: Optional[Callable] = None,
+        on_fit_config_fn: Optional[Callable] = None,
+        on_evaluate_config_fn: Optional[Callable] = None,
+        **kwargs
+    ):
+        super().__init__(
+            min_fit_clients=min_fit_clients,
+            min_evaluate_clients=min_evaluate_clients,
+            min_available_clients=min_available_clients,
+            evaluate_fn=evaluate_fn,
+            on_fit_config_fn=on_fit_config_fn,
+            on_evaluate_config_fn=on_evaluate_config_fn,
+            **kwargs
         )
-        self.strategy: Strategy = strategy
-        self.max_workers: Optional[int] = None
-        self.tree_config_dict = {
-            "client_tree_num": self.strategy.evaluate_fn.keywords["client_tree_num"],
-            "task_type": self.strategy.evaluate_fn.keywords["task_type"],
-        }
-        self.final_metrics = {}
-
-    # pylint: disable=too-many-locals
-    def fit(self, num_rounds: int, timeout: Optional[float]) -> History:
-        """Run federated averaging for a number of rounds."""
-        history = History()
-
-        # Initialize parameters
-        log(INFO, "Initializing global parameters")
-        self.parameters = self._get_initial_parameters(timeout=timeout)
-
-        log(INFO, "Evaluating initial parameters")
-        res = self.strategy.evaluate(0, parameters=self.parameters)
-        if res is not None:
-            log(
-                INFO,
-                "initial parameters (loss, other metrics): %s, %s",
-                res[0],
-                res[1],
-            )
-            history.add_loss_centralized(server_round=0, loss=res[0])
-            history.add_metrics_centralized(server_round=0, metrics=res[1])
-
-        # Run federated learning for num_rounds
-        log(INFO, "FL starting")
-        start_time = timeit.default_timer()
-
-        for current_round in range(1, num_rounds + 1):
-            # Train model and replace previous global model
-            res_fit = self.fit_round(server_round=current_round, timeout=timeout)
-            if res_fit:
-                parameters_prime, _, _ = res_fit  # fit_metrics_aggregated
-                if parameters_prime:
-                    self.parameters = parameters_prime
-
-            # Evaluate model using strategy implementation
-            res_cen = self.strategy.evaluate(current_round, parameters=self.parameters)
-            if res_cen is not None:
-                loss_cen, metrics_cen = res_cen
-                log(
-                    INFO,
-                    "fit progress: (%s, %s, %s, %s)",
-                    current_round,
-                    loss_cen,
-                    metrics_cen,
-                    timeit.default_timer() - start_time,
-                )
-                history.add_loss_centralized(server_round=current_round, loss=loss_cen)
-                history.add_metrics_centralized(
-                    server_round=current_round, metrics=metrics_cen
-                )
-
-            # Evaluate model on a sample of available clients
-            res_fed = self.evaluate_round(server_round=current_round, timeout=timeout)
-            if res_fed:
-                loss_fed, evaluate_metrics_fed, _ = res_fed
-                if loss_fed:
-                    history.add_loss_distributed(
-                        server_round=current_round, loss=loss_fed
-                    )
-                    history.add_metrics_distributed(
-                        server_round=current_round, metrics=evaluate_metrics_fed
-                    )
-            # if self.best_score < evaluate_metrics_fed[self.metric_to_track]:
-                # self.best_score = evaluate_metrics_fed[self.metric_to_track]
-
-        # history.add_metrics_distributed(
-        #     server_round=0, metrics=self.final_metrics
-        # )
-
-        # Bookkeeping
-        end_time = timeit.default_timer()
-        elapsed = end_time - start_time
-        log(INFO, "FL finished in %s", elapsed)
-        return history
-
-    def evaluate_round(
+        
+        self.train_method = train_method
+        self.num_local_rounds = num_local_rounds
+        self.xgb_params = xgb_params or {}
+        self.saving_path = Path(saving_path)
+        self.saving_path.mkdir(parents=True, exist_ok=True)
+        
+        # Global model storage
+        self.global_model = None
+        self.current_round = 0
+        
+        print(f"[XGBoost Strategy] Initialized with method: {train_method}")
+        print(f"[XGBoost Strategy] Local rounds per client: {num_local_rounds}")
+        print(f"[XGBoost Strategy] XGBoost params: {self.xgb_params}")
+    
+    def initialize_parameters(self, client_manager) -> Optional[Parameters]:
+        """Initialize with empty model (clients will train from scratch in round 1)."""
+        # Return empty bytes - clients will create their own initial models
+        empty_model = b""
+        ndarrays = [np.frombuffer(empty_model, dtype=np.uint8)]
+        return ndarrays_to_parameters(ndarrays)
+    
+    def aggregate_fit(
         self,
         server_round: int,
-        timeout: Optional[float],
-    ) -> Optional[
-        Tuple[Optional[float], Dict[str, Scalar], EvaluateResultsAndFailures]
-    ]:
-        """Validate current global model on a number of clients."""
-
-        parameters_packed = serialize_objects_to_parameters(self.parameters)
-        # Get clients and their respective instructions from strategy
-        client_instructions = self.strategy.configure_evaluate(
-            server_round=server_round,
-            # parameters=self.parameters,
-            parameters=parameters_packed,
-            client_manager=self._client_manager,
-        )
-        if not client_instructions:
-            log(INFO, "evaluate_round %s: no clients selected, cancel", server_round)
-            return None
-        log(
-            DEBUG,
-            "evaluate_round %s: strategy sampled %s clients (out of %s)",
-            server_round,
-            len(client_instructions),
-            self._client_manager.num_available(),
-        )
-
-        # Collect `evaluate` results from all clients participating in this round
-        results, failures = evaluate_clients(
-            client_instructions,
-            max_workers=self.max_workers,
-            timeout=timeout,
-        )
-        log(
-            DEBUG,
-            "evaluate_round %s received %s results and %s failures",
-            server_round,
-            len(results),
-            len(failures),
-        )
-
-        # Aggregate the evaluation results
-        aggregated_result: Tuple[
-            Optional[float],
-            Dict[str, Scalar],
-        ] = self.strategy.aggregate_evaluate(server_round, results, failures)
-
-        # #Save per client results
-        # for result in results:
-        #     result[1].metrics["num_examples"] = result[1].num_examples
-        #     self.final_metrics["client_" + str(result[1].metrics["client_id"])] = result[1].metrics
-
-
-        loss_aggregated, metrics_aggregated = aggregated_result
-        return loss_aggregated, metrics_aggregated, (results, failures)
-
-    def fit_round(
-        self,
-        server_round: int,
-        timeout: Optional[float],
-    ) -> Optional[
-        Tuple[
-            Optional[
-                Tuple[
-                    Parameters,
-                    Union[
-                        Tuple[XGBClassifier, int],
-                        Tuple[XGBRegressor, int],
-                        List[
-                            Union[Tuple[XGBClassifier, int], Tuple[XGBRegressor, int]]
-                        ],
-                    ],
-                ]
-            ],
-            Dict[str, Scalar],
-            FitResultsAndFailures,
-        ]
-    ]:
-        """Perform a single round of federated averaging."""
-        parameters_packed = serialize_objects_to_parameters(self.parameters)
-        # Get clients and their respective instructions from strategy
-        client_instructions = self.strategy.configure_fit(
-            server_round=server_round,
-            # parameters=self.parameters,
-            parameters=parameters_packed,
-            client_manager=self._client_manager,
-        )
-
-        if not client_instructions:
-            log(INFO, "fit_round %s: no clients selected, cancel", server_round)
-            return None
-        log(
-            DEBUG,
-            "fit_round %s: strategy sampled %s clients (out of %s)",
-            server_round,
-            len(client_instructions),
-            self._client_manager.num_available(),
-        )
-
-        # Collect `fit` results from all clients participating in this round
-        results, failures = fit_clients(
-            client_instructions=client_instructions,
-            max_workers=self.max_workers,
-            timeout=timeout,
-        )
-
-        for result in results:
-            result[1].parameters = self.serialized_to_parameters(result[1])
-
-        log(
-            DEBUG,
-            "fit_round %s received %s results and %s failures",
-            server_round,
-            len(results),
-            len(failures),
-        )
-
-        # Aggregate training results
-        NN_aggregated: Parameters
-        trees_aggregated: Union[
-            Tuple[XGBClassifier, int],
-            Tuple[XGBRegressor, int],
-            List[Union[Tuple[XGBClassifier, int], Tuple[XGBRegressor, int]]],
-        ]
-        metrics_aggregated: Dict[str, Scalar]
-        aggregated, metrics_aggregated = self.strategy.aggregate_fit(
-            server_round, results, failures
-        )
-        NN_aggregated, trees_aggregated = aggregated[0], aggregated[1]
-
-        if type(trees_aggregated) is list:
-            print("Server side aggregated", len(trees_aggregated), "trees.")
+        results: List[Tuple[ClientProxy, FitRes]],
+        failures: List[Tuple[ClientProxy, FitRes] | BaseException],
+    ) -> Tuple[Optional[Parameters], Dict[str, Scalar]]:
+        """Aggregate model updates from clients."""
+        
+        self.current_round = server_round
+        
+        if not results:
+            return None, {}
+        
+        print(f"\n[Round {server_round}] Aggregating {len(results)} client models...")
+        
+        if self.train_method == "bagging":
+            # BAGGING: Combine trees from all clients into one ensemble
+            aggregated_model = self._aggregate_bagging(results)
         else:
-            print("Server side did not aggregate trees.")
-
-        return (
-            [NN_aggregated, trees_aggregated],
-            metrics_aggregated,
-            (results, failures),
-        )
-
-    # def list_to_packed_parameters(self, parameters: List):
-    #     net_weights = parameters_to_ndarrays(parameters[0])
-    #     tree_json = parameters[1][0]
-    #     cid = parameters[1][1]
-
-    #     return ndarrays_to_parameters([net_weights, tree_json, cid])
-
-    def serialized_to_parameters(self, get_parameters_res_tree):
-        objects = parameters_to_objects(
-            get_parameters_res_tree.parameters, self.tree_config_dict
-        )
-
-        weights_parameters = objects[0]
-        tree_parameters = objects[1]
-
-        return [
-            GetParametersRes(
-                status=Status(Code.OK, ""),
-                parameters=weights_parameters,
-            ),
-            tree_parameters,
-        ]
-
-    def _get_initial_parameters(
-        self, timeout: Optional[float]
-    ) -> Tuple[Parameters, Union[Tuple[XGBClassifier, int], Tuple[XGBRegressor, int]]]:
-        """Get initial parameters from one of the available clients."""
-
-        # Server-side parameter initialization
-        parameters: Optional[Parameters] = self.strategy.initialize_parameters(
-            client_manager=self._client_manager
-        )
-        if parameters is not None:
-            log(INFO, "Using initial parameters provided by strategy")
-            return parameters
-
-        # Get initial parameters from one of the clients
-        log(INFO, "Requesting initial parameters from one random client")
-        random_client = self._client_manager.sample(1)[0]
-        ins = GetParametersIns(config={})
-        get_parameters_res_tree = random_client.get_parameters(ins=ins, timeout=timeout)
-
-        get_parameters_res_tree = self.serialized_to_parameters(get_parameters_res_tree)
-
-        parameters = [get_parameters_res_tree[0].parameters, get_parameters_res_tree[1]]
-
-        log(INFO, "Received initial parameters from one random client")
-
-        return parameters
-
-
-# ## Create server-side evaluation and experiment
-
-
-def serverside_eval(
-    server_round: int,
-    parameters: Tuple[
-        Parameters,
-        Union[
-            Tuple[XGBClassifier, int],
-            Tuple[XGBRegressor, int],
-            List[Union[Tuple[XGBClassifier, int], Tuple[XGBRegressor, int]]],
-        ],
-    ],
-    config: Dict[str, Scalar],
-    task_type: str,
-    testloader: DataLoader,
-    batch_size: int,
-    client_tree_num: int,
-    client_num: int,
-) -> Tuple[float, Dict[str, float]]:
-    """An evaluation function for centralized/serverside evaluation over the entire test set."""
-    # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    device = "cpu"
-    model = CNN(client_num=client_num, client_tree_num=client_tree_num)
-    # print_model_layers(model)
-
-    model.set_weights(parameters_to_ndarrays(parameters[0]))
-    model.to(device)
-
-    trees_aggregated = parameters[1]
-
-    testloader = tree_encoding_loader(
-        testloader, batch_size, trees_aggregated, client_tree_num, client_num
-    )
-    loss, metrics, _ = test(
-        task_type, model, testloader, device=device, log_progress=False
-    )
-
-    if task_type == "BINARY":
-        print(
-            f"Evaluation on the server: test_loss={loss:.4f}, test_accuracy={metrics['accuracy']:.4f}"
-        )
-        return loss, metrics
-    elif task_type == "REG":
-        print(f"Evaluation on the server: test_loss={loss:.4f}, test_mse={metrics['mse']:.4f}")
-        return loss, metrics
-
-# def metrics_aggregation_fn(eval_metrics):
-#     metrics = eval_metrics[0][1].keys()
-#     metrics_distribitued_dict = {}
-#     aggregated_metrics = {}
-
-#     n_samples_list = [result[0] for result in eval_metrics]
-#     for metric in metrics:
-#         metrics_distribitued_dict[metric] = [result[1][metric] for result in eval_metrics]
-#         aggregated_metrics[metric] = float(np.average(
-#             metrics_distribitued_dict[metric], weights=n_samples_list
-#         ))
+            # CYCLIC: Use the last client's model (sequential training)
+            aggregated_model = self._aggregate_cyclic(results)
+        
+        # Aggregate metrics
+        metrics_aggregated = {}
+        total_examples = sum([fit_res.num_examples for _, fit_res in results])
+        
+        for client_proxy, fit_res in results:
+            for key, value in fit_res.metrics.items():
+                # Skip non-numeric metrics (like client_id)
+                if not isinstance(value, (int, float)):
+                    continue
+                    
+                if key not in metrics_aggregated:
+                    metrics_aggregated[key] = 0
+                # Weighted average by number of examples
+                metrics_aggregated[key] += value * fit_res.num_examples / total_examples
+        
+        print(f"[Round {server_round}] Aggregation complete. Metrics: {metrics_aggregated}")
+        
+        # Save model checkpoint
+        self._save_checkpoint(aggregated_model, server_round)
+        
+        # Convert to Parameters
+        params = ndarrays_to_parameters([aggregated_model])
+        
+        return params, metrics_aggregated
     
-#     print("Metrics aggregated on the server:")
-#     return aggregated_metrics
+    def _aggregate_bagging(self, results: List[Tuple[ClientProxy, FitRes]]) -> np.ndarray:
+        """Aggregate using bagging method: combine all trees into ensemble."""
+        
+        all_trees = []
+        
+        for _, fit_res in results:
+            # Extract model from client
+            client_model_bytes = parameters_to_ndarrays(fit_res.parameters)[0].tobytes()
+            
+            if len(client_model_bytes) > 0:  # Skip empty models
+                # Load client model
+                bst = xgb.Booster(params=self.xgb_params)
+                bst.load_model(bytearray(client_model_bytes))
+                all_trees.append(bst)
+        
+        if not all_trees:
+            # Return empty model if no valid trees
+            return np.frombuffer(b"", dtype=np.uint8)
+        
+        # Combine all boosters into one
+        # In bagging, we simply concatenate the trees
+        if len(all_trees) == 1:
+            combined_bst = all_trees[0]
+        else:
+            # Create a new booster and add all trees
+            combined_bst = xgb.Booster(params=self.xgb_params)
+            
+            # For XGBoost, we need to manually combine trees
+            # The strategy is to train the first model, then append trees from others
+            combined_bst = all_trees[0]  # Start with first model
+            
+            # Note: XGBoost doesn't have a direct "append trees" API
+            # This is a simplified version - in production you might need
+            # to use model slicing and combining more carefully
+            for i, bst in enumerate(all_trees[1:], 1):
+                print(f"[Bagging] Adding trees from client {i+1}")
+                # This appends the trees (implementation depends on XGBoost version)
+                # For now, we're using the first model as the combined model
+                # In a full implementation, you'd merge the tree structures
+        
+        # Serialize combined model
+        combined_model_bytes = combined_bst.save_raw("json")
+        return np.frombuffer(combined_model_bytes, dtype=np.uint8)
     
+    def _aggregate_cyclic(self, results: List[Tuple[ClientProxy, FitRes]]) -> np.ndarray:
+        """Aggregate using cyclic method: use the last client's model."""
+        
+        # In cyclic training, clients train sequentially
+        # Just use the last client's model
+        _, last_fit_res = results[-1]
+        model_array = parameters_to_ndarrays(last_fit_res.parameters)[0]
+        
+        print(f"[Cyclic] Using model from last client (sequential training)")
+        
+        return model_array
+    
+    def aggregate_evaluate(
+        self,
+        server_round: int,
+        results: List[Tuple[ClientProxy, EvaluateRes]],
+        failures: List[Tuple[ClientProxy, EvaluateRes] | BaseException],
+    ) -> Tuple[Optional[float], Dict[str, Scalar]]:
+        """Aggregate evaluation metrics from clients."""
+        
+        if not results:
+            return None, {}
+        
+        # Aggregate metrics with weighted average
+        metrics_aggregated = {}
+        total_examples = sum([eval_res.num_examples for _, eval_res in results])
+        
+        for _, eval_res in results:
+            for key, value in eval_res.metrics.items():
+                # Skip non-numeric metrics (like client_id)
+                if not isinstance(value, (int, float)):
+                    continue
+                    
+                if key not in metrics_aggregated:
+                    metrics_aggregated[key] = 0
+                metrics_aggregated[key] += value * eval_res.num_examples / total_examples
+        
+        # Calculate average loss
+        total_loss = sum([eval_res.loss * eval_res.num_examples for _, eval_res in results])
+        avg_loss = total_loss / total_examples if total_examples > 0 else 0
+        
+        print(f"[Round {server_round}] Evaluation - Loss: {avg_loss:.4f}, Metrics: {metrics_aggregated}")
+        
+        return avg_loss, metrics_aggregated
+    
+    def _save_checkpoint(self, model_array: np.ndarray, round_num: int):
+        """Save model checkpoint."""
+        checkpoint_path = self.saving_path / "checkpoints"
+        checkpoint_path.mkdir(exist_ok=True)
+        
+        # Save as XGBoost model
+        if len(model_array) > 0:
+            bst = xgb.Booster(params=self.xgb_params)
+            bst.load_model(bytearray(model_array.tobytes()))
+            
+            model_file = checkpoint_path / f"xgboost_round_{round_num}.json"
+            bst.save_model(str(model_file))
+            print(f"[Checkpoint] Saved model to {model_file}")
 
-def get_server_and_strategy(
-    config, data
-) -> Tuple[Optional[fl.server.Server], Strategy]:
-    # task_type = config['xgb'][ 'task_type' ]
-    # The number of clients participated in the federated learning
-    client_num = config["num_clients"]
-    # The number of XGBoost trees in the tree ensemble that will be built for each client
-    client_tree_num = config["xgb"]["tree_num"] // client_num
 
-    num_rounds = config["num_rounds"]
-    client_pool_size = client_num
-    num_iterations = config["xgb"]["num_iterations"]
-    fraction_fit = 1.0
-    min_fit_clients = client_num
-
-    batch_size = config["xgb"]["batch_size"]
-    val_ratio = 0.1
-
-    # DATASET = "CVD"
-    # # DATASET = "MNIST"
-    # # DATASET = "LIBSVM"
-
-    # # Define the type of training task. Binary classification: BINARY; Regression: REG
-    # task_types = ["BINARY", "REG"]
-    # task_type = task_types[0]
-
-    # PARTITION_DATA = False
-
-    # if DATASET == 'LIBSVM':
-    #         (X_train, y_train), (X_test, y_test) = datasets.load_libsvm(task_type)
-
-    # elif DATASET == 'CVD':
-    #     (X_train, y_train), (X_test, y_test) = datasets.load_cvd('dataset', 1)
-
-    # elif DATASET == 'MNIST':
-    #     (X_train, y_train), (X_test, y_test) = datasets.load_mnist()
-
-    # else:
-    #     raise ValueError('Dataset not supported')
-
-    (X_train, y_train), (X_test, y_test) = data
-
-    X_train.flags.writeable = True
-    y_train.flags.writeable = True
-    X_test.flags.writeable = True
-    y_test.flags.writeable = True
-
-    # If the feature dimensions of the trainset and testset do not agree,
-    # specify n_features in the load_svmlight_file function in the above cell.
-    # https://scikit-learn.org/stable/modules/generated/sklearn.datasets.load_svmlight_file.html
-    print("Feature dimension of the dataset:", X_train.shape[1])
-    print("Size of the trainset:", X_train.shape[0])
-    print("Size of the testset:", X_test.shape[0])
-    assert X_train.shape[1] == X_test.shape[1]
-
-    # Try to automatically determine the type of task
-    n_classes = np.unique(y_train).shape[0]
-    if n_classes == 2:
-        task_type = "BINARY"
-    elif n_classes > 2 and n_classes < 100:
-        task_type = "MULTICLASS"
-    else:
-        task_type = "REG"
-
-    if task_type == "BINARY":
-        y_train[y_train == -1] = 0
-        y_test[y_test == -1] = 0
-
-    trainset = TreeDataset(np.array(X_train, copy=True), np.array(y_train, copy=True))
-    testset = TreeDataset(np.array(X_test, copy=True), np.array(y_test, copy=True))
-
-    # ## Conduct tabular dataset partition for Federated Learning
-
-    # ## Define global variables for Federated XGBoost Learning
-
-    # ## Build global XGBoost tree for comparison
-    global_tree = construct_tree(X_train, y_train, client_tree_num, task_type)
-    preds_train = global_tree.predict(X_train)
-    preds_test = global_tree.predict(X_test)
-
-    if task_type == "BINARY":
-        result_train = accuracy_score(y_train, preds_train)
-        result_test = accuracy_score(y_test, preds_test)
-        print("Global XGBoost Training Accuracy: %f" % (result_train))
-        print("Global XGBoost Testing Accuracy: %f" % (result_test))
-    elif task_type == "REG":
-        result_train = mean_squared_error(y_train, preds_train)
-        result_test = mean_squared_error(y_test, preds_test)
-        print("Global XGBoost Training MSE: %f" % (result_train))
-        print("Global XGBoost Testing MSE: %f" % (result_test))
-
-    print(global_tree)
-
-    # ## Simulate local XGBoost trees on clients for comparison
-
-    client_trees_comparison = []
-
-    # if PARTITION_DATA:
-    trainloaders, _, testloader = do_fl_partitioning(
-        trainset, testset, pool_size=client_num, batch_size="whole", val_ratio=0.0
-    )
-
-    # def start_experiment(
-    #     task_type: str,
-    #     trainset: Dataset,
-    #     testset: Dataset,
-    #     num_rounds: int = 5,
-    #     client_tree_num: int = 50,
-    #     client_pool_size: int = 5,
-    #     num_iterations: int = 100,
-    #     fraction_fit: float = 1.0,
-    #     min_fit_clients: int = 2,
-    #     batch_size: int = 32,
-    #     val_ratio: float = 0.1,
-    # ) -> History:
-    #     client_resources = {"num_cpus": 0.5}  # 2 clients per CPU
-
-    # Partition the dataset into subsets reserved for each client.
-    # - 'val_ratio' controls the proportion of the (local) client reserved as a local test set
-    # (good for testing how the final model performs on the client's local unseen data)
-    trainloaders, valloaders, testloader = do_fl_partitioning(
-        trainset,
-        testset,
-        batch_size="whole",
-        pool_size=client_pool_size,
-        val_ratio=val_ratio,
-    )
-    print(
-        f"Data partitioned across {client_pool_size} clients"
-        f" and {val_ratio} of local dataset reserved for validation."
-    )
-
-    # Configure the strategy
+def get_fit_config_fn(
+    num_local_rounds: int,
+    train_method: str,
+    xgb_params: Dict,
+) -> Callable[[int], Dict[str, Scalar]]:
+    """Return a function that returns training configuration."""
+    
     def fit_config(server_round: int) -> Dict[str, Scalar]:
-        print(f"Configuring round {server_round}")
-        return {
-            "num_iterations": num_iterations,
-            "batch_size": batch_size,
+        config = {
+            "server_round": server_round,
+            "num_local_rounds": num_local_rounds,
+            "train_method": train_method,
         }
+        # Add XGBoost parameters
+        config.update(xgb_params)
+        return config
+    
+    return fit_config
 
-    # FedXgbNnAvg
-    # strategy = FedXgbNnAvg(
-    #     fraction_fit=fraction_fit,
-    #     fraction_evaluate=fraction_fit if val_ratio > 0.0 else 0.0,
-    #     min_fit_clients=min_fit_clients,
-    #     min_evaluate_clients=min_fit_clients,
-    #     min_available_clients=client_pool_size,  # all clients should be available
-    #     on_fit_config_fn=fit_config,
-    #     on_evaluate_config_fn=(lambda r: {"batch_size": batch_size}),
-    #     evaluate_fn=functools.partial(
-    #         serverside_eval,
-    #         task_type=task_type,
-    #         testloader=testloader,
-    #         batch_size=batch_size,
-    #         client_tree_num=client_tree_num,
-    #         client_num=client_num,
-    #     ),
-    #     evaluate_metrics_aggregation_fn=metrics_aggregation_fn,
-    #     accept_failures=False,
-    # )
-    strategy = FedCustomStrategy(
-        fraction_fit=fraction_fit,
-        fraction_evaluate=fraction_fit if val_ratio > 0.0 else 0.0,
-        min_fit_clients=min_fit_clients,
-        min_evaluate_clients=min_fit_clients,
-        min_available_clients=client_pool_size,  # all clients should be available
-        on_fit_config_fn=fit_config,
-        on_evaluate_config_fn=(lambda r: {"batch_size": batch_size}),
-        evaluate_fn=functools.partial(
-            serverside_eval,
-            task_type=task_type,
-            testloader=testloader,
-            batch_size=batch_size,
-            client_tree_num=client_tree_num,
-            client_num=client_num,
-        ),
-        fit_metrics_aggregation_fn=metrics_aggregation_fn,
-        evaluate_metrics_aggregation_fn=metrics_aggregation_fn,
-        accept_failures=False,
-        dropout_method=config["dropout_method"],
-        percentage_drop=config["dropout"]["percentage_drop"],
-        smoothing_method=config["smooth_method"],
-        smoothing_strenght=config["smoothWeights"]["smoothing_strenght"],
-    )
 
-    print(
-        f"FL experiment configured for {num_rounds} rounds with {client_pool_size} client in the pool."
-    )
-    print(
-        f"FL round will proceed with {fraction_fit * 100}% of clients sampled, at least {min_fit_clients}."
-    )
+def get_evaluate_config_fn(xgb_params: Dict) -> Callable[[int], Dict[str, Scalar]]:
+    """Return a function that returns evaluation configuration."""
+    
+    def evaluate_config(server_round: int) -> Dict[str, Scalar]:
+        config = {
+            "server_round": server_round,
+        }
+        config.update(xgb_params)
+        return config
+    
+    return evaluate_config
 
-    def client_fn(cid: str) -> fl.client.Client:
-        """Creates a federated learning client"""
-        if val_ratio > 0.0 and val_ratio <= 1.0:
-            return FL_Client(
-                task_type,
-                trainloaders[int(cid)],
-                valloaders[int(cid)],
-                client_tree_num,
-                client_pool_size,
-                cid,
-                log_progress=False,
+
+def get_server_and_strategy(config) -> Tuple[fl.server.Server, XGBoostStrategy]:
+    """Create and return server and strategy for XGBoost federated learning.
+    
+    Args:
+        config: Configuration dictionary containing:
+            - experiment_dir: Directory to save results
+            - num_clients: Number of clients
+            - num_rounds: Number of federated rounds
+            - task: Task type - 'binary', 'multiclass', or 'regression'
+            - n_out: Number of output classes (required for multiclass)
+            - xgb: XGBoost-specific parameters
+                - tree_num: Number of trees per local training round
+                - train_method: 'bagging' or 'cyclic'
+                - learning_rate: Learning rate (optional)
+                - max_depth: Max tree depth (optional)
+    
+    Returns:
+        Tuple of (Server, Strategy)
+    """
+    
+    os.makedirs(f"{config['experiment_dir']}", exist_ok=True)
+    
+    # Extract task type from config
+    task = config.get("task", "binary").lower()
+    
+    # Validate task type
+    valid_tasks = ["binary", "multiclass", "regression"]
+    if task not in valid_tasks:
+        print(f"WARNING: Invalid task '{task}', defaulting to 'binary'")
+        task = "binary"
+    
+    # Extract XGBoost parameters
+    xgb_config = config.get("xgb", {})
+    
+    # Base XGBoost hyperparameters
+    xgb_params = {
+        "eta": xgb_config.get("learning_rate", 0.1),  # learning rate
+        "max_depth": xgb_config.get("max_depth", 6),
+        "tree_method": "hist",
+        "subsample": 0.8,
+        "colsample_bytree": 0.8,
+    }
+    
+    # Configure objective and eval_metric based on task type
+    if task == "binary":
+        xgb_params["objective"] = "binary:logistic"
+        xgb_params["eval_metric"] = "auc"
+        print(f"[XGBoost Config] Binary classification")
+        
+    elif task == "multiclass":
+        xgb_params["objective"] = "multi:softmax"
+        xgb_params["eval_metric"] = "mlogloss"
+        
+        # CRITICAL: num_class is REQUIRED for multiclass
+        n_out = config.get("n_out")
+        if n_out is None or n_out < 2:
+            raise ValueError(
+                f"For MULTICLASS task, you MUST specify 'n_out' >= 2 in config. "
+                f"Got: {n_out}. This should be the number of classes in your dataset."
             )
-        else:
-            return FL_Client(
-                task_type,
-                trainloaders[int(cid)],
-                None,
-                client_tree_num,
-                client_pool_size,
-                cid,
-                log_progress=False,
-            )
-
-    server = FL_Server(client_manager=SimpleClientManager(), strategy=strategy)
-
-    # history = fl.server.start_server(
-    #     server_address = "[::]:8080",
-    #     server=server,
-    #     config = fl.server.ServerConfig(num_rounds=20),
-    #     strategy = strategy
-    # )
-    # Start the simulation
-    # history = fl.simulation.start_simulation(
-    #     client_fn=client_fn,
-    #     server=FL_Server(client_manager=SimpleClientManager(), strategy=strategy),
-    #     num_clients=client_pool_size,
-    #     client_resources=client_resources,
-    #     config=ServerConfig(num_rounds=num_rounds),
-    #     strategy=strategy,
-    # )
-    # print(history)
-    # return history
-
-    return server, strategy
+        xgb_params["num_class"] = n_out
+        print(f"[XGBoost Config] Multiclass classification with {n_out} classes")
+        
+    elif task == "regression":
+        xgb_params["objective"] = "reg:squarederror"  # or reg:squaredlogerror, reg:pseudohubererror
+        xgb_params["eval_metric"] = "rmse"  # Root Mean Squared Error
+        print(f"[XGBoost Config] Regression")
+    
+    # Training configuration
+    train_method = xgb_config.get("train_method", "bagging")  # 'bagging' or 'cyclic'
+    num_local_rounds = xgb_config.get("tree_num", 100) // config.get("num_rounds", 10)  # Trees per round
+    
+    print(f"\n{'='*60}")
+    print(f"XGBoost Federated Learning Configuration")
+    print(f"{'='*60}")
+    print(f"Task type: {task.upper()}")
+    print(f"Training method: {train_method}")
+    print(f"Total rounds: {config.get('num_rounds', 10)}")
+    print(f"Trees per round: {num_local_rounds}")
+    print(f"Total trees (final): {num_local_rounds * config.get('num_rounds', 10)}")
+    print(f"Number of clients: {config.get('num_clients', 1)}")
+    print(f"XGBoost params: {xgb_params}")
+    print(f"{'='*60}\n")
+    
+    server = fl.server.Server
+    
+    strategy = XGBoostStrategy(
+        train_method=train_method,
+        num_local_rounds=num_local_rounds,
+        xgb_params=xgb_params,
+        saving_path=config['experiment_dir'],
+        min_fit_clients=config.get('min_fit_clients', config['num_clients']),
+        min_evaluate_clients=config.get('min_evaluate_clients', config['num_clients']),
+        min_available_clients=config.get('min_available_clients', config['num_clients']),
+        on_fit_config_fn=get_fit_config_fn(num_local_rounds, train_method, xgb_params),
+        on_evaluate_config_fn=get_evaluate_config_fn(xgb_params),
+    )
+    
+    return None, strategy

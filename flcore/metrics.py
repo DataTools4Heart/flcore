@@ -4,10 +4,14 @@ from torch import Tensor
 from torchmetrics import MetricCollection
 from torchmetrics.classification import (
     BinaryAccuracy,
-    BinaryF1Score,
     BinaryPrecision,
     BinaryRecall,
     BinarySpecificity,
+    BinaryF1Score,
+    MulticlassAccuracy,
+    MulticlassPrecision,
+    MulticlassRecall,
+    MulticlassF1Score,
 )
 
 from torchmetrics.functional.classification.precision_recall import (
@@ -43,31 +47,61 @@ class BinaryBalancedAccuracy(BinaryStatScores):
         return (recall + specificity) / 2
 
 
-def get_metrics_collection(task_type="binary", device="cpu"):
+def get_metrics_collection(config):
+    device = config["device"]
+    if config["task"] == "classification":
+        if config["n_out"] == 1: # Binaria
+            return MetricCollection(
+                {
+                    "accuracy": BinaryAccuracy().to(device),
+                    "precision": BinaryPrecision().to(device),
+                    "recall": BinaryRecall().to(device),
+                    "specificity": BinarySpecificity().to(device),
+                    "f1": BinaryF1Score().to(device),
+                    "balanced_accuracy": BinaryBalancedAccuracy().to(device),
+                }
+            )
 
-    if task_type.lower() == "binary":
-        return MetricCollection(
-            {
-                "accuracy": BinaryAccuracy().to(device),
-                "precision": BinaryPrecision().to(device),
-                "recall": BinaryRecall().to(device),
-                "specificity": BinarySpecificity().to(device),
-                "f1": BinaryF1Score().to(device),
-                "balanced_accuracy": BinaryBalancedAccuracy().to(device),
-            }
-        )
-    elif task_type.lower() == "reg":
+        elif config["n_out"] > 1: # Multiclase
+            num_classes = config["n_out"]
+            return MetricCollection(
+                {
+                    # Overall accuracy
+                    "accuracy": MulticlassAccuracy(
+                        num_classes=num_classes,
+                        average="micro",
+                    ).to(device),
+
+                    # Macro metrics (robust to imbalance)
+                    "precision": MulticlassPrecision(
+                        num_classes=num_classes,
+                        average="macro",
+                    ).to(device),
+
+                    "recall": MulticlassRecall(
+                        num_classes=num_classes,
+                        average="macro",
+                    ).to(device),
+
+                    "f1": MulticlassF1Score(
+                        num_classes=num_classes,
+                        average="macro",
+                    ).to(device),
+                }
+            )
+
+    elif config["task"] == "regression":
         return MetricCollection({
             "mse": MeanSquaredError().to(device),
         })
 
-def calculate_metrics(y_true, y_pred, task_type="binary"):
-    metrics_collection = get_metrics_collection(task_type)
+def calculate_metrics(y_true, y_pred, config):
+    metrics_collection = get_metrics_collection(config)
     if not torch.is_tensor(y_true):
         y_true = torch.tensor(y_true.tolist())
     if not torch.is_tensor(y_pred):
         y_pred = torch.tensor(y_pred.tolist())
-    metrics_collection.update(y_pred, y_true)
+    metrics_collection.update(y_pred.view(-1), y_true)
 
     metrics = metrics_collection.compute()
     metrics = {k: v.item() for k, v in metrics.items()}

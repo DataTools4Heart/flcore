@@ -1,7 +1,7 @@
 from typing import Optional, Tuple, List
 import numpy as np
 import pandas as pd
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from imblearn.ensemble import BalancedRandomForestClassifier
 
 XY = Tuple[np.ndarray, np.ndarray]
@@ -21,33 +21,60 @@ NDArrays = List[NDArray]
 from typing import cast
 
 
-def get_model(bal_RF):
-    if(bal_RF == True):
-        model = BalancedRandomForestClassifier(n_estimators=100,random_state=42)
-    else:
-        model = RandomForestClassifier(n_estimators=100,class_weight= "balanced",max_depth=2,random_state=42)
-    
+def get_model(config):
+    if config["task"] == "classification":
+        # ESTOS DOS CASOS YA CUBREN RANDOM FOREST BALANCEADO,
+        if str(config["balanced"]).lower() == "true":
+            model = BalancedRandomForestClassifier(
+                n_estimators=config["n_estimators"],
+                random_state=config["seed"])
+        else:
+            model = RandomForestClassifier(
+                n_estimators=config["n_estimators"],
+                random_state=config["seed"],
+                class_weight=config["class_weight"],
+                max_depth=config["max_depth"])
+    elif config["task"] == "regression":
+        model = RandomForestRegressor(
+            n_estimators=config["n_estimators"],
+            criterion=config["regression_criterion"],
+            max_depth=config["max_depth"],
+            min_samples_split=2,
+            min_samples_leaf=1,
+            min_weight_fraction_leaf=0.0,
+            max_features=1.0,
+            max_leaf_nodes=None,
+            min_impurity_decrease=0.0,
+            bootstrap=True,
+            oob_score=False,
+            n_jobs=None,
+            random_state=config["seed"],
+            verbose=0,
+            warm_start=False,
+            ccp_alpha=0.0,
+            max_samples=None)
+
     return model
 
-def get_model_parameters(model: RandomForestClassifier) -> RFRegParams:
+def get_model_parameters(model):
     """Returns the paramters of a sklearn LogisticRegression model."""
     params = [model]
     
     return params
 
-
-def set_model_params(
-    model: RandomForestClassifier, params: RFRegParams
-) -> RandomForestClassifier:
-    """Sets the parameters of a sklean LogisticRegression model."""
-    model.n_classes_ =2
+def set_model_params(model, params):
+    ## AQUI HAY QUE QUITAR EL HARDCODEADO DE ESTO
+    ## ESTO TENDRIA QUE SOPORTAR MULTIPLES CATEGORIAS
+    #'n_features_in_': 3, '_n_features': 3, 'n_outputs_': 1, 'classes_': array([0, 1]), 'n_classes_': 2,
+    #model.n_classes_ =2
     model.estimators_ = params[0]
-    model.classes_ = np.array([i for i in range(model.n_classes_)])
-    model.n_outputs_ = 1
+    #model.classes_ = np.array([i for i in range(model.n_classes_)])
+    #model.n_outputs_ = 1
+    # _________________________________________________
     return model
 
 
-def set_initial_params_server(model: RandomForestClassifier):
+def set_initial_params_server(model):
     """Sets initial parameters as zeros Required since model params are
     uninitialized until model.fit is called.
     But server asks for initial parameters from clients at launch. 
@@ -55,7 +82,8 @@ def set_initial_params_server(model: RandomForestClassifier):
     model.estimators_ = 0
 
 
-def set_initial_params_client(model: RandomForestClassifier,X_train, y_train):
+def set_initial_params_client(model,X_train, y_train):
+    # ¿¿?¿?¿?¿?¿?¿?¿?¿?¿?¿??
     """Sets initial parameters as zeros Required since model params are
     uninitialized until model.fit is called.
     But server asks for initial parameters from clients at launch.

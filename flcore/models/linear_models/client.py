@@ -2,6 +2,7 @@
 from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import log_loss
 import time
+import numpy as np
 from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.model_selection import KFold, StratifiedShuffleSplit, train_test_split
 import warnings
@@ -13,20 +14,26 @@ from flcore.metrics import calculate_metrics
 import time
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
-
-
+from sklearn.metrics import mean_squared_error
+from sklearn.metrics import accuracy_score
 
 
 # Define Flower client
 class MnistClient(fl.client.NumPyClient):
-    def __init__(self, data,client_id,config):
-        self.client_id = client_id
+    def __init__(self, data,config):
+        self.config = config
+        self.node_name = config["node_name"]
         # Load data
         (self.X_train, self.y_train), (self.X_test, self.y_test) = data
 
         # Create train and validation split
-        self.X_train, self.X_val, self.y_train, self.y_val = train_test_split(self.X_train, self.y_train, test_size=0.2, random_state=42, stratify=self.y_train)
-        
+        self.X_train, self.X_val, self.y_train, self.y_val = train_test_split(
+                self.X_train,
+                self.y_train,
+                test_size=config["test_size"],
+                random_state=config["seed"],
+                stratify=self.y_train)
+
         # #Only use the standardScaler to the continous variables
         # scaled_features_train = StandardScaler().fit_transform(self.X_train.values)
         # scaled_features_train = pd.DataFrame(scaled_features_train, index=self.X_train.index, columns=self.X_train.columns)
@@ -37,15 +44,13 @@ class MnistClient(fl.client.NumPyClient):
         # scaled_features_df = pd.DataFrame(scaled_features, index=self.X_test.index, columns=self.X_test.columns)
         # self.X_test = scaled_features_df
 
-        self.model_name = config['model']
-        self.n_features = config['linear_models']['n_features']
-        self.model = utils.get_model(self.model_name)
+        self.model = utils.get_model(config)
         self.round_time = 0
         self.first_round = True
         self.personalize = True
         # Setting initial parameters, akin to model.compile for keras models
-        utils.set_initial_params(self.model,self.n_features)
-    
+        utils.set_initial_params(self.model, config)
+
     def get_parameters(self, config):  # type: ignore
         #compute the feature selection
         #We perform it from the one called by the server
@@ -69,22 +74,18 @@ class MnistClient(fl.client.NumPyClient):
             # y_pred = self.model.predict(self.X_test.loc[:, parameters[2].astype(bool)])
             y_pred = self.model.predict(self.X_test)
 
-            metrics = calculate_metrics(self.y_test, y_pred)
-            print(f"Client {self.client_id} Evaluation just after local training: {metrics['balanced_accuracy']}")
+            metrics = calculate_metrics(self.y_test, y_pred,self.config)
             # Add 'personalized' to the metrics to identify them
             metrics = {f"personalized {key}": metrics[key] for key in metrics}
             self.round_time = (time.time() - start_time)
             metrics["running_time"] = self.round_time
-            
-
-        print(f"Training finished for round {config['server_round']}")
 
         if self.first_round:
-            local_model = utils.get_model(self.model_name, local=True)
-            utils.set_initial_params(local_model,self.n_features)
+            local_model = utils.get_model(self.config)
+            utils.set_initial_params(self.model, self.config)
             local_model.fit(self.X_train, self.y_train)
             y_pred = local_model.predict(self.X_test)
-            local_metrics = calculate_metrics(self.y_test, y_pred)
+            local_metrics = calculate_metrics(self.y_test, y_pred,self.config)
             #Add 'local' to the metrics to identify them
             local_metrics = {f"local {key}": local_metrics[key] for key in local_metrics}
             metrics.update(local_metrics)
@@ -92,38 +93,65 @@ class MnistClient(fl.client.NumPyClient):
 
         return utils.get_model_parameters(self.model), len(self.X_train), metrics
 
-    def evaluate(self, parameters, config):  # type: ignore
+    def evaluate(self, parameters, config):
         utils.set_model_params(self.model, parameters)
 
         # Calculate validation set metrics
-        y_pred = self.model.predict(self.X_val)
-        val_metrics = calculate_metrics(self.y_val, y_pred)
+        pred = self.model.predict(self.X_val)
+        y_pred = pred
+        metrics = calculate_metrics(self.y_val, y_pred, self.config)
 
-        y_pred = self.model.predict(self.X_test)
-        # y_pred = self.model.predict(self.X_test.loc[:, parameters[2].astype(bool)])
+        if self.config["task"] == "classification":
+            if self.config["n_out"] > 1: # Multivariable
+                losses = []
 
-        if(isinstance(self.model, SGDClassifier)):
-            loss = 1.0
-        else:
-            loss = log_loss(self.y_test, self.model.predict_proba(self.X_test), labels=[0, 1])
-       
-        metrics = calculate_metrics(self.y_test, y_pred)
+                if hasattr(self.model, "predict_proba"):
+                    y_score = self.model.predict_proba(self.X_val)
+
+                    for m in range(self.y_val.shape[1]):
+                        losses.append(
+                            log_loss(
+                                self.y_val[:, m],
+                                y_score[:, m]
+                            )
+                        )
+                else:
+                    print("PREDICT PROBA NO DISPONIBLE")
+                    """
+                    for m in range(self.y_test.shape[1]):
+                        losses.append(
+                            1.0 - accuracy_score(
+                                self.y_test[:, m],
+                                y_pred[:, m]
+                            )
+                        )
+                    """
+            elif self.config["n_out"] == 1: # Binario
+                if hasattr(self.model, "predict_proba"):
+                    loss = log_loss(
+                        self.y_val,
+                        self.model.predict_proba(self.X_val)
+                    )
+                else:
+                    loss = 1.0 - accuracy_score(
+                        self.y_val,
+                        y_pred
+                    )
+
+        elif self.config["task"] == "regression":
+            loss = mean_squared_error(self.y_val, y_pred)
+
         metrics["round_time [s]"] = self.round_time
-        metrics["client_id"] = self.client_id
+        # No tiene sentido agregar el client ID
+        # metrics["client_id"] = self.node_name
 
-        print(f"Client {self.client_id} Evaluation after aggregated model: {metrics['balanced_accuracy']}")
-
-
-        # Add validation metrics to the evaluation metrics with a prefix
-        val_metrics = {f"val {key}": val_metrics[key] for key in val_metrics}
-        metrics.update(val_metrics)
-
+#        print(f"Client {self.node_name} Evaluation after aggregated model: {metrics['balanced_accuracy']}")
 
         return loss, len(y_pred),  metrics
 
 
-def get_client(config,data,client_id) -> fl.client.Client:
-    return MnistClient(data,client_id,config)
+def get_client(config,data) -> fl.client.Client:
+    return MnistClient(data,config)
     # # Start Flower client
     # fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=MnistClient())
 

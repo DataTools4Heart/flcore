@@ -12,79 +12,79 @@ import logging
 #import grpc
 
 import flcore.datasets as datasets
-from flcore.client_selector import get_model_client
-
-# Start Flower client but after the server or error
+from flcore.utils import StreamToLogger, GetModelClient, CheckClientConfig, survival_models_list
 
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Reads parameters from command line.")
-    # # parser.add_argument("--client_id", type=int, default="Client Id", help="Number of client")
-    parser.add_argument("--dataset", type=str, default="dt4h_format", help="Dataloader to use")
-    #parser.add_argument("--metadata_file", type=str, default="metadata.json", help="Json file with metadata")
-    parser.add_argument("--data_id", type=str, default="data_id.parquet" , help="Dataset ID")
-    parser.add_argument("--normalization_method",type=str, default="IQR", help="Type of normalization: IQR STD MIN_MAX")
-    parser.add_argument("--train_labels", type=str, nargs='+', default=None, help="Dataloader to use")
-    parser.add_argument("--target_label", type=str, nargs='+', default=None, help="Dataloader to use")
-    parser.add_argument("--train_size", type=float, default=0.8, help="Fraction of dataset to use for training. [0,1)")
-    parser.add_argument("--num_clients", type=int, default=1, help="Number of clients")
-    parser.add_argument("--model", type=str, default="random_forest", help="Model to train")
-    parser.add_argument("--num_rounds", type=int, default=50, help="Number of federated iterations")
-    parser.add_argument("--checkpoint_selection_metric", type=str, default="precision", help="Metric used for checkpoints")
-    parser.add_argument("--dropout_method", type=str, default=None, help="Determines if dropout is used")
-    parser.add_argument("--smooth_method", type=str, default=None, help="Weight smoothing")
-    parser.add_argument("--seed", type=int, default=42, help="Seed")
-    parser.add_argument("--local_port", type=int, default=8081, help="Local port")
-    parser.add_argument("--production_mode", type=str, default="True",  help="Production mode")
+    # Variables node settings
     parser.add_argument("--node_name", type=str, default="./", help="Node name for certificates")
-
-    parser.add_argument("--experiment", type=json.loads, default={"name": "experiment_1", "log_path": "logs", "debug": "true"}, help="experiment logs")
-    parser.add_argument("--smoothWeights", type=json.loads, default= {"smoothing_strenght": 0.5}, help="Smoothing parameters")
-    parser.add_argument("--linear_models", type=json.loads, default={"n_features": 9}, help="Linear model parameters")
-#    parser.add_argument("--n_features", type=int, default=0, help="Number of features")
-    parser.add_argument("--random_forest", type=json.loads, default={"balanced_rf": "true"}, help="Random forest parameters")
-    parser.add_argument("--weighted_random_forest", type=json.loads, default={"balanced_rf": "true", "levelOfDetail": "DecisionTree"}, help="Weighted random forest parameters")
-    parser.add_argument("--xgb", type=json.loads, default={"batch_size": 32,"num_iterations": 100,"task_type": "BINARY","tree_num": 500}, help="XGB parameters")
-
-# Variables hardcoded
+    parser.add_argument("--local_port", type=int, default=8081, help="Local port")
     parser.add_argument("--sandbox_path", type=str, default="/sandbox", help="Sandbox path to use")
     parser.add_argument("--certs_path", type=str, default="/certs", help="Certificates path")
     parser.add_argument("--data_path", type=str, default="/data", help="Data path")
+    parser.add_argument("--production_mode", type=str, default="True",  help="Production mode") # ¿Should exist?
+    parser.add_argument("--experiment_name", type=str, default="experiment_1", help="Experiment directory")
+    # Variables dataset related
+    parser.add_argument("--dataset", type=str, default="dt4h_format", help="Dataloader to use")
+    parser.add_argument("--data_id", type=str, default="data_id.parquet" , help="Dataset ID")
+    parser.add_argument("--normalization_method",type=str, default="IQR", help="Type of normalization: IQR STD MIN_MAX")
+    parser.add_argument("--train_labels", type=str, nargs='+', default=None, help="Dataloader to use")
+    parser.add_argument("--target_labels", type=str, nargs='+', default=None, help="Dataloader to use")
+    parser.add_argument("--train_size", type=float, default=0.7, help="Fraction of dataset to use for training. [0,1)")
+    parser.add_argument("--validation_size", type=float, default=0.2, help="Fraction of dataset to use for validation. [0,1)")
+    parser.add_argument("--test_size", type=float, default=0.1, help="Fraction of dataset to use for testing. [0,1)")
+    # Variables training related
+    parser.add_argument("--num_rounds", type=int, default=50, help="Number of federated iterations")
+    parser.add_argument("--lr", type=float, default=1e-3, help="Learning rate when needed")    
+    parser.add_argument("--checkpoint_selection_metric", type=str, default="precision", help="Metric used for checkpoints")
+    parser.add_argument("--seed", type=int, default=42, help="Seed")
+    parser.add_argument("--num_clients", type=int, default=1, help="Number of clients") # shouldnt exist here
+
+    # General variables model related
+    parser.add_argument("--model", type=str, default="random_forest", help="Model to train")
+    parser.add_argument("--n_feats", type=int, default=0, help="Number of input features")
+    parser.add_argument("--n_out", type=int, default=0, help="Number of output features")
+    parser.add_argument("--task", type=str, default="None", help="Task to perform (classification, regression)")
+    parser.add_argument("--device", type=str, default="cpu", help="Device for training, CPU, GPU")
+    parser.add_argument("--local_epochs", type=int, default=10, help="Number of local epochs to train in each round")
+    parser.add_argument("--batch_size", type=int, default=8, help="Batch size to train")
+    parser.add_argument("--penalty", type=str, default="none", help="Penalties: none, l1, l2, elasticnet, smooth l1")
+
+    # Specific variables model related
+    # # Linear models
+    parser.add_argument("--solver", type=str, default="saga", help="Numerical solver of optimization method")
+    parser.add_argument("--l1_ratio", type=str, default=0.5, help="L1-L2 Ratio, necessary for ElasticNet, 0 -> L1 ; 1 -> L2")
+    parser.add_argument("--max_iter", type=int, default=100000, help="Max iterations of optimizer")
+    parser.add_argument("--tol", type=float, default=0.001, help="Gamma for SVR")
+    parser.add_argument("--kernel", type=str, default="linear", help="Kernel of SVR")
+    #kernel{‘linear’, ‘poly’, ‘rbf’, ‘sigmoid’, ‘precomputed’} or callable, default=’rbf’
+    parser.add_argument("--degree", type=int, default=3, help="Degree of polinonial")
+    parser.add_argument("--gamma", type=str, default="scale", help="Gamma for SVR")
+    # # Random forest
+    parser.add_argument("--balanced", type=str, default="True", help="Balanced Random Forest: True or False")
+    parser.add_argument("--n_estimators", type=int, default=100, help="Number of estimators")
+    parser.add_argument("--max_depth", type=int, default=2, help="Max depth")
+    parser.add_argument("--class_weight", type=str, default="balanced", help="Class weight")
+    parser.add_argument("--levelOfDetail", type=str, default="DecisionTree", help="Level of detail")
+    parser.add_argument("--regression_criterion", type=str, default="squared_error", help="Criterion for training")
+    # # Neural networks
+    # params : type: "nn", "BNN" Bayesiana, otros
+    parser.add_argument("--dropout_p", type=float, default=0.0, help="Montecarlo dropout rate")
+    parser.add_argument("--T", type=int, default=20, help="Samples of MC dropout")
+    # # XGB
+    parser.add_argument("--booster", type=str, default="gbtree", help="Booster to use: gbtree, gblinear or dart")
+    parser.add_argument("--tree_method", type=str, default="hist", help="Tree method: exact, approx hist")
+    parser.add_argument("--train_method", type=str, default="bagging", help="Train method: bagging, cyclic")
+    parser.add_argument("--eta", type=float, default=0.1, help="ETA value")
+    # # Survival
+    parser.add_argument("--time_col", type=str, default="time", help="")
+    parser.add_argument("--event_col", type=str, default="event", help="")
+    parser.add_argument("--negative_duration_strategy", type=str, default="clip", help="")
 
     args = parser.parse_args()
-
     config = vars(args)
-
-    est = config["data_id"]
-    id = est.split("/")[-1]
-#    dir_name = os.path.dirname(config["data_id"])
-    dir_name_parent = str(Path(config["data_id"]).parent)
-
-#    config["metadata_file"] = os.path.join(dir_name_parent,"metadata.json")
-    config["metadata_file"] = os.path.join(est,"metadata.json")
-
-    pattern = "*.parquet"
-    parquet_files = glob.glob(os.path.join(est, pattern))
-    # ¿How to choose one of the list?
-    config["data_file"] = parquet_files[-1]
-
-    new = []
-    for i in config["train_labels"]:
-        parsed = i.replace("]", "").replace("[", "").replace(",", "")
-        new.append(parsed)
-    config["train_labels"] = new
-
-    new = []
-    for i in config["target_label"]:
-        parsed = i.replace("]", "").replace("[", "").replace(",", "")
-        new.append(parsed)
-    config["target_labels"] = new
-
-    if config["model"] in ("logistic_regression", "elastic_net", "lsvc"):
-        config["linear_models"] = {}
-        n_feats = len(config["train_labels"])
-        config['linear_models']['n_features'] = n_feats # config["n_features"]
-        config["held_out_center_id"] = -1
+    config = CheckClientConfig(config)
 
     # Create sandbox log file path
     sandbox_log_file = Path(os.path.join(config["sandbox_path"], "log_client.txt"))
@@ -108,19 +108,6 @@ if __name__ == "__main__":
     logger.addHandler(file_handler)
     logger.addHandler(console_handler)
 
-    # Redirect print() and sys.stdout/sys.stderr into logger
-    class StreamToLogger:
-        def __init__(self, logger, level):
-            self.logger = logger
-            self.level = level
-
-        def write(self, message):
-            for line in message.rstrip().splitlines():
-                self.logger.log(self.level, line.rstrip())
-
-        def flush(self):
-            pass
-
     # Create two sub-loggers
     stdout_logger = logging.getLogger("STDOUT")
     stderr_logger = logging.getLogger("STDERR")
@@ -135,7 +122,8 @@ if __name__ == "__main__":
     # Now you can use logging in both places
     logging.debug("This will be logged to both the console and the file.")
 
-    model = config["model"]
+#### PODRIAMOS QUITAR ESTO DE PRODUCTION MODE; NO TIENE NINGUN SENTIDO
+    #model = config["model"]
     if config["production_mode"] == "True":
         node_name = os.getenv("NODE_NAME")
 #        num_client = int(node_name.split("_")[-1])
@@ -170,30 +158,12 @@ if __name__ == "__main__":
 #            raise ValueError("Please provide the client id when running in simulation mode")
 #        num_client = int(sys.argv[1])
 
+# *******************************************************************************************
+# Aquí lo correcto es cargar todo como instancias de dataloader de torch
 num_client = 0 # config["client_id"]
-(X_train, y_train), (X_test, y_test) = datasets.load_dataset(config, num_client)
-
-data = (X_train, y_train), (X_test, y_test)
-client = get_model_client(config, data, num_client)
-"""
-if isinstance(client, fl.client.NumPyClient):
-    fl.client.start_numpy_client(
-        server_address=f"{central_ip}:{central_port}",
-#        credentials=ssl_credentials,
-        root_certificates=root_certificate,
-        client=client,
-#        channel = channel,
-    )
-else:
-    fl.client.start_client(
-        server_address=f"{central_ip}:{central_port}",
-#        credentials=ssl_credentials,
-        root_certificates=root_certificate,
-        client=client,
-#        channel = channel,
-    )
-#fl.client.start_client(channel=channel, client=client)
-"""
+data = datasets.load_dataset(config, num_client)
+client = GetModelClient(config, data)
+# *******************************************************************************************
 for attempt in range(3):
     try:
         if isinstance(client, fl.client.NumPyClient):
@@ -220,3 +190,7 @@ for attempt in range(3):
         else:
             print("All connection attempts failed.")
             raise
+
+sys.stdout.flush()
+sys.stderr.flush()
+os._exit(0)

@@ -1,0 +1,855 @@
+{
+  "entity": {
+    "id": "eeacd191-a194-40eb-bee8-424e04453461",
+    "population": {
+      "url": "https://ai4hf.eu/cohorts/maggic|0.1",
+      "title": "Patients with Diagnosis of Heart Failure",
+      "description": "This cohort includes patients with a diagnosis of heart failure.",
+      "pipeline": {
+        "reference": "PopulationPipeline/maggic/_history/1",
+        "display": "Patients diagnosed with heart failure, using the time of their initial diagnosis as the event time."
+      }
+    },
+    "featureSet": {
+      "url": "https://ai4hf.eu/feature-sets/maggic-mlp",
+      "title": "MAGGIC-MLP Features",
+      "description": "Set of extracted features for MAGGIC-MLP",
+      "pipeline": {
+        "reference": "FeatureSet/maggic-mlp/_history/1",
+        "display": "MAGGIC-MLP Features"
+      }
+    },
+    "dataSource": {
+      "id": "myFhirServer",
+      "name": "myFhirServer",
+      "interface": "fhir",
+      "version": "R5",
+      "sourceType": "fhir-api"
+    },
+    "issued": "2025-07-04T13:07:24.272468300Z",
+    "temporal": {
+      "end": "2025-07-04T13:06:39.982Z"
+    },
+    "baseVariables": [
+      {
+        "name": "pid",
+        "description": "A unique identifier assigned to each patient in the cohort.",
+        "dataType": "IDENTIFIER",
+        "generatedDescription": []
+      },
+      {
+        "name": "eventTime",
+        "description": "The time when the entity becomes eligible for the specified cohort. e.g. time of diagnosis for a cohort specific to a disease",
+        "dataType": "DATETIME",
+        "generatedDescription": []
+      },
+      {
+        "name": "exitTime",
+        "description": "The time when the entity is no longer eligible for the specified cohort. e.g. time of death, time of discharge",
+        "dataType": "DATETIME",
+        "generatedDescription": []
+      },
+      {
+        "name": "referenceTimePoint",
+        "description": "The sampling time point based on which the features and outcomes are calculated",
+        "dataType": "DATETIME",
+        "generatedDescription": []
+      }
+    ],
+    "features": [
+      {
+        "name": "patient_demographics_gender",
+        "description": "Gender of the patient",
+        "dataType": "NOMINAL",
+        "generatedDescription": [
+          "latest value",
+          "until that time point"
+        ],
+        "valueSet": {
+          "url": "http://hl7.org/fhir/ValueSet/administrative-gender",
+          "concept": [
+            {
+              "code": "male",
+              "display": "Male"
+            },
+            {
+              "code": "female",
+              "display": "Female"
+            },
+            {
+              "code": "other",
+              "display": "Other"
+            },
+            {
+              "code": "unknown",
+              "display": "Unknown"
+            }
+          ]
+        }
+      },
+      {
+        "name": "patient_demographics_age",
+        "description": "Age of the patient at reference point",
+        "dataType": "NUMERIC",
+        "generatedDescription": [
+          "latest value",
+          "until that time point"
+        ]
+      },
+      {
+        "name": "nyha_nyha",
+        "description": "The latest value of the New York Heart Assessment as LOINC Code",
+        "dataType": "NOMINAL",
+        "generatedDescription": [
+          "latest value",
+          "until that time point"
+        ],
+        "valueSet": {
+          "url": "https://datatools4heart.eu/fhir/ValueSet/nyha-classification",
+          "concept": [
+            {
+              "code": "LA28404-4",
+              "display": "Class-I"
+            },
+            {
+              "code": "LA28405-1",
+              "display": "Class-II"
+            },
+            {
+              "code": "LA28406-9",
+              "display": "Class-III"
+            },
+            {
+              "code": "LA28407-7",
+              "display": "Class-IV"
+            }
+          ]
+        }
+      },
+      {
+        "name": "vital_signs_systolic_blood_pressure_value_p3a_avg",
+        "description": "The average value recorded over the three years preceding the reference time point.",
+        "dataType": "NUMERIC",
+        "generatedDescription": [
+          "for systolic_blood_pressure (pivot value = '8480-6')",
+          "average of values",
+          "within last 3 year"
+        ]
+      },
+      {
+        "name": "vital_signs_bmi_value_p3a_avg",
+        "description": "The average value recorded over the three years preceding the reference time point.",
+        "dataType": "NUMERIC",
+        "generatedDescription": [
+          "for bmi (pivot value = '39156-5')",
+          "average of values",
+          "within last 3 year"
+        ]
+      },
+      {
+        "name": "lab_results_sodium_value_p3a_avg",
+        "description": "The average value recorded over the three years preceding the reference time point.",
+        "dataType": "NUMERIC",
+        "generatedDescription": [
+          "for sodium (pivot value = '2951-2')",
+          "average of values",
+          "within last 3 year"
+        ]
+      },
+      {
+        "name": "lab_results_creatinine_value_p3a_avg",
+        "description": "The average value recorded over the three years preceding the reference time point.",
+        "dataType": "NUMERIC",
+        "generatedDescription": [
+          "for creatinine (pivot value = '2160-0')",
+          "average of values",
+          "within last 3 year"
+        ]
+      },
+      {
+        "name": "lab_results_urinary_creatinine_value_p3a_avg",
+        "description": "The average value recorded over the three years preceding the reference time point.",
+        "dataType": "NUMERIC",
+        "generatedDescription": [
+          "for urinary_creatinine (pivot value = '2161-8')",
+          "average of values",
+          "within last 3 year"
+        ]
+      },
+      {
+        "name": "conditions_heart_failure_occurred_prior_to_18_months_any",
+        "description": "Indicates whether the condition was diagnosed 18 months or more before the reference time point, corresponding to the criteria for 'Heart Failure (HF) ≥ 18 Months Prior.'",
+        "dataType": "BOOLEAN",
+        "generatedDescription": [
+          "for Find the Heart Failures.",
+          "if any true",
+          "until that time point"
+        ],
+        "default": false
+      },
+      {
+        "name": "conditions_has_chronic_obstructive_pulmonary_disease_any",
+        "description": "Whether the patient has the Chronic Obstructive Pulmonary Disease (COPD).",
+        "dataType": "BOOLEAN",
+        "generatedDescription": [
+          "if any true",
+          "until that time point"
+        ],
+        "default": false
+      },
+      {
+        "name": "conditions_has_atrial_fibrillation_any",
+        "description": "Whether the patient has the Atrial Fibrillations.",
+        "dataType": "BOOLEAN",
+        "generatedDescription": [
+          "if any true",
+          "until that time point"
+        ],
+        "default": false
+      },
+      {
+        "name": "conditions_has_myocardial_infarction_any",
+        "description": "Whether the patient has the Myocardial Infarctions.",
+        "dataType": "BOOLEAN",
+        "generatedDescription": [
+          "if any true",
+          "until that time point"
+        ],
+        "default": false
+      },
+      {
+        "name": "conditions_has_pci_any",
+        "description": "Whether the patient has the Percutaneous Coronary Intervention (PCI).",
+        "dataType": "BOOLEAN",
+        "generatedDescription": [
+          "if any true",
+          "until that time point"
+        ],
+        "default": false
+      },
+      {
+        "name": "conditions_has_cabg_any",
+        "description": "Whether the patient has the Coronary Artery Bypass Graft (CABG) Surgeries.",
+        "dataType": "BOOLEAN",
+        "generatedDescription": [
+          "if any true",
+          "until that time point"
+        ],
+        "default": false
+      },
+      {
+        "name": "conditions_has_stroke_any",
+        "description": "Whether the patient has the strokes.",
+        "dataType": "BOOLEAN",
+        "generatedDescription": [
+          "if any true",
+          "until that time point"
+        ],
+        "default": false
+      },
+      {
+        "name": "conditions_has_diabetes_any",
+        "description": "Whether the patient has the diabetes.",
+        "dataType": "BOOLEAN",
+        "generatedDescription": [
+          "if any true",
+          "until that time point"
+        ],
+        "default": false
+      },
+      {
+        "name": "med_beta_blocker_use_administered",
+        "description": "Whether the medication administered.",
+        "dataType": "BOOLEAN",
+        "generatedDescription": [
+          "for Find Beta Blocker medications.",
+          "latest value",
+          "until that time point"
+        ]
+      },
+      {
+        "name": "med_ace_inhibitors_arb_use_administered",
+        "description": "Whether the medication administered.",
+        "dataType": "BOOLEAN",
+        "generatedDescription": [
+          "for Find ACE Inhibitors / ARB Use medications.",
+          "latest value",
+          "until that time point"
+        ]
+      },
+      {
+        "name": "echocardiographs_lvef",
+        "description": "The most recent left ventricular ejection fraction (LVEF) recorded prior to the reference time point.",
+        "dataType": "NUMERIC",
+        "generatedDescription": [
+          "latest value",
+          "until that time point"
+        ]
+      },
+      {
+        "name": "smoking_status_smoker",
+        "description": "Indicates whether the patient's most recent recorded smoking status, collected before the reference time point, classifies them as a current smoker. A value of 1 denotes a current smoker, while 0 represents either a former smoker or someone who has never smoked.",
+        "dataType": "NOMINAL",
+        "generatedDescription": [
+          "latest value",
+          "until that time point"
+        ],
+        "valueSet": {
+          "concept": [
+            {
+              "code": "1",
+              "display": "Smoker"
+            },
+            {
+              "code": "0",
+              "display": "Non-smoker"
+            }
+          ]
+        }
+      }
+    ],
+    "outcomes": [
+      {
+        "name": "patient_demographics_months_to_death_or_last_record_date_f",
+        "description": "The number of months between the reference time point and the patient’s date of death (if known); otherwise, the number of months between the reference time point and the last known date of recorded activity related to the patient.",
+        "dataType": "NUMERIC",
+        "generatedDescription": [
+          "next value",
+          "from that time point"
+        ]
+      },
+      {
+        "name": "patient_demographics_deceased_in_12_months_f",
+        "description": "Mortality recorded within the 12 months following the reference time point.",
+        "dataType": "BOOLEAN",
+        "generatedDescription": [
+          "next value",
+          "from that time point"
+        ]
+      },
+      {
+        "name": "patient_demographics_deceased_in_24_months_f",
+        "description": "Mortality recorded within the 24 months following the reference time point.",
+        "dataType": "BOOLEAN",
+        "generatedDescription": [
+          "next value",
+          "from that time point"
+        ]
+      },
+      {
+        "name": "patient_demographics_deceased_in_36_months_f",
+        "description": "Mortality recorded within the 36 months following the reference time point.",
+        "dataType": "BOOLEAN",
+        "generatedDescription": [
+          "next value",
+          "from that time point"
+        ]
+      },
+      {
+        "name": "patient_demographics_deceased_in_48_months_f",
+        "description": "Mortality recorded within the 48 months following the reference time point.",
+        "dataType": "BOOLEAN",
+        "generatedDescription": [
+          "next value",
+          "from that time point"
+        ]
+      }
+    ],
+    "populationStats": {
+      "numOfEntries": 16,
+      "entityStats": {
+        "pid": {
+          "numOfEntity": 16,
+          "maxEntriesPerEntity": 1,
+          "avgEntriesPerEntity": 1.0
+        }
+      },
+      "eligibilityPeriodStats": {
+        "period": "d",
+        "min": 44,
+        "max": 973,
+        "avg": 508.5,
+        "ongoing": 14
+      },
+      "eligibilityCriteriaStats": {
+        "entryStats": {
+          "Patients diagnosed with heart failure": 16
+        },
+        "exitStats": {
+          "Patient's deceased time.": 0,
+          "Patients diagnosed with heart failure": 0
+        },
+        "eligibilityStats": {}
+      }
+    },
+    "datasetStats": {
+      "numOfEntries": 77,
+      "entityStats": {
+        "pid": 16
+      },
+      "samplingStats": {
+        "max": 17,
+        "min": 1,
+        "avg": 4.8125
+      },
+      "secondaryTimePointStats": {
+        "lastRecordDate": 19
+      },
+      "featureStats": {
+        "med_ace_inhibitors_arb_use_administered": {
+          "numOfNotNull": 67,
+          "numOfTrue": 67
+        },
+        "conditions_has_stroke_any": {
+          "numOfNotNull": 77,
+          "numOfTrue": 0
+        },
+        "conditions_has_chronic_obstructive_pulmonary_disease_any": {
+          "numOfNotNull": 77,
+          "numOfTrue": 5
+        },
+        "vital_signs_bmi_value_p3a_avg": {
+          "numOfNotNull": 30,
+          "min": 12.0,
+          "max": 32.13,
+          "avg": 24.130416666666665,
+          "q1": 20.4,
+          "q2": 24.13,
+          "q3": 27.425,
+          "histogram": [
+            {
+              "bin": 12.0,
+              "count": 1
+            },
+            {
+              "bin": 16.85,
+              "count": 1
+            },
+            {
+              "bin": 18.472083333333334,
+              "count": 4
+            },
+            {
+              "bin": 20.189999999999998,
+              "count": 3
+            },
+            {
+              "bin": 23.500833333333333,
+              "count": 3
+            },
+            {
+              "bin": 24.24,
+              "count": 5
+            },
+            {
+              "bin": 25.32875,
+              "count": 4
+            },
+            {
+              "bin": 27.4725,
+              "count": 4
+            },
+            {
+              "bin": 31.145555555555553,
+              "count": 3
+            },
+            {
+              "bin": 32.13,
+              "count": 2
+            }
+          ]
+        },
+        "conditions_heart_failure_occurred_prior_to_18_months_any": {
+          "numOfNotNull": 77,
+          "numOfTrue": 46
+        },
+        "lab_results_creatinine_value_p3a_avg": {
+          "numOfNotNull": 36,
+          "min": 2.5,
+          "max": 18.533333333333335,
+          "avg": 11.992885802469136,
+          "q1": 10.3,
+          "q2": 12.85,
+          "q3": 14.4,
+          "histogram": [
+            {
+              "bin": 2.5,
+              "count": 3
+            },
+            {
+              "bin": 6.633333333333333,
+              "count": 2
+            },
+            {
+              "bin": 10.121666666666666,
+              "count": 4
+            },
+            {
+              "bin": 11.285,
+              "count": 3
+            },
+            {
+              "bin": 12.354166666666666,
+              "count": 4
+            },
+            {
+              "bin": 12.883333333333333,
+              "count": 7
+            },
+            {
+              "bin": 14.240370370370371,
+              "count": 6
+            },
+            {
+              "bin": 15.396,
+              "count": 5
+            },
+            {
+              "bin": 16.08,
+              "count": 1
+            },
+            {
+              "bin": 18.533333333333335,
+              "count": 1
+            }
+          ]
+        },
+        "echocardiographs_lvef": {
+          "numOfNotNull": 66,
+          "min": 1.5,
+          "max": 76.14,
+          "avg": 44.916363636363634,
+          "q1": 37.42,
+          "q2": 43.01,
+          "q3": 54.4,
+          "histogram": [
+            {
+              "bin": 1.5,
+              "count": 1
+            },
+            {
+              "bin": 9.57,
+              "count": 1
+            },
+            {
+              "bin": 22.836000000000002,
+              "count": 5
+            },
+            {
+              "bin": 32.3,
+              "count": 7
+            },
+            {
+              "bin": 37.42,
+              "count": 15
+            },
+            {
+              "bin": 42.903333333333336,
+              "count": 6
+            },
+            {
+              "bin": 50.18,
+              "count": 2
+            },
+            {
+              "bin": 54.58863636363637,
+              "count": 22
+            },
+            {
+              "bin": 66.17,
+              "count": 4
+            },
+            {
+              "bin": 76.14,
+              "count": 3
+            }
+          ]
+        },
+        "conditions_has_myocardial_infarction_any": {
+          "numOfNotNull": 77,
+          "numOfTrue": 8
+        },
+        "lab_results_urinary_creatinine_value_p3a_avg": {
+          "numOfNotNull": 0
+        },
+        "lab_results_sodium_value_p3a_avg": {
+          "numOfNotNull": 41,
+          "min": 13.5,
+          "max": 152.45,
+          "avg": 137.7574668989547,
+          "q1": 137.87,
+          "q2": 140.57857142857142,
+          "q3": 142.68333333333334,
+          "histogram": [
+            {
+              "bin": 13.5,
+              "count": 1
+            },
+            {
+              "bin": 136.50125,
+              "count": 4
+            },
+            {
+              "bin": 137.685,
+              "count": 6
+            },
+            {
+              "bin": 138.94791666666669,
+              "count": 6
+            },
+            {
+              "bin": 140.2580357142857,
+              "count": 4
+            },
+            {
+              "bin": 141.92371428571428,
+              "count": 7
+            },
+            {
+              "bin": 143.00598148148148,
+              "count": 9
+            },
+            {
+              "bin": 144.2575,
+              "count": 2
+            },
+            {
+              "bin": 146.23666666666668,
+              "count": 1
+            },
+            {
+              "bin": 152.45,
+              "count": 1
+            }
+          ]
+        },
+        "patient_demographics_gender": {
+          "numOfNotNull": 75,
+          "valueSet": [
+            "female",
+            "male"
+          ],
+          "cardinalityPerItem": {
+            "female": 9,
+            "male": 66
+          }
+        },
+        "conditions_has_pci_any": {
+          "numOfNotNull": 77,
+          "numOfTrue": 0
+        },
+        "conditions_has_diabetes_any": {
+          "numOfNotNull": 77,
+          "numOfTrue": 0
+        },
+        "patient_demographics_age": {
+          "numOfNotNull": 75,
+          "min": 16.0,
+          "max": 91.0,
+          "avg": 62.733333333333334,
+          "q1": 44.0,
+          "q2": 73.0,
+          "q3": 81.0,
+          "histogram": [
+            {
+              "bin": 17.200000000000003,
+              "count": 5
+            },
+            {
+              "bin": 26.0,
+              "count": 5
+            },
+            {
+              "bin": 40.125,
+              "count": 8
+            },
+            {
+              "bin": 44.0,
+              "count": 1
+            },
+            {
+              "bin": 52.5,
+              "count": 12
+            },
+            {
+              "bin": 70.80000000000001,
+              "count": 5
+            },
+            {
+              "bin": 74.0,
+              "count": 11
+            },
+            {
+              "bin": 77.71428571428572,
+              "count": 7
+            },
+            {
+              "bin": 82.5,
+              "count": 12
+            },
+            {
+              "bin": 88.00000000000001,
+              "count": 9
+            }
+          ]
+        },
+        "vital_signs_systolic_blood_pressure_value_p3a_avg": {
+          "numOfNotNull": 43,
+          "min": 35.666666666666664,
+          "max": 133.85,
+          "avg": 114.07771548541898,
+          "q1": 111.3875,
+          "q2": 119.03375,
+          "q3": 122.38,
+          "histogram": [
+            {
+              "bin": 35.666666666666664,
+              "count": 1
+            },
+            {
+              "bin": 45.0,
+              "count": 1
+            },
+            {
+              "bin": 98.66,
+              "count": 2
+            },
+            {
+              "bin": 107.2,
+              "count": 1
+            },
+            {
+              "bin": 109.81430555555555,
+              "count": 6
+            },
+            {
+              "bin": 113.4296142857143,
+              "count": 5
+            },
+            {
+              "bin": 116.12887499999998,
+              "count": 4
+            },
+            {
+              "bin": 120.0968634259259,
+              "count": 12
+            },
+            {
+              "bin": 123.57500000000002,
+              "count": 8
+            },
+            {
+              "bin": 133.2811111111111,
+              "count": 3
+            }
+          ]
+        },
+        "conditions_has_cabg_any": {
+          "numOfNotNull": 77,
+          "numOfTrue": 0
+        },
+        "med_beta_blocker_use_administered": {
+          "numOfNotNull": 68,
+          "numOfTrue": 68
+        },
+        "nyha_nyha": {
+          "numOfNotNull": 69,
+          "valueSet": [
+            "LA28407-7",
+            "LA28405-1",
+            "LA28406-9"
+          ],
+          "cardinalityPerItem": {
+            "LA28405-1": 20,
+            "LA28406-9": 34,
+            "LA28407-7": 15
+          }
+        },
+        "conditions_has_atrial_fibrillation_any": {
+          "numOfNotNull": 77,
+          "numOfTrue": 17
+        },
+        "smoking_status_smoker": {
+          "numOfNotNull": 31,
+          "valueSet": [
+            "1",
+            "0"
+          ],
+          "cardinalityPerItem": {
+            "0": 1,
+            "1": 30
+          }
+        }
+      },
+      "outcomeStats": {
+        "patient_demographics_deceased_in_12_months_f": {
+          "numOfNotNull": 75,
+          "numOfTrue": 5
+        },
+        "patient_demographics_deceased_in_36_months_f": {
+          "numOfNotNull": 75,
+          "numOfTrue": 7
+        },
+        "patient_demographics_deceased_in_24_months_f": {
+          "numOfNotNull": 75,
+          "numOfTrue": 6
+        },
+        "patient_demographics_deceased_in_48_months_f": {
+          "numOfNotNull": 75,
+          "numOfTrue": 7
+        },
+        "patient_demographics_months_to_death_or_last_record_date_f": {
+          "numOfNotNull": 21,
+          "min": -125.0,
+          "max": 31.0,
+          "avg": -10.19047619047619,
+          "q1": 0.0,
+          "q2": 2.0,
+          "q3": 9.0,
+          "histogram": [
+            {
+              "bin": -125.0,
+              "count": 1
+            },
+            {
+              "bin": -113.0,
+              "count": 1
+            },
+            {
+              "bin": -101.0,
+              "count": 1
+            },
+            {
+              "bin": 0.2857142857142857,
+              "count": 7
+            },
+            {
+              "bin": 2.5,
+              "count": 2
+            },
+            {
+              "bin": 6.5,
+              "count": 2
+            },
+            {
+              "bin": 8.666666666666666,
+              "count": 3
+            },
+            {
+              "bin": 14.5,
+              "count": 2
+            },
+            {
+              "bin": 19.0,
+              "count": 1
+            },
+            {
+              "bin": 31.0,
+              "count": 1
+            }
+          ]
+        }
+      }
+    }
+  }
+}
