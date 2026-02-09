@@ -8,3 +8,4 @@ RUN pip3 install -r /home/requirements.txt
 RUN ln -s /usr/bin/python3 /usr/bin/python
 
 WORKDIR /flcore
+COPY . /flcore
