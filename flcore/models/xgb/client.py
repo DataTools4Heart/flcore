@@ -188,7 +188,7 @@ class FL_Client(fl.client.Client):
 
         if self.first_round:
             #Get best threshold based on validation set
-            y_pred_proba_val = self.tree.predict_proba(self.X_val, device=self.device)
+            y_pred_proba_val = self.tree.predict_proba(self.X_val)
             best_threshold = find_best_threshold(self.y_val, y_pred_proba_val, metric="balanced_accuracy")
             y_pred_proba = self.tree.predict_proba(self.X_test)
             local_metrics = calculate_metrics(self.y_test, y_pred_proba, threshold=best_threshold)
