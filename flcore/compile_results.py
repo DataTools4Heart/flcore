@@ -8,6 +8,7 @@ from flcore.report.generate_report import generate_report
 
 
 def compile_results(experiment_dir: str):
+    print(f"Compiling results for experiment in {experiment_dir}")
     per_client_metrics = {}
     held_out_metrics = {}
     fit_metrics = {}
@@ -49,9 +50,11 @@ def compile_results(experiment_dir: str):
             # Read history.yaml
             history = yaml.safe_load(open(os.path.join(fold_dir, "history.yaml"), "r"))
             
-            # selection_metric = 'val '+ config['checkpoint_selection_metric']
-            selection_metric = config['checkpoint_selection_metric']
+            selection_metric = 'val '+ config['checkpoint_selection_metric']
+            # selection_metric = config['checkpoint_selection_metric']
             best_round= int(np.argmax(history['metrics_distributed'][selection_metric]))
+            # best_round = -1
+            print(f"Best round for {directory} based on {selection_metric}: {best_round}")
             # client_order = history['metrics_distributed']['per client client_id'][best_round]
             client_order = history['metrics_distributed']['per client n samples'][best_round]
             for logs in history.keys():
@@ -128,12 +131,16 @@ def compile_results(experiment_dir: str):
                 writer.write(f"\n{'Federated finetuned locally:'} \n")
                 personalized_section = True
 
-        # Calculate general mean and std
-        mean = np.average(per_client_metrics[metric])
-        # Calculate std of the average metric between experiment runs
-        std = np.std(np.mean(per_client_metrics[metric], axis=1))
-        per_client_mean = np.around(np.mean(per_client_metrics[metric], axis=0), 3)
-        per_client_std = np.around(np.std(per_client_metrics[metric], axis=0), 3)
+        # Calculate general weighted mean and std
+        # Weighted by number of samples in each client
+        weights = np.array(per_client_metrics['n samples'][0])
+        per_client_mean = np.mean(per_client_metrics[metric], axis=0)
+        per_client_std = np.std(per_client_metrics[metric], axis=0)
+        mean = np.average(per_client_mean, weights=weights)
+        std = np.sqrt(np.average((per_client_mean - mean) ** 2, weights=weights))
+        # Round per client mean and std to 3 decimals
+        per_client_mean = np.around(per_client_mean, 3)
+        per_client_std = np.around(per_client_std, 3)
         if metric not in execution_stats:
             writer.write(f"{metric:<30}: {mean:<6.3f}  ±{std:<6.3f}  \t\t\t|| Per client {metric} {per_client_mean}  ({per_client_std})\n".replace("\n", "")+"\n")
         for i, _ in enumerate(per_client_mean):

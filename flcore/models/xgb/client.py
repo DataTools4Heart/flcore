@@ -47,6 +47,7 @@ class FL_Client(fl.client.Client):
         client_tree_num: int,
         client_num: int,
         cid: str,
+        config,
         log_progress: bool = False,
     ):
         """
@@ -75,7 +76,7 @@ class FL_Client(fl.client.Client):
 
         (self.X_train, self.y_train), (self.X_test, self.y_test) = data
 
-        self.X_train, self.X_val, self.y_train, self.y_val = train_test_split(self.X_train, self.y_train, test_size=0.2, random_state=42, stratify=self.y_train)
+        self.X_train, self.X_val, self.y_train, self.y_val = train_test_split(self.X_train, self.y_train, test_size=0.2, random_state=config['seed'], stratify=self.y_train)
 
         trainset = TreeDataset(np.array(self.X_train, copy=True), np.array(self.y_train, copy=True))
         valset = TreeDataset(np.array(self.X_val, copy=True), np.array(self.y_val, copy=True))
@@ -309,6 +310,7 @@ def get_client(config, data, client_id) -> fl.client.Client:
         client_tree_num,
         client_num,
         cid,
-        log_progress=False,
+        config,
+        log_progress=False
     )
     return client

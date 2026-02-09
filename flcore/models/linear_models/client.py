@@ -25,7 +25,7 @@ class MnistClient(fl.client.NumPyClient):
         (self.X_train, self.y_train), (self.X_test, self.y_test) = data
 
         # Create train and validation split
-        self.X_train, self.X_val, self.y_train, self.y_val = train_test_split(self.X_train, self.y_train, test_size=0.2, random_state=42, stratify=self.y_train)
+        self.X_train, self.X_val, self.y_train, self.y_val = train_test_split(self.X_train, self.y_train, test_size=0.2, random_state=config['seed'], stratify=self.y_train)
         
         # #Only use the standardScaler to the continous variables
         # scaled_features_train = StandardScaler().fit_transform(self.X_train.values)
@@ -69,11 +69,15 @@ class MnistClient(fl.client.NumPyClient):
             # y_pred = self.model.predict(self.X_test.loc[:, parameters[2].astype(bool)])
             # If LSVC is used, use decision_function instead of predict_proba
             if self.model_name == 'lsvc':
+                y_pred_proba = self.model.decision_function(self.X_val)
+            else:
+                y_pred_proba = self.model.predict_proba(self.X_val)
+            best_threshold = find_best_threshold(self.y_val, y_pred_proba, metric="balanced_accuracy")
+            if self.model_name == 'lsvc':
                 y_pred_proba = self.model.decision_function(self.X_test)
             else:
                 y_pred_proba = self.model.predict_proba(self.X_test)
-            metrics = calculate_metrics(self.y_test, y_pred_proba)
-            print(f"Client {self.client_id} Evaluation just after local training: {metrics['balanced_accuracy']}")
+            metrics = calculate_metrics(self.y_test, y_pred_proba, threshold=best_threshold)
             # Add 'personalized' to the metrics to identify them
             metrics = {f"personalized {key}": metrics[key] for key in metrics}
             self.round_time = (time.time() - start_time)

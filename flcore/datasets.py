@@ -482,7 +482,7 @@ def prepare_dataset(X, y, center_id, config, center_indices=None):
     feature_selection_method = config.get("feature_selection_method", "mutual_info")
     normalization_method = config.get("data_normalization", "global")
 
-    np.random.seed(42)
+    np.random.seed(42)  # For reproducibility of partitioning and reference selection
 
     # Convert target to binary classification if needed
     if y.nunique() > 2:
@@ -563,7 +563,7 @@ def prepare_dataset(X, y, center_id, config, center_indices=None):
     # Split into train/test for this center
     if len(X_center) > 1:
         X_train, X_test, y_train, y_test = train_test_split(
-            X_center, y_center, test_size=0.2, random_state=42, stratify=y_center
+            X_center, y_center, test_size=0.2, random_state=config['seed'], stratify=y_center
         )
     else:
         X_train, y_train = X_center, y_center
@@ -572,9 +572,6 @@ def prepare_dataset(X, y, center_id, config, center_indices=None):
     # Apply GLOBAL preprocessing parameters to both train and test sets
     X_train_processed, feature_names = apply_preprocessing(X_train, global_preprocessing_params, normalization=normalization_method)
     X_test_processed, _ = apply_preprocessing(X_test, global_preprocessing_params, normalization=normalization_method)
-
-    # shuffle the training data
-    X_train_processed, y_train = shuffle(X_train_processed, y_train)
 
     return X_train_processed, y_train, X_test_processed, y_test
    
@@ -711,7 +708,6 @@ def load_kaggle_hf(data_path, center_id, config) -> Dataset:
         elif center_id == 3:
             center_id_mapped = 3  # switzerland
         else:
-            # print(f"Invalid center id: {center_id}", type(center_id))
             raise ValueError(f"Invalid center id: {center_id}")
     
     # Create center_indices
