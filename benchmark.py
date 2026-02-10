@@ -51,15 +51,32 @@ n_features = [None]
 # dirichlet_alpha = [0.7, None]
 # data_normalization = ["global", "local", None]
 
-# Feature selection experiment
-experiment_name = "feature_selection"
-benchmark_dir = "benchmark_results_feature_selection"
-model_names = ["balanced_random_forest"]
-datasets = ["ukbb_cvd"]
-num_clients = [5,10]
-dirichlet_alpha = [0.7, None]
+# # Feature selection experiment
+# experiment_name = "feature_selection"
+# benchmark_dir = "benchmark_results_feature_selection"
+# model_names = ["balanced_random_forest"]
+# datasets = ["ukbb_cvd"]
+# num_clients = [5,10]
+# dirichlet_alpha = [0.7, None]
+# data_normalization = ["global"]
+# n_features = [10, 20, 35, 40, None]
+
+# # Number of Clients ablation experiment
+experiment_name = "num_clients_ablation"
+benchmark_dir = "benchmark_results_num_clients_ablation"
+model_names = [
+   "logistic_regression",
+   "elastic_net",
+   "lsvc",
+    "random_forest",
+    "balanced_random_forest",
+    "xgb"
+    ]
+datasets = ["diabetes"]
+num_clients = [3,5,10,20]
+dirichlet_alpha = [0.7, 1.0, None]
 data_normalization = ["global"]
-n_features = [10, 20, 35, 40, None]
+n_features = [None]
 
 os.makedirs(benchmark_dir, exist_ok=True)
 
