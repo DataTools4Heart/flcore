@@ -30,10 +30,10 @@ from torch.utils.data import DataLoader
 from xgboost import XGBClassifier, XGBRegressor
 
 from flcore.metrics import metrics_aggregation_fn
-from flcore.models.xgb.client import FL_Client
-from flcore.models.xgb.fed_custom_strategy import FedCustomStrategy
-from flcore.models.xgb.cnn import CNN, test
-from flcore.models.xgb.utils import (
+from flcore.models.xgblr.client import FL_Client
+from flcore.models.xgblr.fed_custom_strategy import FedCustomStrategy
+from flcore.models.xgblr.cnn import CNN, test
+from flcore.models.xgblr.utils import (
     TreeDataset,
     construct_tree,
     do_fl_partitioning,

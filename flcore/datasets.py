@@ -22,7 +22,7 @@ from ucimlrepo import fetch_ucirepo
 import pickle
 
 
-from flcore.models.xgb.utils import TreeDataset, do_fl_partitioning, get_dataloader
+from flcore.models.xgblr.utils import TreeDataset, do_fl_partitioning, get_dataloader
 
 XY = Tuple[np.ndarray, np.ndarray]
 Dataset = Tuple[XY, XY]

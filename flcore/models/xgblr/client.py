@@ -24,8 +24,8 @@ from torch.utils.data import DataLoader
 from xgboost import XGBClassifier, XGBRegressor
 from sklearn.model_selection import KFold, StratifiedShuffleSplit, train_test_split
 
-from flcore.models.xgb.cnn import CNN, test, train
-from flcore.models.xgb.utils import (
+from flcore.models.xgblr.cnn import CNN, test, train
+from flcore.models.xgblr.utils import (
     NumpyEncoder,
     TreeDataset,
     construct_tree_from_loader,

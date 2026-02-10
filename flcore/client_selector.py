@@ -1,7 +1,7 @@
 import numpy as np
 
 import flcore.models.linear_models as linear_models
-import flcore.models.xgb as xgb
+import flcore.models.xgblr as xgblr
 import flcore.models.random_forest as random_forest
 import flcore.models.weighted_random_forest as weighted_random_forest
 
@@ -17,8 +17,8 @@ def get_model_client(config, data, client_id):
     elif model == "weighted_random_forest":
         client = weighted_random_forest.client.get_client(config,data,client_id)
 
-    elif model == "xgb":
-        client = xgb.client.get_client(config, data, client_id)
+    elif model == "xgblr":
+        client = xgblr.client.get_client(config, data, client_id)
 
     else:
         raise ValueError(f"Unknown model: {model}")
