@@ -410,15 +410,15 @@ def get_server_and_strategy(
     # The number of clients participated in the federated learning
     client_num = config["num_clients"]
     # The number of XGBoost trees in the tree ensemble that will be built for each client
-    client_tree_num = config["xgb"]["tree_num"] // client_num
+    client_tree_num = config["xgblr"]["tree_num"] // client_num
 
     num_rounds = config["num_rounds"]
     client_pool_size = client_num
-    num_iterations = config["xgb"]["num_iterations"]
+    num_iterations = config["xgblr"]["num_iterations"]
     fraction_fit = 1.0
     min_fit_clients = client_num
 
-    batch_size = config["xgb"]["batch_size"]
+    batch_size = config["xgblr"]["batch_size"]
     val_ratio = 0.1
 
     # DATASET = "CVD"

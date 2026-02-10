@@ -272,9 +272,9 @@ class FL_Client(fl.client.Client):
 
 def get_client(config, data, client_id) -> fl.client.Client:
     (X_train, y_train), (X_test, y_test) = data
-    task_type = config["xgb"]["task_type"]
+    task_type = config["xgblr"]["task_type"]
     client_num = config["num_clients"]
-    client_tree_num = config["xgb"]["tree_num"] // client_num
+    client_tree_num = config["xgblr"]["tree_num"] // client_num
     batch_size = "whole"
     cid = str(client_id)
     #measure time for client data loading
