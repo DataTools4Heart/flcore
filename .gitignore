@@ -8,6 +8,9 @@ results/
 data/
 logs/
 external/
+benchmark*/
+*.png
+*.csv
 other/
 # C extensions
 *.so
