@@ -554,6 +554,50 @@ def iqr_normalize(col, Q1, Q2, Q3):
 def min_max_normalize(col, min_val, max_val):
     return (col - min_val) / (max_val - min_val)
 
+def load_base(config):
+    """
+    Things to take into account:
+       * In DT4H / AI4HF datasets the categorical variables can be "nominal" or "boolean"
+       * In DT4H / AI4HF this function maps strings into numbers, e.g. "category1" to 1,
+         "False" to 0, etc.
+       * In DT4H / AI4HF the datasets are normalized and standarized with STD and quartils
+    """
+    with open("dataset_description.json", 'r') as file:
+        metadata = json.load(file)
+
+    dat = pd.read_csv("data.csv")
+    dat_len = len(dat)
+
+    cat_map = {}
+    for feat in metadata:
+        col = feat["name"]
+        categories = feat.get("categories", {})
+        label_to_int = {v: int(k) for k, v in categories.items()}
+        label_to_int.update({int(k): int(k) for k in categories})
+        label_to_int.update({k: int(k) for k in categories})
+        cat_map[col] = label_to_int
+        for col, mapa in cat_map.items():
+            dat[col] = dat[col].map(mapa)
+
+        for feat in metadata:
+            if feat["type"] == "continuous":
+                # Should we normalize?
+                pass
+
+    dat_shuffled = dat.sample(frac=1).reset_index(drop=True)
+
+    target_labels = config["target_labels"]
+    train_labels = config["train_labels"]
+    data_train = dat_shuffled[train_labels] #.to_numpy()
+    data_target = dat_shuffled[target_labels] #.to_numpy()
+
+    X_train = data_train[:int(dat_len*config["train_size"])]
+    y_train = data_target[:int(dat_len*config["train_size"]):].iloc[:, 0]
+
+    X_test = data_train[int(dat_len*config["train_size"]):]
+    y_test = data_target[int(dat_len*config["train_size"]):].iloc[:, 0]
+    return (X_train, y_train), (X_test, y_test)
+
 def load_dt4h(config):
     metadata = Path(config['metadata_file'])
     with open(metadata, 'r') as file:
@@ -770,6 +814,8 @@ def load_dataset(config, id=None):
 #        return load_libsvm(config, id)
     elif config["dataset"] == "dt4h_format":
         return load_dt4h(config)
+    elif config["dataset"] == "base_format":
+        return load_base(config)
     elif config["dataset"] == "survival":
         return load_survival(config)
     else:
