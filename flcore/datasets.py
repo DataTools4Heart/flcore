@@ -549,7 +549,14 @@ def std_normalize(col, mean, std):
     return (col - mean) / std
 
 def iqr_normalize(col, Q1, Q2, Q3):
-    return (col - Q2) / (Q3 - Q1)
+    col = col.astype(float)
+    Q1, Q2, Q3 = float(Q1), float(Q2), float(Q3)
+
+    denom = (Q3 - Q1)
+    if denom == 0:
+        return col * 0
+
+    return (col - Q2) / denom
 
 def min_max_normalize(col, min_val, max_val):
     return (col - min_val) / (max_val - min_val)
@@ -599,90 +606,116 @@ def load_base(config):
     return (X_train, y_train), (X_test, y_test)
 
 def load_dt4h(config):
-    metadata = Path(config['metadata_file'])
-    with open(metadata, 'r') as file:
-        metadata = json.load(file)
+    metadata_path = Path(config["metadata_file"])
+    with open(metadata_path, "r") as f:
+        metadata = json.load(f)
 
-    data_file = Path(config['data_file'])
+    data_file = Path(config["data_file"])
     dat = pd.read_parquet(data_file)
 
     dat_len = len(dat)
-    # Numerical variables
-    numeric_columns_non_zero = {}
-    for feat in metadata["entries"][0]["featureSet"]["features"]:
-        if feat["dataType"] == "NUMERIC" and feat["statistics"]["numOfNotNull"] != 0:
-            # statistic keys = ['Q1', 'avg', 'min', 'Q2', 'max', 'Q3', 'numOfNotNull']
-            numeric_columns_non_zero[feat["name"]] = (
-                feat["statistics"]["Q1"],
-                feat["statistics"]["avg"],
-                feat["statistics"]["min"],
-                feat["statistics"]["Q2"],
-                feat["statistics"]["max"],
-                feat["statistics"]["Q3"],
-                feat["statistics"]["numOfNotNull"],
-            )
 
-    for col, (q1,avg,mini,q2,maxi,q3,numOfNotNull) in numeric_columns_non_zero.items():
+    features = metadata["entries"][0]["features"]
+    feature_stats = metadata["entries"][0]["datasetStats"]["featureStats"]
+
+    # -------- NUMERIC FEATURES --------
+    numeric_columns = {}
+
+    for feat in features:
+        name = feat["name"]
+        dtype = feat["dataType"]
+
+        if dtype == "NUMERIC" and name in feature_stats:
+            stats = feature_stats[name]
+
+            if stats.get("numOfNotNull", 0) != 0:
+                numeric_columns[name] = (
+                    stats.get("q1"),
+                    stats.get("avg"),
+                    stats.get("min"),
+                    stats.get("q2"),
+                    stats.get("max"),
+                    stats.get("q3"),
+                    stats.get("numOfNotNull"),
+                )
+
+    for col, (q1, avg, mini, q2, maxi, q3, num) in numeric_columns.items():
         if col in dat.columns:
+
             if config["normalization_method"] == "IQR":
-               dat[col] = iqr_normalize(dat[col], q1,q2,q3 )
+                dat[col] = iqr_normalize(dat[col], q1, q2, q3)
+
             elif config["normalization_method"] == "STD":
-                pass # no std found in data set
+                pass  # not available in metadata
+
             elif config["normalization_method"] == "MIN_MAX":
-               dat[col] = min_max_normalize(col, mini, maxi)
-    tipos=[]
-    map_variables = {}
-    for feat in metadata["entries"][0]["featureSet"]["features"]:
-        tipos.append(feat["dataType"])
-        if feat["dataType"] == "NOMINAL" and feat["statistics"]["numOfNotNull"] != 0:
-            num_cat = len(feat["statistics"]["valueset"])
-            map_cat = {}
-            for ind, cat in enumerate(feat["statistics"]["valueset"]):
-                map_cat[cat] = ind
-            map_variables[feat["name"]] = map_cat
-    for col,mapa in map_variables.items():
-        dat[col] = dat[col].map(mapa)
-    
-    dat[map_variables.keys()].dropna()
-    
-    tipos=[]
-    map_variables = {}
-    boolean_map = {np.bool_(False) :0, np.bool_(True):1, "False":0,"True":1}
-    for feat in metadata["entries"][0]["featureSet"]["features"]:
-        tipos.append(feat["dataType"])
-        if feat["dataType"] == "BOOLEAN" and feat["statistics"]["numOfNotNull"] != 0:
-            map_variables[feat["name"]] = boolean_map
-    for col,mapa in map_variables.items():
-        dat[col] = dat[col].map(boolean_map)
-    
-    dat[map_variables.keys()].dropna()
+                dat[col] = min_max_normalize(dat[col], mini, maxi)
 
-    """    # Print statistics
-    for i in dat.keys():
-        maxim = dat[i].max()
-        minim = dat[i].min()
-        mean = dat[i].mean()
-        estd = dat[i].std()
-        print(f"Column: {i}")
-        print(f"  Maximum:          {maxim:10.2f}")
-        print(f"  Minimum:          {minim:10.2f}")
-        print(f"  Mean:             {mean:10.2f}")
-        print(f"  Std dev:          {estd:10.2f}")
-        print("-" * 40)
-    """
+    # -------- NOMINAL FEATURES --------
+    map_variables = {}
 
+    for feat in features:
+        name = feat["name"]
+        dtype = feat["dataType"]
+
+        if dtype == "NOMINAL" and name in feature_stats:
+            stats = feature_stats[name]
+
+            if stats.get("numOfNotNull", 0) != 0 and "valueset" in stats:
+
+                map_cat = {cat: i for i, cat in enumerate(stats["valueset"])}
+                map_variables[name] = map_cat
+
+    for col, mapa in map_variables.items():
+        if col in dat.columns:
+            dat[col] = dat[col].map(mapa)
+
+    dat[list(map_variables.keys())] = dat[list(map_variables.keys())].dropna()
+
+    # -------- BOOLEAN FEATURES --------
+    boolean_map = {
+        np.bool_(False): 0,
+        np.bool_(True): 1,
+        "False": 0,
+        "True": 1,
+    }
+
+    boolean_columns = []
+
+    for feat in features:
+        name = feat["name"]
+        dtype = feat["dataType"]
+
+        if dtype == "BOOLEAN" and name in feature_stats:
+            stats = feature_stats[name]
+
+            if stats.get("numOfNotNull", 0) != 0:
+                boolean_columns.append(name)
+
+    for col in boolean_columns:
+        if col in dat.columns:
+            dat[col] = dat[col].map(boolean_map)
+
+    dat[boolean_columns] = dat[boolean_columns].dropna()
+
+    # -------- SHUFFLE --------
     dat_shuffled = dat.sample(frac=1).reset_index(drop=True)
 
+    # -------- SPLIT --------
     target_labels = config["target_labels"]
     train_labels = config["train_labels"]
-    data_train = dat_shuffled[train_labels] #.to_numpy()
-    data_target = dat_shuffled[target_labels] #.to_numpy()
 
-    X_train = data_train[:int(dat_len*config["train_size"])]
-    y_train = data_target[:int(dat_len*config["train_size"]):].iloc[:, 0]
+    data_train = dat_shuffled[train_labels]
+    data_target = dat_shuffled[target_labels]
 
-    X_test = data_train[int(dat_len*config["train_size"]):]
-    y_test = data_target[int(dat_len*config["train_size"]):].iloc[:, 0]
+    split_idx = int(dat_len * config["train_size"])
+
+    X_train = data_train[:split_idx]
+    y_train = data_target[:split_idx].iloc[:, 0]
+
+    X_test = data_train[split_idx:]
+    y_test = data_target[split_idx:].iloc[:, 0]
+
     return (X_train, y_train), (X_test, y_test)
 
 def load_survival(config):
