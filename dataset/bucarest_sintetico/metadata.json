@@ -1,0 +1,132 @@
+{
+"entries": [
+{
+"features": [
+{"name": "patient_demographics_gender", "dataType": "NOMINAL"},
+{"name": "encounters_encounterClass", "dataType": "NOMINAL"},
+{"name": "encounters_admissionYear", "dataType": "NOMINAL"},
+{"name": "patient_demographics_age", "dataType": "NUMERIC"},
+{"name": "encounters_lengthOfStay", "dataType": "NUMERIC"},
+{"name": "vital_signs_weight_value_p6mo_min", "dataType": "NUMERIC"},
+{"name": "med_admins_history_diuretics_loop_any", "dataType": "BOOLEAN"},
+{"name": "patient_flags_smoker", "dataType": "BOOLEAN"}
+],
+"outcomes": [
+{"name": "outcome_in_hospital_mortality", "dataType": "BOOLEAN"},
+{"name": "outcome_readmission_30d", "dataType": "BOOLEAN"}
+],
+"datasetStats": {
+"featureStats": {
+
+      "patient_demographics_gender": {
+        "numOfNotNull": 7845,
+        "valueSet": ["female", "male"],
+        "cardinalityPerItem": {
+          "female": 2814,
+          "male": 5031
+        }
+      },
+
+      "encounters_encounterClass": {
+        "numOfNotNull": 10000,
+        "valueSet": ["inpatient", "outpatient", "emergency"],
+        "cardinalityPerItem": {
+          "inpatient": 4200,
+          "outpatient": 3500,
+          "emergency": 2300
+        }
+      },
+
+      "encounters_admissionYear": {
+        "numOfNotNull": 10000,
+        "valueSet": ["2019", "2020", "2021", "2022", "2023"],
+        "cardinalityPerItem": {
+          "2019": 1500,
+          "2020": 1800,
+          "2021": 2200,
+          "2022": 2400,
+          "2023": 2100
+        }
+      },
+
+      "patient_demographics_age": {
+        "numOfNotNull": 9980,
+        "min": 18,
+        "max": 97,
+        "avg": 56.4,
+        "q1": 42,
+        "q2": 58,
+        "q3": 71,
+        "histogram": [
+          {"bin": 30, "count": 1500},
+          {"bin": 45, "count": 2400},
+          {"bin": 60, "count": 3000},
+          {"bin": 75, "count": 2100},
+          {"bin": 90, "count": 980}
+        ]
+      },
+
+      "encounters_lengthOfStay": {
+        "numOfNotNull": 9500,
+        "min": 1,
+        "max": 45,
+        "avg": 6.2,
+        "q1": 2,
+        "q2": 4,
+        "q3": 8,
+        "histogram": [
+          {"bin": 2, "count": 3000},
+          {"bin": 5, "count": 3500},
+          {"bin": 10, "count": 2000},
+          {"bin": 20, "count": 800},
+          {"bin": 40, "count": 200}
+        ]
+      },
+
+      "vital_signs_weight_value_p6mo_min": {
+        "numOfNotNull": 8700,
+        "min": 42.5,
+        "max": 135.0,
+        "avg": 76.8,
+        "q1": 64.0,
+        "q2": 75.5,
+        "q3": 88.2,
+        "histogram": [
+          {"bin": 55, "count": 1200},
+          {"bin": 70, "count": 2600},
+          {"bin": 85, "count": 2800},
+          {"bin": 100, "count": 1500},
+          {"bin": 120, "count": 600}
+        ]
+      },
+
+      "med_admins_history_diuretics_loop_any": {
+        "numOfNotNull": 7845,
+        "numOfTrue": 950
+      },
+
+      "patient_flags_smoker": {
+        "numOfNotNull": 9200,
+        "numOfTrue": 2100
+      }
+
+    },
+
+    "outcomeStats": {
+
+      "outcome_in_hospital_mortality": {
+        "numOfNotNull": 10000,
+        "numOfTrue": 820
+      },
+
+      "outcome_readmission_30d": {
+        "numOfNotNull": 10000,
+        "numOfTrue": 1530
+      }
+
+    }
+  }
+}
+
+]
+}
