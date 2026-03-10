@@ -606,8 +606,9 @@ def load_base(config):
     return (X_train, y_train), (X_test, y_test)
 
 def load_dt4h(config):
+
     metadata_path = Path(config["metadata_file"])
-    with open(metadata_path, "r") as f:
+    with open(metadata_path) as f:
         metadata = json.load(f)
 
     data_file = Path(config["data_file"])
@@ -615,106 +616,82 @@ def load_dt4h(config):
 
     dat_len = len(dat)
 
-    features = metadata["entries"][0]["features"]
-    feature_stats = metadata["entries"][0]["datasetStats"]["featureStats"]
+    entry = metadata["entries"][0]
+    features = entry["features"]
+    feature_stats = entry["datasetStats"]["featureStats"]
 
-    # -------- NUMERIC FEATURES --------
-    numeric_columns = {}
+    boolean_map = {False: 0, True: 1, "False": 0, "True": 1}
 
     for feat in features:
+
         name = feat["name"]
         dtype = feat["dataType"]
 
-        if dtype == "NUMERIC" and name in feature_stats:
-            stats = feature_stats[name]
+        if name not in dat.columns:
+            continue
 
-            if stats.get("numOfNotNull", 0) != 0:
-                numeric_columns[name] = (
-                    stats.get("q1"),
-                    stats.get("avg"),
-                    stats.get("min"),
-                    stats.get("q2"),
-                    stats.get("max"),
-                    stats.get("q3"),
-                    stats.get("numOfNotNull"),
-                )
+        stats = feature_stats.get(name, {})
+        num_not_null = stats.get("numOfNotNull", 0)
 
-    for col, (q1, avg, mini, q2, maxi, q3, num) in numeric_columns.items():
-        if col in dat.columns:
+        if num_not_null == 0:
+            continue
+
+        # -------------------
+        # NUMERIC
+        # -------------------
+        if dtype == "NUMERIC":
 
             if config["normalization_method"] == "IQR":
-                dat[col] = iqr_normalize(dat[col], q1, q2, q3)
 
-            elif config["normalization_method"] == "STD":
-                pass  # not available in metadata
+                q1 = stats.get("q1")
+                q2 = stats.get("q2")
+                q3 = stats.get("q3")
+
+                dat[name] = iqr_normalize(dat[name], q1, q2, q3)
 
             elif config["normalization_method"] == "MIN_MAX":
-                dat[col] = min_max_normalize(dat[col], mini, maxi)
 
-    # -------- NOMINAL FEATURES --------
-    map_variables = {}
+                mini = stats.get("min")
+                maxi = stats.get("max")
 
-    for feat in features:
-        name = feat["name"]
-        dtype = feat["dataType"]
+                dat[name] = min_max_normalize(dat[name], mini, maxi)
 
-        if dtype == "NOMINAL" and name in feature_stats:
-            stats = feature_stats[name]
+        # -------------------
+        # NOMINAL
+        # -------------------
+        elif dtype == "NOMINAL":
 
-            if stats.get("numOfNotNull", 0) != 0 and "valueset" in stats:
+            value_set = stats.get("valueSet", [])
 
-                map_cat = {cat: i for i, cat in enumerate(stats["valueset"])}
-                map_variables[name] = map_cat
+            if len(value_set) > 0:
+                cat_map = {cat: i for i, cat in enumerate(value_set)}
+                dat[name] = dat[name].map(cat_map)
 
-    for col, mapa in map_variables.items():
-        if col in dat.columns:
-            dat[col] = dat[col].map(mapa)
+        # -------------------
+        # BOOLEAN
+        # -------------------
+        elif dtype == "BOOLEAN":
 
-    dat[list(map_variables.keys())] = dat[list(map_variables.keys())].dropna()
+            dat[name] = dat[name].map(boolean_map)
 
-    # -------- BOOLEAN FEATURES --------
-    boolean_map = {
-        np.bool_(False): 0,
-        np.bool_(True): 1,
-        "False": 0,
-        "True": 1,
-    }
+    # -------------------
+    # Shuffle dataset
+    # -------------------
+    dat = dat.sample(frac=1).reset_index(drop=True)
 
-    boolean_columns = []
-
-    for feat in features:
-        name = feat["name"]
-        dtype = feat["dataType"]
-
-        if dtype == "BOOLEAN" and name in feature_stats:
-            stats = feature_stats[name]
-
-            if stats.get("numOfNotNull", 0) != 0:
-                boolean_columns.append(name)
-
-    for col in boolean_columns:
-        if col in dat.columns:
-            dat[col] = dat[col].map(boolean_map)
-
-    dat[boolean_columns] = dat[boolean_columns].dropna()
-
-    # -------- SHUFFLE --------
-    dat_shuffled = dat.sample(frac=1).reset_index(drop=True)
-
-    # -------- SPLIT --------
     target_labels = config["target_labels"]
     train_labels = config["train_labels"]
 
-    data_train = dat_shuffled[train_labels]
-    data_target = dat_shuffled[target_labels]
-
     split_idx = int(dat_len * config["train_size"])
 
-    X_train = data_train[:split_idx]
-    y_train = data_target[:split_idx].iloc[:, 0]
+    X = dat[train_labels]
+    y = dat[target_labels].iloc[:, 0]
 
-    X_test = data_train[split_idx:]
-    y_test = data_target[split_idx:].iloc[:, 0]
+    X_train = X[:split_idx]
+    y_train = y[:split_idx]
+
+    X_test = X[split_idx:]
+    y_test = y[split_idx:]
 
     return (X_train, y_train), (X_test, y_test)
 
