@@ -618,7 +618,9 @@ def load_dt4h(config):
 
     entry = metadata["entries"][0]
     features = entry["features"]
+    outcomes = entry["outcomes"]
     feature_stats = entry["datasetStats"]["featureStats"]
+    outcome_stats = entry["datasetStats"]["outcomeStats"]
 
     boolean_map = {False: 0, True: 1, "False": 0, "True": 1}
 
@@ -674,6 +676,58 @@ def load_dt4h(config):
 
             dat[name] = dat[name].map(boolean_map)
 
+    for feat in outcomes:
+
+        name = feat["name"]
+        dtype = feat["dataType"]
+
+        if name not in dat.columns:
+            continue
+
+        stats = outcome_stats.get(name, {})
+        num_not_null = stats.get("numOfNotNull", 0)
+
+        if num_not_null == 0:
+            continue
+
+        # -------------------
+        # NUMERIC
+        # -------------------
+        if dtype == "NUMERIC":
+
+            if config["normalization_method"] == "IQR":
+
+                q1 = stats.get("q1")
+                q2 = stats.get("q2")
+                q3 = stats.get("q3")
+
+                dat[name] = iqr_normalize(dat[name], q1, q2, q3)
+
+            elif config["normalization_method"] == "MIN_MAX":
+
+                mini = stats.get("min")
+                maxi = stats.get("max")
+
+                dat[name] = min_max_normalize(dat[name], mini, maxi)
+
+        # -------------------
+        # NOMINAL
+        # -------------------
+        elif dtype == "NOMINAL":
+
+            value_set = stats.get("valueSet", [])
+
+            if len(value_set) > 0:
+                cat_map = {cat: i for i, cat in enumerate(value_set)}
+                dat[name] = dat[name].map(cat_map)
+
+        # -------------------
+        # BOOLEAN
+        # -------------------
+        elif dtype == "BOOLEAN":
+
+            dat[name] = dat[name].map(boolean_map)
+
     # -------------------
     # Shuffle dataset
     # -------------------
@@ -685,7 +739,7 @@ def load_dt4h(config):
     split_idx = int(dat_len * config["train_size"])
 
     X = dat[train_labels]
-    y = dat[target_labels].iloc[:, 0]
+    y = dat[target_labels] #.iloc[:, 0]
 
     X_train = X[:split_idx]
     y_train = y[:split_idx]
