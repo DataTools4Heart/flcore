@@ -1,6 +1,7 @@
 import os
 import sys
 import glob
+import json
 import numpy as np
 from pathlib import Path
 
@@ -206,9 +207,36 @@ def CheckClientConfig(config):
         new.append(parsed)
     config["target_labels"] = new
 
-    # VERIFICAR EL TASK SI HACE FALTA CAMBIARLO SEGUN EL NUMERO DE LABELS, binario bmulticlase¿?¿?¿?¿?
+    with open(config["metadata_file"]) as f:
+        meta = json.load(f)
+
+    entry = meta["entries"][0]
+    feature_stats = entry["datasetStats"]["featureStats"]
+    outcome_stats = entry["datasetStats"]["outcomeStats"]
+    features_meta = {o["name"]: o for o in entry["features"]}
+    outcomes_meta = {o["name"]: o for o in entry["outcomes"]}
+
+    n_out = 0
+    for target in config["target_labels"]:
+        if target in outcomes_meta:
+            dtype = outcomes_meta[target]["dataType"]
+            stats = outcome_stats.get(target, {})
+
+        elif target in features_meta:
+            dtype = features_meta[target]["dataType"]
+            stats = feature_stats.get(target, {})
+        else:
+            raise ValueError(f"Target {target} no encontrado en metadata['outcomes']")
+
+        if dtype == "BOOLEAN":
+            n_out += 1
+        elif dtype == "NOMINAL":
+            n_out += len(stats.get("valueSet", []))
+        elif dtype == "NUMERIC":
+            n_out += 1
+
+    config["n_out"] = n_out
     config["n_feats"] = len(config["train_labels"])
-    config["n_out"] = len(config["target_labels"])
 
     if config["model"] in ["svm","svr","lsvr"]:
         if config["task"] == "regression":
