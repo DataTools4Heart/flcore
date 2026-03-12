@@ -739,7 +739,7 @@ def load_dt4h(config):
     split_idx = int(dat_len * config["train_size"])
 
     X = dat[train_labels]
-    y = dat[target_labels] #.iloc[:, 0]
+    y = dat[target_labels].iloc[:, 0]
 
     X_train = X[:split_idx]
     y_train = y[:split_idx]
