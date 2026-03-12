@@ -26,13 +26,19 @@ class MnistClient(fl.client.NumPyClient):
         # Load data
         (self.X_train, self.y_train), (self.X_test, self.y_test) = data
 
+        if self.config["task"] == "classification":
+            stratify=self.y_train
+        else:
+            stratify = None
+
         # Create train and validation split
         self.X_train, self.X_val, self.y_train, self.y_val = train_test_split(
                 self.X_train,
                 self.y_train,
                 test_size=config["test_size"],
                 random_state=config["seed"],
-                stratify=self.y_train)
+                stratify=stratify
+                )
 
         # #Only use the standardScaler to the continous variables
         # scaled_features_train = StandardScaler().fit_transform(self.X_train.values)
