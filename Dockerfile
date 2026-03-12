@@ -1,7 +1,8 @@
-FROM ubuntu:22.04
+FROM python:3.11-slim
+
 
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends --assume-yes \
-    pip iputils-ping curl wget wkhtmltopdf
+    pip iputils-ping curl wget 
 
 COPY requirements.txt /home/requirements.txt
 RUN pip3 install -r /home/requirements.txt
