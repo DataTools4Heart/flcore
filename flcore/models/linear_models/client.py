@@ -95,26 +95,18 @@ class MnistClient(fl.client.NumPyClient):
 
     def evaluate(self, parameters, config):
         utils.set_model_params(self.model, parameters)
-
         # Calculate validation set metrics
         pred = self.model.predict(self.X_val)
         y_pred = pred
         metrics = calculate_metrics(self.y_val, y_pred, self.config)
-
         if self.config["task"] == "classification":
             if self.config["n_out"] > 1: # Multivariable
                 losses = []
 
                 if hasattr(self.model, "predict_proba"):
                     y_score = self.model.predict_proba(self.X_val)
-
-                    for m in range(self.y_val.shape[1]):
-                        losses.append(
-                            log_loss(
-                                self.y_val[:, m],
-                                y_score[:, m]
-                            )
-                        )
+                    loss = log_loss(self.y_val,y_score)
+                    losses.append(loss)
                 else:
                     print("PREDICT PROBA NO DISPONIBLE")
                     """
