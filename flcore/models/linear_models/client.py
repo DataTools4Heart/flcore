@@ -105,7 +105,7 @@ class MnistClient(fl.client.NumPyClient):
 
                 if hasattr(self.model, "predict_proba"):
                     y_score = self.model.predict_proba(self.X_val)
-                    loss = log_loss(self.y_val,y_score)
+                    loss = log_loss(self.y_val,y_score,labels=np.arange(self.config["n_out"]))
                     losses.append(loss)
                 else:
                     print("PREDICT PROBA NO DISPONIBLE")
