@@ -21,7 +21,9 @@
 | `--train_size`           | float     | 0.7               | Fraction for training dataset                 |
 | `--validation_size`      | float     | 0.2               | Fraction for validation dataset               |
 | `--test_size`            | float     | 0.1               | Fraction for testing dataset                  |
+
 3. Training Variables
+
 | Argument                        | Type  | Default     | Description                                        |
 | ------------------------------- | ----- | ----------- | -------------------------------------------------- |
 | `--num_rounds`                  | int   | 50          | Number of federated iterations                     |
@@ -29,7 +31,9 @@
 | `--checkpoint_selection_metric` | str   | "precision" | Metric used to select checkpoint models            |
 | `--seed`                        | int   | 42          | Random seed                                        |
 | `--num_clients`                 | int   | 1           | Number of clients in federation (informative only) |
+
 4. General Model Variables
+
 | Argument         | Type | Default         | Description                                                           |
 | ---------------- | ---- | --------------- | --------------------------------------------------------------------- |
 | `--model`        | str  | "random_forest" | Model type (`random_forest`, `xgb`, `nn`, `linear`, `cox`)            |
@@ -85,7 +89,9 @@ Survival
 | `--event_col`                  | str   | "event" | Column indicating event occurrence |
 | `--negative_duration_strategy` | str   | "clip"  | Strategy for negative durations    |
 | `--l1_penalty`                 | float | 0.0     | L1 regularization penalty          |
+
 1. General Settings
+
 | Argument                  | Type | Default    | Description                                    |
 | ------------------------- | ---- | ---------- | ---------------------------------------------- |
 | `--model`                 | str  | None       | Model type                                     |
@@ -99,7 +105,9 @@ Survival
 | `--sandbox_path`          | str  | "/sandbox" | Path to sandbox directory                      |
 | `--local_port`            | int  | 8081       | Server listening port                          |
 | `--production_mode`       | str  | "True"     | Production mode (minimal logs)                 |
+
 2. Strategy Settings
+
 | Argument                        | Type  | Default            | Description                          |
 | ------------------------------- | ----- | ------------------ | ------------------------------------ |
 | `--strategy`                    | str   | "FedAvg"           | Federated aggregation strategy       |
