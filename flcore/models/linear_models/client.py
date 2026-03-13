@@ -1,4 +1,3 @@
-
 from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import log_loss
 import time
@@ -32,13 +31,14 @@ class MnistClient(fl.client.NumPyClient):
             stratify = None
 
         # Create train and validation split
-        self.X_train, self.X_val, self.y_train, self.y_val = train_test_split(
-                self.X_train,
-                self.y_train,
-                test_size=config["test_size"],
-                random_state=config["seed"],
-                stratify=stratify
-                )
+#        self.X_train, self.X_val, self.y_train, self.y_val = train_test_split(
+#                self.X_train,
+#                self.y_train,
+#                test_size=config["test_size"],
+#                random_state=config["seed"],
+#                stratify=stratify
+#                )
+#                stratify=self.y_train)
 
         # #Only use the standardScaler to the continous variables
         # scaled_features_train = StandardScaler().fit_transform(self.X_train.values)
@@ -102,16 +102,16 @@ class MnistClient(fl.client.NumPyClient):
     def evaluate(self, parameters, config):
         utils.set_model_params(self.model, parameters)
         # Calculate validation set metrics
-        pred = self.model.predict(self.X_val)
+        pred = self.model.predict(self.X_test)
         y_pred = pred
-        metrics = calculate_metrics(self.y_val, y_pred, self.config)
+        metrics = calculate_metrics(self.y_test, y_pred, self.config)
         if self.config["task"] == "classification":
             if self.config["n_out"] > 1: # Multivariable
                 losses = []
 
                 if hasattr(self.model, "predict_proba"):
-                    y_score = self.model.predict_proba(self.X_val)
-                    loss = log_loss(self.y_val,y_score,labels=np.arange(self.config["n_out"]))
+                    y_score = self.model.predict_proba(self.X_test)
+                    loss = log_loss(self.y_test,y_score,labels=np.arange(self.config["n_out"]))
                     losses.append(loss)
                 else:
                     print("PREDICT PROBA NO DISPONIBLE")
@@ -127,17 +127,17 @@ class MnistClient(fl.client.NumPyClient):
             elif self.config["n_out"] == 1: # Binario
                 if hasattr(self.model, "predict_proba"):
                     loss = log_loss(
-                        self.y_val,
-                        self.model.predict_proba(self.X_val)
+                        self.y_test,
+                        self.model.predict_proba(self.X_test)
                     )
                 else:
                     loss = 1.0 - accuracy_score(
-                        self.y_val,
+                        self.y_test,
                         y_pred
                     )
 
         elif self.config["task"] == "regression":
-            loss = mean_squared_error(self.y_val, y_pred)
+            loss = mean_squared_error(self.y_test, y_pred)
 
         metrics["round_time [s]"] = self.round_time
         # No tiene sentido agregar el client ID
@@ -152,4 +152,3 @@ def get_client(config,data) -> fl.client.Client:
     return MnistClient(data,config)
     # # Start Flower client
     # fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=MnistClient())
-
