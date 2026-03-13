@@ -137,13 +137,13 @@ def CheckClientConfig(config):
                 print("Since this model only supports regression assigning task automatically to regression")
 
             if config["model"] == "lasso_regression":
-                config["model"] == "linear_regression"
+                config["model"] = "linear_regression"
                 config["penalty"] = "l1"
             elif config["model"] == "ridge_regression":
-                config["model"] == "linear_regression"
+                config["model"] = "linear_regression"
                 config["penalty"] = "l2"
             elif config["model"] == "linear_regression_elasticnet":
-                config["model"] == "linear_regression"
+                config["model"] = "linear_regression"
                 config["penalty"] = "elasticnet"
             elif config["model"] == "svm":
                 if config["kernel"] != "linear":
