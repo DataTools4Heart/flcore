@@ -235,6 +235,20 @@ def CheckClientConfig(config):
         elif dtype == "NUMERIC":
             n_out += 1
 
+        if config["task"] == "regression":
+            if dtype != "NUMERIC":
+                raise ValueError(
+                    f"Inconsistent configuration: task='regression' but target '{target}' "
+                    f"has dtype '{dtype}'. Regression requires NUMERIC targets."
+                )
+
+        elif config["task"] == "classification":
+            if dtype == "NUMERIC":
+                raise ValueError(
+                    f"Inconsistent configuration: task='classification' but target '{target}' "
+                    f"has dtype NUMERIC. Classification requires BOOLEAN or NOMINAL targets."
+                )
+
     config["n_out"] = n_out
     config["n_feats"] = len(config["train_labels"])
 
