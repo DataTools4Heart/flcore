@@ -169,7 +169,9 @@ class FlowerClient(fl.client.NumPyClient):
                     probs = torch.sigmoid(logits.squeeze(1))
                     preds = (probs > 0.5).long()
                 else:           # Multiclase
-                    loss = F.cross_entropy(logits, y.long())
+                        #y = y.squeeze()
+                    y = y.long()
+                    loss = F.cross_entropy(logits, y)
                     preds = torch.argmax(logits, dim=1)
                 correct += (preds == y).sum().item()
             elif self.config["task"] == "regression":
