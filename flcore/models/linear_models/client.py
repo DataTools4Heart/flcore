@@ -1,3 +1,4 @@
+from scipy.special import softmax
 from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import log_loss
 import time
@@ -107,23 +108,18 @@ class MnistClient(fl.client.NumPyClient):
         metrics = calculate_metrics(self.y_test, y_pred, self.config)
         if self.config["task"] == "classification":
             if self.config["n_out"] > 1: # Multivariable
-                losses = []
-
                 if hasattr(self.model, "predict_proba"):
                     y_score = self.model.predict_proba(self.X_test)
                     loss = log_loss(self.y_test,y_score,labels=np.arange(self.config["n_out"]))
-                    losses.append(loss)
                 else:
-                    print("PREDICT PROBA NO DISPONIBLE")
-                    """
-                    for m in range(self.y_test.shape[1]):
-                        losses.append(
-                            1.0 - accuracy_score(
-                                self.y_test[:, m],
-                                y_pred[:, m]
-                            )
-                        )
-                    """
+                    decision = self.model.decision_function(self.X_test)
+                    y_score = softmax(decision, axis=1)
+                    loss = log_loss(
+                    self.y_test,
+                    y_score,
+                    labels=np.arange(self.config["n_out"])
+                    )
+
             elif self.config["n_out"] == 1: # Binario
                 if hasattr(self.model, "predict_proba"):
                     loss = log_loss(
