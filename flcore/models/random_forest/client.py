@@ -37,7 +37,8 @@ class MnistClient(fl.client.Client):
                 config["test_size"],
                 config["seed"],
                 self.X_train,
-                self.y_train)
+                self.y_train,
+                config["task"])
         self.model = utils.get_model(config)
         # Setting initial parameters, akin to model.compile for keras models
         # AQUI DEBERIA INICIALIZAR CON 0, ya que está en fit, que haga 1 iteración
@@ -147,7 +148,7 @@ class MnistClient(fl.client.Client):
                 # ************************************************** CORREGIR ADAPTAR
                 # ************************************* Por ahora idéntico al binario
                 y_pred_prob = self.model.predict_proba(self.X_test)
-                loss = log_loss(self.y_test, y_pred_prob)
+                loss = log_loss(self.y_test, y_pred_prob,labels=np.arange(self.config["n_out"]))
                 # accuracy,specificity,sensitivity,balanced_accuracy, precision, F1_score = \
                 # measurements_metrics(self.model,self.X_test, self.y_test)
                 y_pred = self.model.predict(self.X_test)
