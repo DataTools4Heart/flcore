@@ -1,0 +1,117 @@
+2026-03-13 17:59:45,142 - root - DEBUG - This will be logged to both the console and the file.
+2026-03-13 17:59:45,142 - root - DEBUG - Starting Flower server...
+2026-03-13 17:59:45,142 - STDOUT - INFO - ELSE
+2026-03-13 17:59:45,145 - STDOUT - INFO - 
+2026-03-13 17:59:45,145 - STDOUT - INFO - ============================================================
+2026-03-13 17:59:45,145 - STDOUT - INFO - Federated XGBoost Configuration
+2026-03-13 17:59:45,145 - STDOUT - INFO - ============================================================
+2026-03-13 17:59:45,145 - STDOUT - INFO - Task:
+2026-03-13 17:59:45,145 - STDOUT - INFO - MULTICLASS
+2026-03-13 17:59:45,145 - STDOUT - INFO - Train method:
+2026-03-13 17:59:45,145 - STDOUT - INFO - bagging
+2026-03-13 17:59:45,146 - STDOUT - INFO - Rounds:
+2026-03-13 17:59:45,146 - STDOUT - INFO - 3
+2026-03-13 17:59:45,146 - STDOUT - INFO - Clients:
+2026-03-13 17:59:45,146 - STDOUT - INFO - 1
+2026-03-13 17:59:45,146 - STDOUT - INFO - XGBoost params:
+2026-03-13 17:59:45,146 - STDOUT - INFO - {'eta': 0.1, 'max_depth': 6, 'tree_method': 'hist', 'subsample': 0.8, 'colsample_bytree': 0.8, 'objective': 'multi:softmax', 'eval_metric': 'mlogloss', 'num_class': 3}
+2026-03-13 17:59:45,146 - STDOUT - INFO - ============================================================
+2026-03-13 17:59:45,146 - STDOUT - INFO - [FedXgb] Training method: bagging
+2026-03-13 17:59:45,146 - STDOUT - INFO - [FedXgb] XGBoost params: {'eta': 0.1, 'max_depth': 6, 'tree_method': 'hist', 'subsample': 0.8, 'colsample_bytree': 0.8, 'objective': 'multi:softmax', 'eval_metric': 'mlogloss', 'num_class': 3}
+2026-03-13 17:59:45,146 - flwr - WARNING - DEPRECATED FEATURE: flwr.server.start_server() is deprecated.
+	Instead, use the `flower-superlink` CLI command to start a SuperLink as shown below:
+
+		$ flower-superlink --insecure
+
+	To view usage and all available options, run:
+
+		$ flower-superlink --help
+
+	Using `start_server()` is deprecated.
+
+            This is a deprecated feature. It will be removed
+            entirely in future versions of Flower.
+        
+2026-03-13 17:59:45,146 - flwr - INFO - Starting Flower server, config: num_rounds=3, no round_timeout
+2026-03-13 17:59:45,164 - flwr - INFO - Flower ECE: gRPC server running (3 rounds), SSL is disabled
+2026-03-13 17:59:45,164 - flwr - INFO - [INIT]
+2026-03-13 17:59:45,164 - flwr - INFO - Using initial global parameters provided by strategy
+2026-03-13 17:59:45,164 - flwr - INFO - Starting evaluation of initial global parameters
+2026-03-13 17:59:45,165 - flwr - INFO - Evaluation returned no results (`None`)
+2026-03-13 17:59:45,165 - flwr - INFO - 
+2026-03-13 17:59:45,165 - flwr - INFO - [ROUND 1]
+2026-03-13 18:32:57,645 - flwr - INFO - configure_fit: strategy sampled 1 clients (out of 1)
+2026-03-13 18:32:57,737 - flwr - INFO - aggregate_fit: received 1 results and 0 failures
+2026-03-13 18:32:57,738 - STDOUT - INFO - 
+2026-03-13 18:32:57,738 - STDOUT - INFO - [Round 1] Aggregating 1 clients
+2026-03-13 18:32:57,933 - STDOUT - INFO - [Checkpoint] Saved /home/iratxe/Documentos/FLCORE/flcore/sandbox/experiment_xgb/checkpoints/xgboost_round_1.json
+2026-03-13 18:32:57,934 - STDOUT - INFO - [Round 1] Aggregation done.
+2026-03-13 18:32:57,934 - flwr - INFO - configure_evaluate: strategy sampled 1 clients (out of 1)
+2026-03-13 18:32:57,953 - flwr - INFO - aggregate_evaluate: received 1 results and 0 failures
+2026-03-13 18:32:57,954 - STDOUT - INFO - [Round 1] Eval loss: 1.1208
+2026-03-13 18:32:57,954 - flwr - INFO - 
+2026-03-13 18:32:57,954 - flwr - INFO - [ROUND 2]
+2026-03-13 18:32:57,954 - flwr - INFO - configure_fit: strategy sampled 1 clients (out of 1)
+2026-03-13 18:32:58,000 - flwr - INFO - aggregate_fit: received 1 results and 0 failures
+2026-03-13 18:32:58,000 - STDOUT - INFO - 
+2026-03-13 18:32:58,000 - STDOUT - INFO - [Round 2] Aggregating 1 clients
+2026-03-13 18:32:58,039 - STDOUT - INFO - [Checkpoint] Saved /home/iratxe/Documentos/FLCORE/flcore/sandbox/experiment_xgb/checkpoints/xgboost_round_2.json
+2026-03-13 18:32:58,039 - STDOUT - INFO - [Round 2] Aggregation done.
+2026-03-13 18:32:58,039 - flwr - INFO - configure_evaluate: strategy sampled 1 clients (out of 1)
+2026-03-13 18:32:58,054 - flwr - INFO - aggregate_evaluate: received 1 results and 0 failures
+2026-03-13 18:32:58,054 - STDOUT - INFO - [Round 2] Eval loss: 1.1208
+2026-03-13 18:32:58,054 - flwr - INFO - 
+2026-03-13 18:32:58,054 - flwr - INFO - [ROUND 3]
+2026-03-13 18:32:58,054 - flwr - INFO - configure_fit: strategy sampled 1 clients (out of 1)
+2026-03-13 18:32:58,096 - flwr - INFO - aggregate_fit: received 1 results and 0 failures
+2026-03-13 18:32:58,096 - STDOUT - INFO - 
+2026-03-13 18:32:58,096 - STDOUT - INFO - [Round 3] Aggregating 1 clients
+2026-03-13 18:32:58,655 - STDOUT - INFO - [Checkpoint] Saved /home/iratxe/Documentos/FLCORE/flcore/sandbox/experiment_xgb/checkpoints/xgboost_round_3.json
+2026-03-13 18:32:58,655 - STDOUT - INFO - [Round 3] Aggregation done.
+2026-03-13 18:32:58,655 - flwr - INFO - configure_evaluate: strategy sampled 1 clients (out of 1)
+2026-03-13 18:32:58,674 - flwr - INFO - aggregate_evaluate: received 1 results and 0 failures
+2026-03-13 18:32:58,674 - STDOUT - INFO - [Round 3] Eval loss: 1.1208
+2026-03-13 18:32:58,674 - flwr - INFO - 
+2026-03-13 18:32:58,674 - flwr - INFO - [SUMMARY]
+2026-03-13 18:32:58,674 - flwr - INFO - Run finished 3 round(s) in 1993.51s
+2026-03-13 18:32:58,675 - flwr - INFO - 	History (loss, distributed):
+2026-03-13 18:32:58,675 - flwr - INFO - 		round 1: 1.1207892894744873
+2026-03-13 18:32:58,675 - flwr - INFO - 		round 2: 1.120847463607788
+2026-03-13 18:32:58,675 - flwr - INFO - 		round 3: 1.1208266019821167
+2026-03-13 18:32:58,675 - flwr - INFO - 	History (metrics, distributed, fit):
+2026-03-13 18:32:58,675 - flwr - INFO - 	{'num_examples': [(1, 2309.0), (2, 2309.0), (3, 2309.0)],
+2026-03-13 18:32:58,675 - flwr - INFO - 	 'num_trees': [(1, 33.0), (2, 66.0), (3, 67.0)]}
+2026-03-13 18:32:58,675 - flwr - INFO - 	History (metrics, distributed, evaluate):
+2026-03-13 18:32:58,675 - flwr - INFO - 	{'accuracy': [(1, 0.3191919191919192),
+2026-03-13 18:32:58,675 - flwr - INFO - 	              (2, 0.3181818181818182),
+2026-03-13 18:32:58,675 - flwr - INFO - 	              (3, 0.32323232323232326)],
+2026-03-13 18:32:58,675 - flwr - INFO - 	 'f1_macro': [(1, 0.31849866855463854),
+2026-03-13 18:32:58,675 - flwr - INFO - 	              (2, 0.31732440877378104),
+2026-03-13 18:32:58,675 - flwr - INFO - 	              (3, 0.3225507754815319)],
+2026-03-13 18:32:58,675 - flwr - INFO - 	 'f1_weighted': [(1, 0.3182277658005686),
+2026-03-13 18:32:58,675 - flwr - INFO - 	                 (2, 0.3170359252126332),
+2026-03-13 18:32:58,675 - flwr - INFO - 	                 (3, 0.32231473779419634)],
+2026-03-13 18:32:58,675 - flwr - INFO - 	 'mlogloss': [(1, 1.1207893093427022),
+2026-03-13 18:32:58,675 - flwr - INFO - 	              (2, 1.120847466467607),
+2026-03-13 18:32:58,675 - flwr - INFO - 	              (3, 1.1208266601418004)]}
+2026-03-13 18:32:58,675 - flwr - INFO - 
+2026-03-13 18:32:58,677 - STDOUT - INFO - History (loss, distributed):
+2026-03-13 18:32:58,677 - STDOUT - INFO - 	round 1: 1.1207892894744873
+2026-03-13 18:32:58,677 - STDOUT - INFO - 	round 2: 1.120847463607788
+2026-03-13 18:32:58,678 - STDOUT - INFO - 	round 3: 1.1208266019821167
+2026-03-13 18:32:58,678 - STDOUT - INFO - History (metrics, distributed, fit):
+2026-03-13 18:32:58,678 - STDOUT - INFO - {'num_examples': [(1, 2309.0), (2, 2309.0), (3, 2309.0)],
+2026-03-13 18:32:58,678 - STDOUT - INFO -  'num_trees': [(1, 33.0), (2, 66.0), (3, 67.0)]}
+2026-03-13 18:32:58,678 - STDOUT - INFO - History (metrics, distributed, evaluate):
+2026-03-13 18:32:58,678 - STDOUT - INFO - {'accuracy': [(1, 0.3191919191919192),
+2026-03-13 18:32:58,678 - STDOUT - INFO -               (2, 0.3181818181818182),
+2026-03-13 18:32:58,678 - STDOUT - INFO -               (3, 0.32323232323232326)],
+2026-03-13 18:32:58,682 - STDOUT - INFO -  'f1_macro': [(1, 0.31849866855463854),
+2026-03-13 18:32:58,682 - STDOUT - INFO -               (2, 0.31732440877378104),
+2026-03-13 18:32:58,682 - STDOUT - INFO -               (3, 0.3225507754815319)],
+2026-03-13 18:32:58,682 - STDOUT - INFO -  'f1_weighted': [(1, 0.3182277658005686),
+2026-03-13 18:32:58,682 - STDOUT - INFO -                  (2, 0.3170359252126332),
+2026-03-13 18:32:58,682 - STDOUT - INFO -                  (3, 0.32231473779419634)],
+2026-03-13 18:32:58,682 - STDOUT - INFO -  'mlogloss': [(1, 1.1207893093427022),
+2026-03-13 18:32:58,682 - STDOUT - INFO -               (2, 1.120847466467607),
+2026-03-13 18:32:58,683 - STDOUT - INFO -               (3, 1.1208266601418004)]}

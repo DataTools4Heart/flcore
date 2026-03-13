@@ -1,0 +1,107 @@
+2026-03-13 18:32:57,132 - root - DEBUG - This will be logged to both the console and the file.
+2026-03-13 18:32:57,132 - root - DEBUG - This will be logged to both the console and the file.
+2026-03-13 18:32:57,313 - STDOUT - INFO - [Client] Detected categorical labels, encoding...
+2026-03-13 18:32:57,313 - STDOUT - INFO - [Client] Label mapping: {0: 'A', 1: 'B', 2: 'C'}
+2026-03-13 18:32:57,314 - STDOUT - INFO - [Client] Encoded labels - Train: [0 1 2], Test: [0 1 2]
+2026-03-13 18:32:57,599 - STDOUT - INFO - [Client] Data prepared as DMatrix
+2026-03-13 18:32:57,599 - STDOUT - INFO - [Client] Initialized
+2026-03-13 18:32:57,599 - STDOUT - INFO - [Client] Training samples: 2309
+2026-03-13 18:32:57,599 - STDOUT - INFO - [Client] Test samples: 990
+2026-03-13 18:32:57,599 - flwr - WARNING - DEPRECATED FEATURE: flwr.client.start_numpy_client() is deprecated. 
+	Instead, use `flwr.client.start_client()` by ensuring you first call the `.to_client()` method as shown below: 
+	flwr.client.start_client(
+		server_address='<IP>:<PORT>',
+		client=FlowerClient().to_client(), # <-- where FlowerClient is of type flwr.client.NumPyClient object
+	)
+	Using `start_numpy_client()` is deprecated.
+
+            This is a deprecated feature. It will be removed
+            entirely in future versions of Flower.
+        
+2026-03-13 18:32:57,599 - flwr - WARNING - DEPRECATED FEATURE: flwr.client.start_client() is deprecated.
+	Instead, use the `flower-supernode` CLI command to start a SuperNode as shown below:
+
+		$ flower-supernode --insecure --superlink='<IP>:<PORT>'
+
+	To view all available options, run:
+
+		$ flower-supernode --help
+
+	Using `start_client()` is deprecated.
+
+            This is a deprecated feature. It will be removed
+            entirely in future versions of Flower.
+        
+2026-03-13 18:32:57,599 - flwr - DEBUG - Using InMemoryObjectStore
+2026-03-13 18:32:57,625 - flwr - DEBUG - Opened insecure gRPC connection (no certificates were passed)
+2026-03-13 18:32:57,627 - flwr - DEBUG - ChannelConnectivity.IDLE
+2026-03-13 18:32:57,628 - flwr - DEBUG - ChannelConnectivity.CONNECTING
+2026-03-13 18:32:57,632 - flwr - DEBUG - ChannelConnectivity.READY
+2026-03-13 18:32:57,651 - flwr - INFO - 
+2026-03-13 18:32:57,651 - flwr - INFO - Received: train message 698f43af-73f6-4ca5-904e-0578091f4918
+2026-03-13 18:32:57,652 - STDOUT - INFO - 
+2026-03-13 18:32:57,652 - STDOUT - INFO - [Client] === Round 1 - FIT ===
+2026-03-13 18:32:57,652 - STDOUT - INFO - [Client] Method: bagging
+2026-03-13 18:32:57,652 - STDOUT - INFO - [Client] Local rounds: 33
+2026-03-13 18:32:57,652 - STDOUT - INFO - [Client] Training from scratch...
+2026-03-13 18:32:57,723 - STDOUT - INFO - [Client] Total trees in model: 33
+2026-03-13 18:32:57,723 - STDOUT - INFO - [Client] Sending all 33 trees
+2026-03-13 18:32:57,732 - STDOUT - INFO - [Client] Saved local model to sandbox/{"name": "experiment_xgb", "log_path": "logs", "debug": "True"}/models/xgboost_client__round_1.json
+2026-03-13 18:32:57,733 - flwr - INFO - Sent reply
+2026-03-13 18:32:57,938 - flwr - INFO - 
+2026-03-13 18:32:57,938 - flwr - INFO - Received: evaluate message 0c424372-92d4-4a25-8141-1bc3ff32001e
+2026-03-13 18:32:57,938 - STDOUT - INFO - 
+2026-03-13 18:32:57,938 - STDOUT - INFO - [Client] === Round 1 - EVALUATE ===
+2026-03-13 18:32:57,946 - STDOUT - INFO - [Client] Loaded global model with 33 trees
+2026-03-13 18:32:57,947 - STDOUT - INFO - [Client] Evaluation results: [32]	test-mlogloss:1.12078930934270216
+2026-03-13 18:32:57,952 - STDOUT - INFO - [Client] Metrics: {'mlogloss': 1.1207893093427022, 'accuracy': 0.3191919191919192, 'f1_macro': 0.31849866855463854, 'f1_weighted': 0.3182277658005686}
+2026-03-13 18:32:57,952 - STDOUT - INFO - [Client] Loss: 1.1208
+2026-03-13 18:32:57,953 - flwr - INFO - Sent reply
+2026-03-13 18:32:57,955 - flwr - INFO - 
+2026-03-13 18:32:57,955 - flwr - INFO - Received: train message 3cf59960-670d-45e8-b43d-25bad8de2f5e
+2026-03-13 18:32:57,956 - STDOUT - INFO - 
+2026-03-13 18:32:57,956 - STDOUT - INFO - [Client] === Round 2 - FIT ===
+2026-03-13 18:32:57,956 - STDOUT - INFO - [Client] Method: bagging
+2026-03-13 18:32:57,956 - STDOUT - INFO - [Client] Local rounds: 33
+2026-03-13 18:32:57,963 - STDOUT - INFO - [Client] Loaded global model with 33 trees
+2026-03-13 18:32:57,963 - STDOUT - INFO - [Client] Continuing training from global model...
+2026-03-13 18:32:57,987 - STDOUT - INFO - [Client] Trained 33 new trees (total: 66)
+2026-03-13 18:32:57,988 - STDOUT - INFO - [Client] Total trees in model: 66
+2026-03-13 18:32:57,988 - STDOUT - INFO - [Client] Sending last 33 trees (bagging mode)
+2026-03-13 18:32:57,998 - STDOUT - INFO - [Client] Saved local model to sandbox/{"name": "experiment_xgb", "log_path": "logs", "debug": "True"}/models/xgboost_client__round_2.json
+2026-03-13 18:32:57,999 - flwr - INFO - Sent reply
+2026-03-13 18:32:58,042 - flwr - INFO - 
+2026-03-13 18:32:58,042 - flwr - INFO - Received: evaluate message 3e24b50a-78a7-40df-a2c5-54be7211b901
+2026-03-13 18:32:58,042 - STDOUT - INFO - 
+2026-03-13 18:32:58,042 - STDOUT - INFO - [Client] === Round 2 - EVALUATE ===
+2026-03-13 18:32:58,049 - STDOUT - INFO - [Client] Loaded global model with 34 trees
+2026-03-13 18:32:58,050 - STDOUT - INFO - [Client] Evaluation results: [33]	test-mlogloss:1.12084746646760691
+2026-03-13 18:32:58,053 - STDOUT - INFO - [Client] Metrics: {'mlogloss': 1.120847466467607, 'accuracy': 0.3181818181818182, 'f1_macro': 0.31732440877378104, 'f1_weighted': 0.3170359252126332}
+2026-03-13 18:32:58,053 - STDOUT - INFO - [Client] Loss: 1.1208
+2026-03-13 18:32:58,053 - flwr - INFO - Sent reply
+2026-03-13 18:32:58,056 - flwr - INFO - 
+2026-03-13 18:32:58,056 - flwr - INFO - Received: train message b5c72b44-d621-4e8f-9839-6c87d50857b9
+2026-03-13 18:32:58,056 - STDOUT - INFO - 
+2026-03-13 18:32:58,056 - STDOUT - INFO - [Client] === Round 3 - FIT ===
+2026-03-13 18:32:58,056 - STDOUT - INFO - [Client] Method: bagging
+2026-03-13 18:32:58,056 - STDOUT - INFO - [Client] Local rounds: 33
+2026-03-13 18:32:58,063 - STDOUT - INFO - [Client] Loaded global model with 34 trees
+2026-03-13 18:32:58,063 - STDOUT - INFO - [Client] Continuing training from global model...
+2026-03-13 18:32:58,086 - STDOUT - INFO - [Client] Trained 33 new trees (total: 67)
+2026-03-13 18:32:58,086 - STDOUT - INFO - [Client] Total trees in model: 67
+2026-03-13 18:32:58,087 - STDOUT - INFO - [Client] Sending last 33 trees (bagging mode)
+2026-03-13 18:32:58,094 - STDOUT - INFO - [Client] Saved local model to sandbox/{"name": "experiment_xgb", "log_path": "logs", "debug": "True"}/models/xgboost_client__round_3.json
+2026-03-13 18:32:58,095 - flwr - INFO - Sent reply
+2026-03-13 18:32:58,658 - flwr - INFO - 
+2026-03-13 18:32:58,658 - flwr - INFO - Received: evaluate message 326bc667-d139-49b8-9c1a-f19c6a3b4952
+2026-03-13 18:32:58,658 - STDOUT - INFO - 
+2026-03-13 18:32:58,658 - STDOUT - INFO - [Client] === Round 3 - EVALUATE ===
+2026-03-13 18:32:58,667 - STDOUT - INFO - [Client] Loaded global model with 35 trees
+2026-03-13 18:32:58,668 - STDOUT - INFO - [Client] Evaluation results: [34]	test-mlogloss:1.12082666014180043
+2026-03-13 18:32:58,673 - STDOUT - INFO - [Client] Metrics: {'mlogloss': 1.1208266601418004, 'accuracy': 0.32323232323232326, 'f1_macro': 0.3225507754815319, 'f1_weighted': 0.32231473779419634}
+2026-03-13 18:32:58,673 - STDOUT - INFO - [Client] Loss: 1.1208
+2026-03-13 18:32:58,674 - flwr - INFO - Sent reply
+2026-03-13 18:32:58,676 - flwr - INFO - 
+2026-03-13 18:32:58,676 - flwr - INFO - Received: reconnect message 180d48dc-d172-41b5-a4bf-fda29aff8ba9
+2026-03-13 18:32:58,677 - flwr - DEBUG - gRPC channel closed
+2026-03-13 18:32:58,677 - flwr - INFO - Disconnect and shut down
