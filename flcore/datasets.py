@@ -14,9 +14,10 @@ import random
 
 from sklearn.datasets import load_svmlight_file
 from sklearn.preprocessing import OrdinalEncoder, MinMaxScaler,StandardScaler
-from sklearn.model_selection import KFold, StratifiedShuffleSplit, train_test_split
+from sklearn.model_selection import KFold, train_test_split
 from sklearn.utils import shuffle
 from sklearn.feature_selection import SelectKBest, f_classif
+from sklearn.model_selection import StratifiedShuffleSplit, ShuffleSplit
 
 
 #from flcore.models.xgb.utils import TreeDataset, do_fl_partitioning, get_dataloader
@@ -884,12 +885,29 @@ def load_dataset(config, id=None):
         return load_survival(config)
     else:
         raise ValueError("Invalid dataset name")
+  
+def get_partitions(n_splits, test_size, random_state, task):
 
-def get_stratifiedPartitions(n_splits,test_size, random_state):
-    sss = StratifiedShuffleSplit(n_splits=n_splits,test_size=test_size, random_state=random_state)
-    return sss
+    if task == "classification":
+        splitter = StratifiedShuffleSplit(
+            n_splits=n_splits,
+            test_size=test_size,
+            random_state=random_state
+        )
 
-def split_partitions(n_splits,test_size, random_state,X_data, y_data):
-    sss = get_stratifiedPartitions(n_splits,test_size, random_state)
-    splits_nested = (sss.split(X_data, y_data))
+    elif task == "regression":
+        splitter = ShuffleSplit(
+            n_splits=n_splits,
+            test_size=test_size,
+            random_state=random_state
+        )
+    else:
+        raise ValueError(f"Unknown task type: {task}")
+
+    return splitter
+
+
+def split_partitions(n_splits, test_size, random_state, X_data, y_data, task):
+    splitter = get_partitions(n_splits, test_size, random_state, task)
+    splits_nested = splitter.split(X_data, y_data)
     return splits_nested
