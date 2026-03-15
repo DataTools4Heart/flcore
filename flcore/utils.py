@@ -91,7 +91,7 @@ class StreamToLogger:
 
 def CheckClientConfig(config):
     # Compaibilidad de logistic regression y elastic net con sus parámetros
-    assert config["task"] in ["classification","regression","none"], "Task not valid"
+    assert config["task"] in ["classification","regression","none","survival"], "Task not valid"
 
     if config["model"] == "logistic_regression":
         if (config["task"] == "classification" or config["task"].lower() == "none"):
