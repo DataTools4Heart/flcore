@@ -16,7 +16,9 @@ import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import accuracy_score
-
+import json
+import joblib
+from pathlib import Path
 
 # Define Flower client
 class MnistClient(fl.client.NumPyClient):
@@ -143,6 +145,65 @@ class MnistClient(fl.client.NumPyClient):
 
         return loss, len(y_pred),  metrics
 
+    def save_model(self):
+        save_path = self.config["sandbox_path"]
+        save_path.mkdir(parents=True, exist_ok=True)
+        model_name = self.config["model"]+"_"+self.config["task"]
+        model_path = save_path / f"{model_name}_model.joblib"
+        joblib.dump(self.model, model_path)
+
+        data_metadata = json.load(open(self.config["metadata_file"], "r"))
+        entity = data_metadata.get("entries", {})[0]
+        features_list = entity.get("features", [])
+        outcomes_list = entity.get("outcomes", [])
+        dataset_stats = entity.get("datasetStats", {})
+        feature_stats = dataset_stats.get("featureStats", {})
+        outcome_stats = dataset_stats.get("outcomeStats", {})
+
+        all_features_meta = {f['name']: f for f in features_list}
+        all_outcomes_meta = {o['name']: o for o in outcomes_list}
+
+        for f_name, f_meta in all_features_meta.items():
+            stats = feature_stats.get(f_name, {})
+            f_meta['stats'] = stats
+
+        for o_name, o_meta in all_outcomes_meta.items():
+            stats = outcome_stats.get(o_name, {})
+            o_meta['stats'] = stats
+
+        features_meta = {}
+        for label in self.config["train_labels"]:
+            if label in all_features_meta:
+                features_meta[label] = all_features_meta[label]
+            elif label in all_outcomes_meta:
+                features_meta[label] = all_outcomes_meta[label]
+
+        outcomes_meta = {}
+        for label in self.config["target_labels"]:
+            if label in all_outcomes_meta:
+                outcomes_meta[label] = all_outcomes_meta[label]
+            elif label in all_features_meta:
+                outcomes_meta[label] = all_features_meta[label]
+
+#>>> features_meta["patient_demographics_age"]["stats"]["min"]
+        metadata = {
+            "node_name": self.config["node_name"],
+            "task": self.config["task"],
+            "n_out": self.config["n_out"],
+            "n_out": self.config["n_feats"],
+            "model_type": self.config["model"],
+            "feature_names": self.config["train_labels"],
+            "target_names":self.config["target_labels"],
+            "metrics": getattr(self, "last_metrics", None),
+            "features_meta": features_meta,
+            "outcomes_meta": outcomes_meta
+        }
+
+        metadata_path = save_path / f"{model_name}_model_metadata.json"
+        with open(metadata_path, "w") as f:
+            json.dump(metadata, f, indent=4)
+
+        print(f"Model and metadata saved for inference at {save_path}")
 
 def get_client(config,data) -> fl.client.Client:
     return MnistClient(data,config)
