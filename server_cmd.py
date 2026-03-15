@@ -210,6 +210,9 @@ if __name__ == "__main__":
                 metric_value = history.metrics_centralized[metric][best_round][1]
             if type(metric_value) in [int, float, numpy.float64]:
                 f.write(f"{metric} {metric_value:.4f} \n")
+# Compile the results
+compile_results(experiment_dir)
+"""
 
 dict_history = {}
 history = history.__dict__
@@ -230,6 +233,3 @@ for logs in history.keys():
 with open(experiment_dir / "history.yaml", "w") as f:
     yaml.dump(history, f)
 
-# Compile the results
-compile_results(experiment_dir)
-"""
