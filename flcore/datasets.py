@@ -759,62 +759,103 @@ def load_survival(config):
     # ********* * * * * *  *  *   *   *    *   *  *  *  * * * * *
 
     from sksurv.util import Surv
-    metadata_file = Path(config['metadata_file'])
-    metadata = pd.read_json(metadata_file)
-    features = [mdt['name'] for mdt in metadata['entity']['features']]
-    nominal_features = [mdt['name'] for mdt in metadata['entity']['features'] if mdt['dataType'] == 'NOMINAL']
-    data_file = Path(config['data_file'])
 
-    time_col = config['survival']['time_col']
-    event_col = config['survival']['event_col']
+    metadata_file = Path(config["metadata_file"])
+
+    with open(metadata_file) as f:
+        metadata = json.load(f)
+
+    entry = metadata["entries"][0]
+
+    features_meta = entry["features"]
+    outcomes_meta = entry["outcomes"]
+
+    features = [f["name"] for f in features_meta]
+
+    nominal_features = [
+        f["name"]
+        for f in features_meta
+        if f["dataType"] == "NOMINAL"
+    ]
+
+    time_col = config["survival"]["time_col"]
+    event_col = config["survival"]["event_col"]
 
     if time_col is None or event_col is None:
-        if 'outcomes' in metadata['entity'].keys():
-            outcomes = metadata['entity']['outcomes']
-        elif 'foutcomes' in metadata['entity'].keys():
-            outcomes = metadata['entity']['foutcomes']
-        else:
-            raise KeyError("outcomes/foutcomes key not found in metadata")
-        
+
         if time_col is None:
-            time_feature_candidates = [outcome['name'] for outcome in outcomes
-                                    if outcome['dataType'] == 'NUMERIC']
-            time_col = random.sample(time_feature_candidates, 1)[0]
+            time_feature_candidates = [
+                o["name"]
+                for o in outcomes_meta
+                if o["dataType"] == "NUMERIC"
+            ]
+
+            if len(time_feature_candidates) == 0:
+                raise ValueError("No NUMERIC outcome available for survival time")
+
+            time_col = random.choice(time_feature_candidates)
 
         if event_col is None:
-            event_feature_candidates = [outcome['name'] for outcome in outcomes
-                                    if outcome['dataType'] == 'BOOLEAN']
-            event_col = random.sample(event_feature_candidates, 1)[0]
+            event_feature_candidates = [
+                o["name"]
+                for o in outcomes_meta
+                if o["dataType"] == "BOOLEAN"
+            ]
+
+            if len(event_feature_candidates) == 0:
+                raise ValueError("No BOOLEAN outcome available for survival event")
+
+            event_col = random.choice(event_feature_candidates)
+
+    data_file = Path(config["data_file"])
 
     df = pd.read_parquet(data_file)[[*features, time_col, event_col]]
-    df[features[0]] *= random.uniform(0.7, 1.4)  #! slight random change to CHECK
+
+    df[features[0]] *= random.uniform(0.7, 1.4)
 
     df_clean = df.replace({None: np.nan}).dropna()
-    if config['survival']['negative_duration_strategy'] == "remove":
+
+    strategy = config["survival"]["negative_duration_strategy"]
+
+    if strategy == "remove":
         df_clean = df_clean[df_clean[time_col] >= 0].copy()
-    elif config['survival']['negative_duration_strategy'] == "shift":
+
+    elif strategy == "shift":
         min_time = df_clean[time_col].min()
         if min_time < 0:
             df_clean[time_col] = df_clean[time_col] - min_time
-    elif config['survival']['negative_duration_strategy'] == "clip":
+
+    elif strategy == "clip":
         df_clean[time_col] = df_clean[time_col].clip(lower=0)
+
     else:
-        raise ValueError(f"Unknown negative_duration_strategy: {config['survival']['negative_duration_strategy']}")
+        raise ValueError(f"Unknown negative_duration_strategy: {strategy}")
+
     df_clean = df_clean.reset_index(drop=True)
-    
-    X = df_clean.drop(columns=[time_col, event_col])
-    X = X.copy()
+
+    X = df_clean.drop(columns=[time_col, event_col]).copy()
+
     X[nominal_features] = X[nominal_features].fillna("missing")
-    X_encoded = pd.get_dummies(X, columns=nominal_features, drop_first=True)
-    #! SAFEGUARD: Ensure all data is numeric after encoding
+
+    X_encoded = pd.get_dummies(
+        X,
+        columns=nominal_features,
+        drop_first=True
+    )
+
     X_encoded = X_encoded.apply(pd.to_numeric, errors="coerce")
+
     if X_encoded.isna().any().any():
         print("Numeric coercion introduced NaNs:")
         print(X_encoded.isna().sum()[X_encoded.isna().sum() > 0])
+
     y_struct = Surv.from_dataframe(event_col, time_col, df_clean)
 
     X_train, X_test, y_train, y_test = train_test_split(
-        X_encoded, y_struct, test_size=1 - config['train_size']
+        X_encoded,
+        y_struct,
+        test_size=1 - config["train_size"],
+        random_state=config.get("seed", 42)
     )
 
     return (X_train, y_train), (X_test, y_test), time_col, event_col
