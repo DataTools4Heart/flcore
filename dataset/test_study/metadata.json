@@ -1,0 +1,3258 @@
+{
+    "entries": [
+        {
+            "features": [
+                {
+                    "name": "encounters_encounterClass",
+                    "dataType": "NOMINAL"
+                },
+                {
+                    "name": "encounters_admissionYear",
+                    "dataType": "NOMINAL"
+                },
+                {
+                    "name": "patient_demographics_gender",
+                    "dataType": "NOMINAL"
+                },
+                {
+                    "name": "patient_demographics_age",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "vital_signs_weight_value_last",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "vital_signs_weight_value_max",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "vital_signs_weight_value_avg",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "vital_signs_weight_value_min",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "vital_signs_weight_value_first",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "vital_signs_weight_value_stddev",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "vital_signs_height_value_last",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "vital_signs_height_value_max",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "vital_signs_height_value_avg",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "vital_signs_height_value_min",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "vital_signs_height_value_first",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "vital_signs_height_value_stddev",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "vital_signs_systolicBp_value_last",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "vital_signs_systolicBp_value_max",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "vital_signs_systolicBp_value_avg",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "vital_signs_systolicBp_value_min",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "vital_signs_systolicBp_value_first",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "vital_signs_systolicBp_value_stddev",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "vital_signs_diastolicBp_value_last",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "vital_signs_diastolicBp_value_max",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "vital_signs_diastolicBp_value_avg",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "vital_signs_diastolicBp_value_min",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "vital_signs_diastolicBp_value_first",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "vital_signs_diastolicBp_value_stddev",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "vital_signs_heartRate_value_last",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "vital_signs_heartRate_value_max",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "vital_signs_heartRate_value_avg",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "vital_signs_heartRate_value_min",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "vital_signs_heartRate_value_first",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "vital_signs_heartRate_value_stddev",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "vital_signs_oxygenSaturation_value_last",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "vital_signs_oxygenSaturation_value_max",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "vital_signs_oxygenSaturation_value_avg",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "vital_signs_oxygenSaturation_value_min",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "vital_signs_oxygenSaturation_value_first",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "vital_signs_oxygenSaturation_value_stddev",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_hemoglobin_value_avg",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_hemoglobin_value_last",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_hemoglobin_value_min",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_hemoglobin_value_stddev",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_hemoglobin_value_first",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_hemoglobin_value_max",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_ferritin_value_avg",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_ferritin_value_last",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_ferritin_value_min",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_ferritin_value_stddev",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_ferritin_value_first",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_ferritin_value_max",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_tfs_value_avg",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_tfs_value_last",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_tfs_value_min",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_tfs_value_stddev",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_tfs_value_first",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_tfs_value_max",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_ntProBnp_value_avg",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_ntProBnp_value_last",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_ntProBnp_value_min",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_ntProBnp_value_stddev",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_ntProBnp_value_first",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_ntProBnp_value_max",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_bnp_value_avg",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_bnp_value_last",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_bnp_value_min",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_bnp_value_stddev",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_bnp_value_first",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_bnp_value_max",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_crpHs_value_avg",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_crpHs_value_last",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_crpHs_value_min",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_crpHs_value_stddev",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_crpHs_value_first",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_crpHs_value_max",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_crpNonHs_value_avg",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_crpNonHs_value_last",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_crpNonHs_value_min",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_crpNonHs_value_stddev",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_crpNonHs_value_first",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_crpNonHs_value_max",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_tropIHs_value_avg",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_tropIHs_value_last",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_tropIHs_value_min",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_tropIHs_value_stddev",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_tropIHs_value_first",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_tropIHs_value_max",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_tropInHs_value_avg",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_tropInHs_value_last",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_tropInHs_value_min",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_tropInHs_value_stddev",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_tropInHs_value_first",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_tropInHs_value_max",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_tropTHs_value_avg",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_tropTHs_value_last",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_tropTHs_value_min",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_tropTHs_value_stddev",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_tropTHs_value_first",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_tropTHs_value_max",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_tropTnHs_value_avg",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_tropTnHs_value_last",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_tropTnHs_value_min",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_tropTnHs_value_stddev",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_tropTnHs_value_first",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_tropTnHs_value_max",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_triGly_value_avg",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_triGly_value_last",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_triGly_value_min",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_triGly_value_stddev",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_triGly_value_first",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_triGly_value_max",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_cholTot_value_avg",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_cholTot_value_last",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_cholTot_value_min",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_cholTot_value_stddev",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_cholTot_value_first",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_cholTot_value_max",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_hdl_value_avg",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_hdl_value_last",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_hdl_value_min",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_hdl_value_stddev",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_hdl_value_first",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_hdl_value_max",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_ldl_value_avg",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_ldl_value_last",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_ldl_value_min",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_ldl_value_stddev",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_ldl_value_first",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_ldl_value_max",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_potassium_value_avg",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_potassium_value_last",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_potassium_value_min",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_potassium_value_stddev",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_potassium_value_first",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_potassium_value_max",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_sodium_value_avg",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_sodium_value_last",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_sodium_value_min",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_sodium_value_stddev",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_sodium_value_first",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_sodium_value_max",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_creatBS_value_avg",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_creatBS_value_last",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_creatBS_value_min",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_creatBS_value_stddev",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_creatBS_value_first",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_creatBS_value_max",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_creatUS_value_avg",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_creatUS_value_last",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_creatUS_value_min",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_creatUS_value_stddev",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_creatUS_value_first",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_creatUS_value_max",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_albuminBS_value_avg",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_albuminBS_value_last",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_albuminBS_value_min",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_albuminBS_value_stddev",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_albuminBS_value_first",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_albuminBS_value_max",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_albuminUS_value_avg",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_albuminUS_value_last",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_albuminUS_value_min",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_albuminUS_value_stddev",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_albuminUS_value_first",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_albuminUS_value_max",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_eGFR_value_avg",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_eGFR_value_last",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_eGFR_value_min",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_eGFR_value_stddev",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_eGFR_value_first",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_eGFR_value_max",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_bun_value_avg",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_bun_value_last",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_bun_value_min",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_bun_value_stddev",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_bun_value_first",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_bun_value_max",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_acr_value_avg",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_acr_value_last",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_acr_value_min",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_acr_value_stddev",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_acr_value_first",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_acr_value_max",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_hba1c%_value_avg",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_hba1c%_value_last",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_hba1c%_value_min",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_hba1c%_value_stddev",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_hba1c%_value_first",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_hba1c%_value_max",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_hba1c_value_avg",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_hba1c_value_last",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_hba1c_value_min",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_hba1c_value_stddev",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_hba1c_value_first",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "lab_results_hba1c_value_max",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "symptoms_Ankle swelling_display_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "symptoms_Ascites_display_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "symptoms_Breathlessness_display_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "symptoms_Cardiac murmur_display_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "symptoms_Chest pain_display_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "symptoms_Cheyne-stokes respiration_display_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "symptoms_Depression_display_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "symptoms_Dizziness_display_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "symptoms_Elevated jugular venous pressure_display_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "symptoms_Fatigue_display_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "symptoms_Hepatojugular reflux_display_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "symptoms_Hepatomegaly_display_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "symptoms_Intermittent claudication_display_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "symptoms_Irregular pulse_display_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "symptoms_Loss of appetite_display_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "symptoms_Nocturnal cough_display_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "symptoms_Oliguria_display_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "symptoms_Orthopnoea_display_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "symptoms_Palpitations_display_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "symptoms_Paroxysmal nocturnal dyspnea_display_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "symptoms_Peripheral edema_display_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "symptoms_Pleural effusion_display_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "symptoms_Pulmonary crepitations_display_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "symptoms_Reduced exercise tolerance_display_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "symptoms_Syncope_display_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "symptoms_Tachycardia_display_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "symptoms_Tachypnoea_display_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "symptoms_Third heart sound_display_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "symptoms_Weight gain_display_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "symptoms_Weight loss_display_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "echocardiographs_lvef",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "electrocardiographs_ecg_qrs_duration",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "electrocardiographs_ecg_qrs_axis",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "electrocardiographs_ecg_qt_duration_corrected",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "electrocardiographs_ecg_st",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "electrocardiographs_ecg_ischemia_without_st",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "electrocardiographs_ecg_type_of_rhythm",
+                    "dataType": "NOMINAL"
+                },
+                {
+                    "name": "smoking_status_smoker_last",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "smoking_status_totalSmokingDuration_sum",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "smoking_status_startTime_count",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "smoking_status_formerSmoker_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "nyha_value",
+                    "dataType": "NOMINAL"
+                },
+                {
+                    "name": "hyperkalemia_severity_categorizedValue",
+                    "dataType": "NOMINAL"
+                },
+                {
+                    "name": "ckd_severity_categorizedValue",
+                    "dataType": "NOMINAL"
+                },
+                {
+                    "name": "conditions_heartFailure_earliest_first",
+                    "dataType": "NOMINAL"
+                },
+                {
+                    "name": "conditions_heartFailure_timeFromEarliest_first",
+                    "dataType": "NUMERIC"
+                },
+                {
+                    "name": "conditions_ap_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "conditions_af_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "conditions_cm_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "conditions_dysl_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "conditions_hf_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "conditions_hyp_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "conditions_ihd_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "conditions_mi_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "conditions_pad_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "conditions_stroke_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "conditions_tia_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "conditions_vd_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "conditions_revasc_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "conditions_devices_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "conditions_aidshiv_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "conditions_copd_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "conditions_diabetes_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "conditions_dem_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "conditions_dep_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "conditions_dia_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "conditions_hthyroid_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "conditions_ibd_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "conditions_ld_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "conditions_mc_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "conditions_osa_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "conditions_rd_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "conditions_ckd_chronic_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "med_rasi_used_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "med_arni_used_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "med_acei_used_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "med_arb_used_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "med_mra_used_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "med_diuretics_used_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "med_diuretics_loop_used_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "med_anti_coag_used_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "med_anti_plat_used_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "med_thrombolytic_used_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "med_bb_used_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "med_ccb_used_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "med_digitalis_used_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "med_antiarrhytmic_used_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "med_inotropes_used_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "med_vasodil_used_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "med_platelet_used_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "med_ll_used_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "med_ivabradine_used_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "med_potassium_binders_used_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "med_insulins_used_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "med_oral_antidiabetic_used_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "med_ari_used_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "med_rdoad_used_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "med_rdoad_syst_used_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "med_cortico_syst_used_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "med_antiinfl_used_any",
+                    "dataType": "BOOLEAN"
+                }
+            ],
+            "outcomes": [
+                {
+                    "name": "encounters_hosp_for_heart_failure_f_w7d_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "encounters_hosp_for_heart_failure_f_w1mo_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "encounters_hosp_for_heart_failure_f_w3mo_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "encounters_hosp_for_heart_failure_f_w6mo_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "encounters_hosp_for_heart_failure_f_w1a_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "encounters_hosp_for_heart_failure_f_w3a_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "encounters_hosp_for_heart_failure_f_w5a_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "encounters_hosp_for_CV_disease_f_w7d_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "encounters_hosp_for_CV_disease_f_w1mo_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "encounters_hosp_for_CV_disease_f_w3mo_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "encounters_hosp_for_CV_disease_f_w6mo_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "encounters_hosp_for_CV_disease_f_w1a_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "encounters_hosp_for_CV_disease_f_w3a_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "encounters_hosp_for_CV_disease_f_w5a_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "encounters_hosp_for_non_cv_disease_f_w7d_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "encounters_hosp_for_non_cv_disease_f_w1mo_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "encounters_hosp_for_non_cv_disease_f_w3mo_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "encounters_hosp_for_non_cv_disease_f_w6mo_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "encounters_hosp_for_non_cv_disease_f_w1a_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "encounters_hosp_for_non_cv_disease_f_w3a_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "encounters_hosp_for_non_cv_disease_f_w5a_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "encounters_hosp_for_renal_complications_f_w7d_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "encounters_hosp_for_renal_complications_f_w1mo_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "encounters_hosp_for_renal_complications_f_w3mo_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "encounters_hosp_for_renal_complications_f_w6mo_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "encounters_hosp_for_renal_complications_f_w1a_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "encounters_hosp_for_renal_complications_f_w3a_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "encounters_hosp_for_renal_complications_f_w5a_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "cause_of_death_isCardivascular_f_w7d_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "cause_of_death_isCardivascular_f_w1mo_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "cause_of_death_isCardivascular_f_w3mo_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "cause_of_death_isCardivascular_f_w6mo_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "cause_of_death_isCardivascular_f_w1a_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "cause_of_death_isCardivascular_f_w3a_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "cause_of_death_isCardivascular_f_w5a_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "cause_of_death_isRenal_f_w7d_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "cause_of_death_isRenal_f_w1mo_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "cause_of_death_isRenal_f_w3mo_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "cause_of_death_isRenal_f_w6mo_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "cause_of_death_isRenal_f_w1a_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "cause_of_death_isRenal_f_w3a_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "cause_of_death_isRenal_f_w5a_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "cause_of_death_isNonRenalAndNonCV_f_w7d_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "cause_of_death_isNonRenalAndNonCV_f_w1mo_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "cause_of_death_isNonRenalAndNonCV_f_w3mo_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "cause_of_death_isNonRenalAndNonCV_f_w6mo_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "cause_of_death_isNonRenalAndNonCV_f_w1a_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "cause_of_death_isNonRenalAndNonCV_f_w3a_any",
+                    "dataType": "BOOLEAN"
+                },
+                {
+                    "name": "cause_of_death_isNonRenalAndNonCV_f_w5a_any",
+                    "dataType": "BOOLEAN"
+                }
+            ],
+            "datasetStats": {
+                "featureStats": {
+                    "encounters_encounterClass": {
+                        "numOfNotNull": 3299,
+                        "valueSet": [
+                            "AMB",
+                            "IMP"
+                        ],
+                        "cardinalityPerItem": {
+                            "AMB": 3220,
+                            "IMP": 79
+                        }
+                    },
+                    "encounters_admissionYear": {
+                        "numOfNotNull": 3299,
+                        "valueSet": [
+                            "2000",
+                            "2001",
+                            "2002",
+                            "2003",
+                            "2004",
+                            "2005",
+                            "2006",
+                            "2007",
+                            "2008",
+                            "2009",
+                            "2010",
+                            "2011",
+                            "2012",
+                            "2013",
+                            "2014",
+                            "2015",
+                            "2016",
+                            "2017",
+                            "2018",
+                            "2019",
+                            "2020",
+                            "2021",
+                            "2022",
+                            "2023"
+                        ],
+                        "cardinalityPerItem": {
+                            "2000": 5,
+                            "2001": 29,
+                            "2002": 104,
+                            "2003": 93,
+                            "2004": 89,
+                            "2005": 101,
+                            "2006": 88,
+                            "2007": 128,
+                            "2008": 90,
+                            "2009": 145,
+                            "2010": 170,
+                            "2011": 132,
+                            "2012": 149,
+                            "2013": 104,
+                            "2014": 275,
+                            "2015": 276,
+                            "2016": 208,
+                            "2017": 120,
+                            "2018": 197,
+                            "2019": 127,
+                            "2020": 92,
+                            "2021": 231,
+                            "2022": 167,
+                            "2023": 179
+                        }
+                    },
+                    "patient_demographics_gender": {
+                        "numOfNotNull": 3299,
+                        "valueSet": [
+                            "female",
+                            "male"
+                        ],
+                        "cardinalityPerItem": {
+                            "female": 2715,
+                            "male": 584
+                        }
+                    },
+                    "patient_demographics_age": {
+                        "numOfNotNull": 3299,
+                        "min": 25,
+                        "max": 84,
+                        "avg": 63.87359806001819,
+                        "q1": 54,
+                        "q2": 64,
+                        "q3": 72
+                    },
+                    "vital_signs_weight_value_last": {
+                        "numOfNotNull": 78,
+                        "min": 0.0,
+                        "max": 105.0,
+                        "avg": 71.53846153846153,
+                        "q1": 62.0,
+                        "q2": 68.0,
+                        "q3": 84.0
+                    },
+                    "vital_signs_weight_value_max": {
+                        "numOfNotNull": 78,
+                        "min": 0.0,
+                        "max": 105.0,
+                        "avg": 71.53846153846153,
+                        "q1": 62.0,
+                        "q2": 68.0,
+                        "q3": 84.0
+                    },
+                    "vital_signs_weight_value_avg": {
+                        "numOfNotNull": 78,
+                        "min": 0.0,
+                        "max": 105.0,
+                        "avg": 71.53846153846153,
+                        "q1": 62.0,
+                        "q2": 68.0,
+                        "q3": 84.0
+                    },
+                    "vital_signs_weight_value_min": {
+                        "numOfNotNull": 78,
+                        "min": 0.0,
+                        "max": 105.0,
+                        "avg": 71.53846153846153,
+                        "q1": 62.0,
+                        "q2": 68.0,
+                        "q3": 84.0
+                    },
+                    "vital_signs_weight_value_first": {
+                        "numOfNotNull": 78,
+                        "min": 0.0,
+                        "max": 105.0,
+                        "avg": 71.53846153846153,
+                        "q1": 62.0,
+                        "q2": 68.0,
+                        "q3": 84.0
+                    },
+                    "vital_signs_weight_value_stddev": {
+                        "numOfNotNull": 0
+                    },
+                    "vital_signs_height_value_last": {
+                        "numOfNotNull": 78,
+                        "min": 0.0,
+                        "max": 194.0,
+                        "avg": 166.5,
+                        "q1": 165.0,
+                        "q2": 171.0,
+                        "q3": 174.0
+                    },
+                    "vital_signs_height_value_max": {
+                        "numOfNotNull": 78,
+                        "min": 0.0,
+                        "max": 194.0,
+                        "avg": 166.5,
+                        "q1": 165.0,
+                        "q2": 171.0,
+                        "q3": 174.0
+                    },
+                    "vital_signs_height_value_avg": {
+                        "numOfNotNull": 78,
+                        "min": 0.0,
+                        "max": 194.0,
+                        "avg": 166.5,
+                        "q1": 165.0,
+                        "q2": 171.0,
+                        "q3": 174.0
+                    },
+                    "vital_signs_height_value_min": {
+                        "numOfNotNull": 78,
+                        "min": 0.0,
+                        "max": 194.0,
+                        "avg": 166.5,
+                        "q1": 165.0,
+                        "q2": 171.0,
+                        "q3": 174.0
+                    },
+                    "vital_signs_height_value_first": {
+                        "numOfNotNull": 78,
+                        "min": 0.0,
+                        "max": 194.0,
+                        "avg": 166.5,
+                        "q1": 165.0,
+                        "q2": 171.0,
+                        "q3": 174.0
+                    },
+                    "vital_signs_height_value_stddev": {
+                        "numOfNotNull": 0
+                    },
+                    "vital_signs_systolicBp_value_last": {
+                        "numOfNotNull": 0
+                    },
+                    "vital_signs_systolicBp_value_max": {
+                        "numOfNotNull": 0
+                    },
+                    "vital_signs_systolicBp_value_avg": {
+                        "numOfNotNull": 0
+                    },
+                    "vital_signs_systolicBp_value_min": {
+                        "numOfNotNull": 0
+                    },
+                    "vital_signs_systolicBp_value_first": {
+                        "numOfNotNull": 0
+                    },
+                    "vital_signs_systolicBp_value_stddev": {
+                        "numOfNotNull": 0
+                    },
+                    "vital_signs_diastolicBp_value_last": {
+                        "numOfNotNull": 0
+                    },
+                    "vital_signs_diastolicBp_value_max": {
+                        "numOfNotNull": 0
+                    },
+                    "vital_signs_diastolicBp_value_avg": {
+                        "numOfNotNull": 0
+                    },
+                    "vital_signs_diastolicBp_value_min": {
+                        "numOfNotNull": 0
+                    },
+                    "vital_signs_diastolicBp_value_first": {
+                        "numOfNotNull": 0
+                    },
+                    "vital_signs_diastolicBp_value_stddev": {
+                        "numOfNotNull": 0
+                    },
+                    "vital_signs_heartRate_value_last": {
+                        "numOfNotNull": 0
+                    },
+                    "vital_signs_heartRate_value_max": {
+                        "numOfNotNull": 0
+                    },
+                    "vital_signs_heartRate_value_avg": {
+                        "numOfNotNull": 0
+                    },
+                    "vital_signs_heartRate_value_min": {
+                        "numOfNotNull": 0
+                    },
+                    "vital_signs_heartRate_value_first": {
+                        "numOfNotNull": 0
+                    },
+                    "vital_signs_heartRate_value_stddev": {
+                        "numOfNotNull": 0
+                    },
+                    "vital_signs_oxygenSaturation_value_last": {
+                        "numOfNotNull": 0
+                    },
+                    "vital_signs_oxygenSaturation_value_max": {
+                        "numOfNotNull": 0
+                    },
+                    "vital_signs_oxygenSaturation_value_avg": {
+                        "numOfNotNull": 0
+                    },
+                    "vital_signs_oxygenSaturation_value_min": {
+                        "numOfNotNull": 0
+                    },
+                    "vital_signs_oxygenSaturation_value_first": {
+                        "numOfNotNull": 0
+                    },
+                    "vital_signs_oxygenSaturation_value_stddev": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_hemoglobin_value_avg": {
+                        "numOfNotNull": 387,
+                        "min": 6.5,
+                        "max": 16.4,
+                        "avg": 11.649095607235152,
+                        "q1": 10.1,
+                        "q2": 11.7,
+                        "q3": 13.5
+                    },
+                    "lab_results_hemoglobin_value_last": {
+                        "numOfNotNull": 387,
+                        "min": 6.5,
+                        "max": 16.4,
+                        "avg": 11.649095607235152,
+                        "q1": 10.1,
+                        "q2": 11.7,
+                        "q3": 13.5
+                    },
+                    "lab_results_hemoglobin_value_min": {
+                        "numOfNotNull": 387,
+                        "min": 6.5,
+                        "max": 16.4,
+                        "avg": 11.649095607235152,
+                        "q1": 10.1,
+                        "q2": 11.7,
+                        "q3": 13.5
+                    },
+                    "lab_results_hemoglobin_value_stddev": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_hemoglobin_value_first": {
+                        "numOfNotNull": 387,
+                        "min": 6.5,
+                        "max": 16.4,
+                        "avg": 11.649095607235152,
+                        "q1": 10.1,
+                        "q2": 11.7,
+                        "q3": 13.5
+                    },
+                    "lab_results_hemoglobin_value_max": {
+                        "numOfNotNull": 387,
+                        "min": 6.5,
+                        "max": 16.4,
+                        "avg": 11.649095607235152,
+                        "q1": 10.1,
+                        "q2": 11.7,
+                        "q3": 13.5
+                    },
+                    "lab_results_ferritin_value_avg": {
+                        "numOfNotNull": 13,
+                        "min": 69.9,
+                        "max": 2000.0,
+                        "avg": 1469.6230769230772,
+                        "q1": 489.7,
+                        "q2": 2000.0,
+                        "q3": 2000.0
+                    },
+                    "lab_results_ferritin_value_last": {
+                        "numOfNotNull": 13,
+                        "min": 69.9,
+                        "max": 2000.0,
+                        "avg": 1469.6230769230772,
+                        "q1": 489.7,
+                        "q2": 2000.0,
+                        "q3": 2000.0
+                    },
+                    "lab_results_ferritin_value_min": {
+                        "numOfNotNull": 13,
+                        "min": 69.9,
+                        "max": 2000.0,
+                        "avg": 1469.6230769230772,
+                        "q1": 489.7,
+                        "q2": 2000.0,
+                        "q3": 2000.0
+                    },
+                    "lab_results_ferritin_value_stddev": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_ferritin_value_first": {
+                        "numOfNotNull": 13,
+                        "min": 69.9,
+                        "max": 2000.0,
+                        "avg": 1469.6230769230772,
+                        "q1": 489.7,
+                        "q2": 2000.0,
+                        "q3": 2000.0
+                    },
+                    "lab_results_ferritin_value_max": {
+                        "numOfNotNull": 13,
+                        "min": 69.9,
+                        "max": 2000.0,
+                        "avg": 1469.6230769230772,
+                        "q1": 489.7,
+                        "q2": 2000.0,
+                        "q3": 2000.0
+                    },
+                    "lab_results_tfs_value_avg": {
+                        "numOfNotNull": 13,
+                        "min": 0.86,
+                        "max": 2.56,
+                        "avg": 1.5799999999999998,
+                        "q1": 1.21,
+                        "q2": 1.36,
+                        "q3": 1.94
+                    },
+                    "lab_results_tfs_value_last": {
+                        "numOfNotNull": 13,
+                        "min": 0.86,
+                        "max": 2.56,
+                        "avg": 1.5799999999999998,
+                        "q1": 1.21,
+                        "q2": 1.36,
+                        "q3": 1.94
+                    },
+                    "lab_results_tfs_value_min": {
+                        "numOfNotNull": 13,
+                        "min": 0.86,
+                        "max": 2.56,
+                        "avg": 1.5799999999999998,
+                        "q1": 1.21,
+                        "q2": 1.36,
+                        "q3": 1.94
+                    },
+                    "lab_results_tfs_value_stddev": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_tfs_value_first": {
+                        "numOfNotNull": 13,
+                        "min": 0.86,
+                        "max": 2.56,
+                        "avg": 1.5799999999999998,
+                        "q1": 1.21,
+                        "q2": 1.36,
+                        "q3": 1.94
+                    },
+                    "lab_results_tfs_value_max": {
+                        "numOfNotNull": 13,
+                        "min": 0.86,
+                        "max": 2.56,
+                        "avg": 1.5799999999999998,
+                        "q1": 1.21,
+                        "q2": 1.36,
+                        "q3": 1.94
+                    },
+                    "lab_results_ntProBnp_value_avg": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_ntProBnp_value_last": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_ntProBnp_value_min": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_ntProBnp_value_stddev": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_ntProBnp_value_first": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_ntProBnp_value_max": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_bnp_value_avg": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_bnp_value_last": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_bnp_value_min": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_bnp_value_stddev": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_bnp_value_first": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_bnp_value_max": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_crpHs_value_avg": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_crpHs_value_last": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_crpHs_value_min": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_crpHs_value_stddev": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_crpHs_value_first": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_crpHs_value_max": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_crpNonHs_value_avg": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_crpNonHs_value_last": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_crpNonHs_value_min": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_crpNonHs_value_stddev": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_crpNonHs_value_first": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_crpNonHs_value_max": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_tropIHs_value_avg": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_tropIHs_value_last": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_tropIHs_value_min": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_tropIHs_value_stddev": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_tropIHs_value_first": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_tropIHs_value_max": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_tropInHs_value_avg": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_tropInHs_value_last": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_tropInHs_value_min": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_tropInHs_value_stddev": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_tropInHs_value_first": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_tropInHs_value_max": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_tropTHs_value_avg": {
+                        "numOfNotNull": 1,
+                        "min": 0.009,
+                        "max": 0.009,
+                        "avg": 0.009,
+                        "q1": 0.009,
+                        "q2": 0.009,
+                        "q3": 0.009
+                    },
+                    "lab_results_tropTHs_value_last": {
+                        "numOfNotNull": 1,
+                        "min": 0.009,
+                        "max": 0.009,
+                        "avg": 0.009,
+                        "q1": 0.009,
+                        "q2": 0.009,
+                        "q3": 0.009
+                    },
+                    "lab_results_tropTHs_value_min": {
+                        "numOfNotNull": 1,
+                        "min": 0.009,
+                        "max": 0.009,
+                        "avg": 0.009,
+                        "q1": 0.009,
+                        "q2": 0.009,
+                        "q3": 0.009
+                    },
+                    "lab_results_tropTHs_value_stddev": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_tropTHs_value_first": {
+                        "numOfNotNull": 1,
+                        "min": 0.009,
+                        "max": 0.009,
+                        "avg": 0.009,
+                        "q1": 0.009,
+                        "q2": 0.009,
+                        "q3": 0.009
+                    },
+                    "lab_results_tropTHs_value_max": {
+                        "numOfNotNull": 1,
+                        "min": 0.009,
+                        "max": 0.009,
+                        "avg": 0.009,
+                        "q1": 0.009,
+                        "q2": 0.009,
+                        "q3": 0.009
+                    },
+                    "lab_results_tropTnHs_value_avg": {
+                        "numOfNotNull": 13,
+                        "min": 4.0,
+                        "max": 24.0,
+                        "avg": 10.846153846153847,
+                        "q1": 7.0,
+                        "q2": 9.0,
+                        "q3": 16.0
+                    },
+                    "lab_results_tropTnHs_value_last": {
+                        "numOfNotNull": 13,
+                        "min": 4.0,
+                        "max": 24.0,
+                        "avg": 10.846153846153847,
+                        "q1": 7.0,
+                        "q2": 9.0,
+                        "q3": 16.0
+                    },
+                    "lab_results_tropTnHs_value_min": {
+                        "numOfNotNull": 13,
+                        "min": 4.0,
+                        "max": 24.0,
+                        "avg": 10.846153846153847,
+                        "q1": 7.0,
+                        "q2": 9.0,
+                        "q3": 16.0
+                    },
+                    "lab_results_tropTnHs_value_stddev": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_tropTnHs_value_first": {
+                        "numOfNotNull": 13,
+                        "min": 4.0,
+                        "max": 24.0,
+                        "avg": 10.846153846153847,
+                        "q1": 7.0,
+                        "q2": 9.0,
+                        "q3": 16.0
+                    },
+                    "lab_results_tropTnHs_value_max": {
+                        "numOfNotNull": 13,
+                        "min": 4.0,
+                        "max": 24.0,
+                        "avg": 10.846153846153847,
+                        "q1": 7.0,
+                        "q2": 9.0,
+                        "q3": 16.0
+                    },
+                    "lab_results_triGly_value_avg": {
+                        "numOfNotNull": 41,
+                        "min": 0.55,
+                        "max": 2.69,
+                        "avg": 1.1699999999999997,
+                        "q1": 0.9,
+                        "q2": 1.16,
+                        "q3": 1.31
+                    },
+                    "lab_results_triGly_value_last": {
+                        "numOfNotNull": 41,
+                        "min": 0.55,
+                        "max": 2.69,
+                        "avg": 1.1699999999999997,
+                        "q1": 0.9,
+                        "q2": 1.16,
+                        "q3": 1.31
+                    },
+                    "lab_results_triGly_value_min": {
+                        "numOfNotNull": 41,
+                        "min": 0.55,
+                        "max": 2.69,
+                        "avg": 1.1699999999999997,
+                        "q1": 0.9,
+                        "q2": 1.16,
+                        "q3": 1.31
+                    },
+                    "lab_results_triGly_value_stddev": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_triGly_value_first": {
+                        "numOfNotNull": 41,
+                        "min": 0.55,
+                        "max": 2.69,
+                        "avg": 1.1699999999999997,
+                        "q1": 0.9,
+                        "q2": 1.16,
+                        "q3": 1.31
+                    },
+                    "lab_results_triGly_value_max": {
+                        "numOfNotNull": 41,
+                        "min": 0.55,
+                        "max": 2.69,
+                        "avg": 1.1699999999999997,
+                        "q1": 0.9,
+                        "q2": 1.16,
+                        "q3": 1.31
+                    },
+                    "lab_results_cholTot_value_avg": {
+                        "numOfNotNull": 43,
+                        "min": 2.37,
+                        "max": 8.64,
+                        "avg": 5.07767441860465,
+                        "q1": 4.26,
+                        "q2": 4.97,
+                        "q3": 5.84
+                    },
+                    "lab_results_cholTot_value_last": {
+                        "numOfNotNull": 43,
+                        "min": 2.37,
+                        "max": 8.64,
+                        "avg": 5.07767441860465,
+                        "q1": 4.26,
+                        "q2": 4.97,
+                        "q3": 5.84
+                    },
+                    "lab_results_cholTot_value_min": {
+                        "numOfNotNull": 43,
+                        "min": 2.37,
+                        "max": 8.64,
+                        "avg": 5.07767441860465,
+                        "q1": 4.26,
+                        "q2": 4.97,
+                        "q3": 5.84
+                    },
+                    "lab_results_cholTot_value_stddev": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_cholTot_value_first": {
+                        "numOfNotNull": 43,
+                        "min": 2.37,
+                        "max": 8.64,
+                        "avg": 5.07767441860465,
+                        "q1": 4.26,
+                        "q2": 4.97,
+                        "q3": 5.84
+                    },
+                    "lab_results_cholTot_value_max": {
+                        "numOfNotNull": 43,
+                        "min": 2.37,
+                        "max": 8.64,
+                        "avg": 5.07767441860465,
+                        "q1": 4.26,
+                        "q2": 4.97,
+                        "q3": 5.84
+                    },
+                    "lab_results_hdl_value_avg": {
+                        "numOfNotNull": 38,
+                        "min": 0.83,
+                        "max": 2.07,
+                        "avg": 1.5005263157894735,
+                        "q1": 1.36,
+                        "q2": 1.53,
+                        "q3": 1.75
+                    },
+                    "lab_results_hdl_value_last": {
+                        "numOfNotNull": 38,
+                        "min": 0.83,
+                        "max": 2.07,
+                        "avg": 1.5005263157894735,
+                        "q1": 1.36,
+                        "q2": 1.53,
+                        "q3": 1.75
+                    },
+                    "lab_results_hdl_value_min": {
+                        "numOfNotNull": 38,
+                        "min": 0.83,
+                        "max": 2.07,
+                        "avg": 1.5005263157894735,
+                        "q1": 1.36,
+                        "q2": 1.53,
+                        "q3": 1.75
+                    },
+                    "lab_results_hdl_value_stddev": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_hdl_value_first": {
+                        "numOfNotNull": 38,
+                        "min": 0.83,
+                        "max": 2.07,
+                        "avg": 1.5005263157894735,
+                        "q1": 1.36,
+                        "q2": 1.53,
+                        "q3": 1.75
+                    },
+                    "lab_results_hdl_value_max": {
+                        "numOfNotNull": 38,
+                        "min": 0.83,
+                        "max": 2.07,
+                        "avg": 1.5005263157894735,
+                        "q1": 1.36,
+                        "q2": 1.53,
+                        "q3": 1.75
+                    },
+                    "lab_results_ldl_value_avg": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_ldl_value_last": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_ldl_value_min": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_ldl_value_stddev": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_ldl_value_first": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_ldl_value_max": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_potassium_value_avg": {
+                        "numOfNotNull": 336,
+                        "min": 0.0,
+                        "max": 6.8,
+                        "avg": 4.361904761904759,
+                        "q1": 4.0,
+                        "q2": 4.3,
+                        "q3": 4.7
+                    },
+                    "lab_results_potassium_value_last": {
+                        "numOfNotNull": 336,
+                        "min": 0.0,
+                        "max": 6.8,
+                        "avg": 4.361904761904759,
+                        "q1": 4.0,
+                        "q2": 4.3,
+                        "q3": 4.7
+                    },
+                    "lab_results_potassium_value_min": {
+                        "numOfNotNull": 336,
+                        "min": 0.0,
+                        "max": 6.8,
+                        "avg": 4.361904761904759,
+                        "q1": 4.0,
+                        "q2": 4.3,
+                        "q3": 4.7
+                    },
+                    "lab_results_potassium_value_stddev": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_potassium_value_first": {
+                        "numOfNotNull": 336,
+                        "min": 0.0,
+                        "max": 6.8,
+                        "avg": 4.361904761904759,
+                        "q1": 4.0,
+                        "q2": 4.3,
+                        "q3": 4.7
+                    },
+                    "lab_results_potassium_value_max": {
+                        "numOfNotNull": 336,
+                        "min": 0.0,
+                        "max": 6.8,
+                        "avg": 4.361904761904759,
+                        "q1": 4.0,
+                        "q2": 4.3,
+                        "q3": 4.7
+                    },
+                    "lab_results_sodium_value_avg": {
+                        "numOfNotNull": 336,
+                        "min": 123.0,
+                        "max": 146.0,
+                        "avg": 137.55357142857142,
+                        "q1": 135.0,
+                        "q2": 138.0,
+                        "q3": 140.0
+                    },
+                    "lab_results_sodium_value_last": {
+                        "numOfNotNull": 336,
+                        "min": 123.0,
+                        "max": 146.0,
+                        "avg": 137.55357142857142,
+                        "q1": 135.0,
+                        "q2": 138.0,
+                        "q3": 140.0
+                    },
+                    "lab_results_sodium_value_min": {
+                        "numOfNotNull": 336,
+                        "min": 123.0,
+                        "max": 146.0,
+                        "avg": 137.55357142857142,
+                        "q1": 135.0,
+                        "q2": 138.0,
+                        "q3": 140.0
+                    },
+                    "lab_results_sodium_value_stddev": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_sodium_value_first": {
+                        "numOfNotNull": 336,
+                        "min": 123.0,
+                        "max": 146.0,
+                        "avg": 137.55357142857142,
+                        "q1": 135.0,
+                        "q2": 138.0,
+                        "q3": 140.0
+                    },
+                    "lab_results_sodium_value_max": {
+                        "numOfNotNull": 336,
+                        "min": 123.0,
+                        "max": 146.0,
+                        "avg": 137.55357142857142,
+                        "q1": 135.0,
+                        "q2": 138.0,
+                        "q3": 140.0
+                    },
+                    "lab_results_creatBS_value_avg": {
+                        "numOfNotNull": 326,
+                        "min": 4.7502,
+                        "max": 157.3221,
+                        "avg": 17.815678527607353,
+                        "q1": 8.1432,
+                        "q2": 9.6135,
+                        "q3": 11.8755
+                    },
+                    "lab_results_creatBS_value_last": {
+                        "numOfNotNull": 326,
+                        "min": 4.7502,
+                        "max": 157.3221,
+                        "avg": 17.815678527607353,
+                        "q1": 8.1432,
+                        "q2": 9.6135,
+                        "q3": 11.8755
+                    },
+                    "lab_results_creatBS_value_min": {
+                        "numOfNotNull": 326,
+                        "min": 4.7502,
+                        "max": 157.3221,
+                        "avg": 17.815678527607353,
+                        "q1": 8.1432,
+                        "q2": 9.6135,
+                        "q3": 11.8755
+                    },
+                    "lab_results_creatBS_value_stddev": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_creatBS_value_first": {
+                        "numOfNotNull": 326,
+                        "min": 4.7502,
+                        "max": 157.3221,
+                        "avg": 17.815678527607353,
+                        "q1": 8.1432,
+                        "q2": 9.6135,
+                        "q3": 11.8755
+                    },
+                    "lab_results_creatBS_value_max": {
+                        "numOfNotNull": 326,
+                        "min": 4.7502,
+                        "max": 157.3221,
+                        "avg": 17.815678527607353,
+                        "q1": 8.1432,
+                        "q2": 9.6135,
+                        "q3": 11.8755
+                    },
+                    "lab_results_creatUS_value_avg": {
+                        "numOfNotNull": 11,
+                        "min": 452.48,
+                        "max": 678.72,
+                        "avg": 549.1461818181818,
+                        "q1": 463.792,
+                        "q2": 520.352,
+                        "q3": 633.472
+                    },
+                    "lab_results_creatUS_value_last": {
+                        "numOfNotNull": 11,
+                        "min": 452.48,
+                        "max": 678.72,
+                        "avg": 549.1461818181818,
+                        "q1": 463.792,
+                        "q2": 520.352,
+                        "q3": 633.472
+                    },
+                    "lab_results_creatUS_value_min": {
+                        "numOfNotNull": 11,
+                        "min": 452.48,
+                        "max": 678.72,
+                        "avg": 549.1461818181818,
+                        "q1": 463.792,
+                        "q2": 520.352,
+                        "q3": 633.472
+                    },
+                    "lab_results_creatUS_value_stddev": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_creatUS_value_first": {
+                        "numOfNotNull": 11,
+                        "min": 452.48,
+                        "max": 678.72,
+                        "avg": 549.1461818181818,
+                        "q1": 463.792,
+                        "q2": 520.352,
+                        "q3": 633.472
+                    },
+                    "lab_results_creatUS_value_max": {
+                        "numOfNotNull": 11,
+                        "min": 452.48,
+                        "max": 678.72,
+                        "avg": 549.1461818181818,
+                        "q1": 463.792,
+                        "q2": 520.352,
+                        "q3": 633.472
+                    },
+                    "lab_results_albuminBS_value_avg": {
+                        "numOfNotNull": 69,
+                        "min": 2.54e7,
+                        "max": 5.11e7,
+                        "avg": 3.866376811594203e7,
+                        "q1": 3.37e7,
+                        "q2": 3.81e7,
+                        "q3": 4.43e7
+                    },
+                    "lab_results_albuminBS_value_last": {
+                        "numOfNotNull": 69,
+                        "min": 2.54e7,
+                        "max": 5.11e7,
+                        "avg": 3.866376811594203e7,
+                        "q1": 3.37e7,
+                        "q2": 3.81e7,
+                        "q3": 4.43e7
+                    },
+                    "lab_results_albuminBS_value_min": {
+                        "numOfNotNull": 69,
+                        "min": 2.54e7,
+                        "max": 5.11e7,
+                        "avg": 3.866376811594203e7,
+                        "q1": 3.37e7,
+                        "q2": 3.81e7,
+                        "q3": 4.43e7
+                    },
+                    "lab_results_albuminBS_value_stddev": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_albuminBS_value_first": {
+                        "numOfNotNull": 69,
+                        "min": 2.54e7,
+                        "max": 5.11e7,
+                        "avg": 3.866376811594203e7,
+                        "q1": 3.37e7,
+                        "q2": 3.81e7,
+                        "q3": 4.43e7
+                    },
+                    "lab_results_albuminBS_value_max": {
+                        "numOfNotNull": 69,
+                        "min": 2.54e7,
+                        "max": 5.11e7,
+                        "avg": 3.866376811594203e7,
+                        "q1": 3.37e7,
+                        "q2": 3.81e7,
+                        "q3": 4.43e7
+                    },
+                    "lab_results_albuminUS_value_avg": {
+                        "numOfNotNull": 4,
+                        "min": 3000.0,
+                        "max": 284600.0,
+                        "avg": 186325.0,
+                        "q1": 3000.0,
+                        "q2": 180000.0,
+                        "q3": 277700.0
+                    },
+                    "lab_results_albuminUS_value_last": {
+                        "numOfNotNull": 4,
+                        "min": 3000.0,
+                        "max": 284600.0,
+                        "avg": 186325.0,
+                        "q1": 3000.0,
+                        "q2": 180000.0,
+                        "q3": 277700.0
+                    },
+                    "lab_results_albuminUS_value_min": {
+                        "numOfNotNull": 4,
+                        "min": 3000.0,
+                        "max": 284600.0,
+                        "avg": 186325.0,
+                        "q1": 3000.0,
+                        "q2": 180000.0,
+                        "q3": 277700.0
+                    },
+                    "lab_results_albuminUS_value_stddev": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_albuminUS_value_first": {
+                        "numOfNotNull": 4,
+                        "min": 3000.0,
+                        "max": 284600.0,
+                        "avg": 186325.0,
+                        "q1": 3000.0,
+                        "q2": 180000.0,
+                        "q3": 277700.0
+                    },
+                    "lab_results_albuminUS_value_max": {
+                        "numOfNotNull": 4,
+                        "min": 3000.0,
+                        "max": 284600.0,
+                        "avg": 186325.0,
+                        "q1": 3000.0,
+                        "q2": 180000.0,
+                        "q3": 277700.0
+                    },
+                    "lab_results_eGFR_value_avg": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_eGFR_value_last": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_eGFR_value_min": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_eGFR_value_stddev": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_eGFR_value_first": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_eGFR_value_max": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_bun_value_avg": {
+                        "numOfNotNull": 343,
+                        "min": 0.9366,
+                        "max": 19.2672,
+                        "avg": 3.451493877551022,
+                        "q1": 2.3192,
+                        "q2": 2.8544,
+                        "q3": 3.7464
+                    },
+                    "lab_results_bun_value_last": {
+                        "numOfNotNull": 343,
+                        "min": 0.9366,
+                        "max": 19.2672,
+                        "avg": 3.451493877551022,
+                        "q1": 2.3192,
+                        "q2": 2.8544,
+                        "q3": 3.7464
+                    },
+                    "lab_results_bun_value_min": {
+                        "numOfNotNull": 343,
+                        "min": 0.9366,
+                        "max": 19.2672,
+                        "avg": 3.451493877551022,
+                        "q1": 2.3192,
+                        "q2": 2.8544,
+                        "q3": 3.7464
+                    },
+                    "lab_results_bun_value_stddev": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_bun_value_first": {
+                        "numOfNotNull": 343,
+                        "min": 0.9366,
+                        "max": 19.2672,
+                        "avg": 3.451493877551022,
+                        "q1": 2.3192,
+                        "q2": 2.8544,
+                        "q3": 3.7464
+                    },
+                    "lab_results_bun_value_max": {
+                        "numOfNotNull": 343,
+                        "min": 0.9366,
+                        "max": 19.2672,
+                        "avg": 3.451493877551022,
+                        "q1": 2.3192,
+                        "q2": 2.8544,
+                        "q3": 3.7464
+                    },
+                    "lab_results_acr_value_avg": {
+                        "numOfNotNull": 4,
+                        "min": 4.425,
+                        "max": 572.595,
+                        "avg": 333.20250000000004,
+                        "q1": 4.425,
+                        "q2": 346.035,
+                        "q3": 409.755
+                    },
+                    "lab_results_acr_value_last": {
+                        "numOfNotNull": 4,
+                        "min": 4.425,
+                        "max": 572.595,
+                        "avg": 333.20250000000004,
+                        "q1": 4.425,
+                        "q2": 346.035,
+                        "q3": 409.755
+                    },
+                    "lab_results_acr_value_min": {
+                        "numOfNotNull": 4,
+                        "min": 4.425,
+                        "max": 572.595,
+                        "avg": 333.20250000000004,
+                        "q1": 4.425,
+                        "q2": 346.035,
+                        "q3": 409.755
+                    },
+                    "lab_results_acr_value_stddev": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_acr_value_first": {
+                        "numOfNotNull": 4,
+                        "min": 4.425,
+                        "max": 572.595,
+                        "avg": 333.20250000000004,
+                        "q1": 4.425,
+                        "q2": 346.035,
+                        "q3": 409.755
+                    },
+                    "lab_results_acr_value_max": {
+                        "numOfNotNull": 4,
+                        "min": 4.425,
+                        "max": 572.595,
+                        "avg": 333.20250000000004,
+                        "q1": 4.425,
+                        "q2": 346.035,
+                        "q3": 409.755
+                    },
+                    "lab_results_hba1c%_value_avg": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_hba1c%_value_last": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_hba1c%_value_min": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_hba1c%_value_stddev": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_hba1c%_value_first": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_hba1c%_value_max": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_hba1c_value_avg": {
+                        "numOfNotNull": 29,
+                        "min": 4.803490712782505,
+                        "max": 7.9144798243206145,
+                        "avg": 6.280106234283353,
+                        "q1": 5.992986549547076,
+                        "q2": 6.175985909049318,
+                        "q3": 6.724983987556044
+                    },
+                    "lab_results_hba1c_value_last": {
+                        "numOfNotNull": 29,
+                        "min": 4.803490712782505,
+                        "max": 7.9144798243206145,
+                        "avg": 6.280106234283353,
+                        "q1": 5.992986549547076,
+                        "q2": 6.175985909049318,
+                        "q3": 6.724983987556044
+                    },
+                    "lab_results_hba1c_value_min": {
+                        "numOfNotNull": 29,
+                        "min": 4.803490712782505,
+                        "max": 7.9144798243206145,
+                        "avg": 6.280106234283353,
+                        "q1": 5.992986549547076,
+                        "q2": 6.175985909049318,
+                        "q3": 6.724983987556044
+                    },
+                    "lab_results_hba1c_value_stddev": {
+                        "numOfNotNull": 0
+                    },
+                    "lab_results_hba1c_value_first": {
+                        "numOfNotNull": 29,
+                        "min": 4.803490712782505,
+                        "max": 7.9144798243206145,
+                        "avg": 6.280106234283353,
+                        "q1": 5.992986549547076,
+                        "q2": 6.175985909049318,
+                        "q3": 6.724983987556044
+                    },
+                    "lab_results_hba1c_value_max": {
+                        "numOfNotNull": 29,
+                        "min": 4.803490712782505,
+                        "max": 7.9144798243206145,
+                        "avg": 6.280106234283353,
+                        "q1": 5.992986549547076,
+                        "q2": 6.175985909049318,
+                        "q3": 6.724983987556044
+                    },
+                    "symptoms_Ankle swelling_display_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "symptoms_Ascites_display_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "symptoms_Breathlessness_display_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "symptoms_Cardiac murmur_display_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "symptoms_Chest pain_display_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "symptoms_Cheyne-stokes respiration_display_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "symptoms_Depression_display_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "symptoms_Dizziness_display_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "symptoms_Elevated jugular venous pressure_display_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "symptoms_Fatigue_display_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "symptoms_Hepatojugular reflux_display_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "symptoms_Hepatomegaly_display_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "symptoms_Intermittent claudication_display_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "symptoms_Irregular pulse_display_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "symptoms_Loss of appetite_display_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "symptoms_Nocturnal cough_display_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "symptoms_Oliguria_display_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "symptoms_Orthopnoea_display_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "symptoms_Palpitations_display_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "symptoms_Paroxysmal nocturnal dyspnea_display_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "symptoms_Peripheral edema_display_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "symptoms_Pleural effusion_display_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "symptoms_Pulmonary crepitations_display_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "symptoms_Reduced exercise tolerance_display_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "symptoms_Syncope_display_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "symptoms_Tachycardia_display_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "symptoms_Tachypnoea_display_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "symptoms_Third heart sound_display_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "symptoms_Weight gain_display_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "symptoms_Weight loss_display_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "echocardiographs_lvef": {
+                        "numOfNotNull": 115,
+                        "min": 36.0,
+                        "max": 70.0,
+                        "avg": 45.36173911716627,
+                        "q1": 36.0,
+                        "q2": 36.0,
+                        "q3": 60.0
+                    },
+                    "electrocardiographs_ecg_qrs_duration": {
+                        "numOfNotNull": 0
+                    },
+                    "electrocardiographs_ecg_qrs_axis": {
+                        "numOfNotNull": 0
+                    },
+                    "electrocardiographs_ecg_qt_duration_corrected": {
+                        "numOfNotNull": 0
+                    },
+                    "electrocardiographs_ecg_st": {
+                        "numOfNotNull": 0
+                    },
+                    "electrocardiographs_ecg_ischemia_without_st": {
+                        "numOfNotNull": 0
+                    },
+                    "electrocardiographs_ecg_type_of_rhythm": {
+                        "numOfNotNull": 0,
+                        "valueSet": [],
+                        "cardinalityPerItem": {}
+                    },
+                    "smoking_status_smoker_last": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "smoking_status_totalSmokingDuration_sum": {
+                        "numOfNotNull": 3299,
+                        "min": 0,
+                        "max": 0,
+                        "avg": 0.0,
+                        "q1": 0,
+                        "q2": 0,
+                        "q3": 0
+                    },
+                    "smoking_status_startTime_count": {
+                        "numOfNotNull": 3299,
+                        "min": 0,
+                        "max": 0,
+                        "avg": 0.0,
+                        "q1": 0,
+                        "q2": 0,
+                        "q3": 0
+                    },
+                    "smoking_status_formerSmoker_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "nyha_value": {
+                        "numOfNotNull": 0,
+                        "valueSet": [],
+                        "cardinalityPerItem": {}
+                    },
+                    "hyperkalemia_severity_categorizedValue": {
+                        "numOfNotNull": 336,
+                        "valueSet": [
+                            "mild",
+                            "moderate",
+                            "normal",
+                            "severe"
+                        ],
+                        "cardinalityPerItem": {
+                            "mild": 22,
+                            "moderate": 16,
+                            "normal": 295,
+                            "severe": 3
+                        }
+                    },
+                    "ckd_severity_categorizedValue": {
+                        "numOfNotNull": 0,
+                        "valueSet": [],
+                        "cardinalityPerItem": {}
+                    },
+                    "conditions_heartFailure_earliest_first": {
+                        "numOfNotNull": 561,
+                        "valueSet": [
+                            "I11.0"
+                        ],
+                        "cardinalityPerItem": {
+                            "I11.0": 561
+                        }
+                    },
+                    "conditions_heartFailure_timeFromEarliest_first": {
+                        "numOfNotNull": 3299,
+                        "min": 0,
+                        "max": 264,
+                        "avg": 21.828432858441953,
+                        "q1": 0,
+                        "q2": 0,
+                        "q3": 0
+                    },
+                    "conditions_ap_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 4
+                    },
+                    "conditions_af_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 301
+                    },
+                    "conditions_cm_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "conditions_dysl_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 1054
+                    },
+                    "conditions_hf_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 561
+                    },
+                    "conditions_hyp_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 1395
+                    },
+                    "conditions_ihd_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 11
+                    },
+                    "conditions_mi_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "conditions_pad_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 672
+                    },
+                    "conditions_stroke_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 323
+                    },
+                    "conditions_tia_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 83
+                    },
+                    "conditions_vd_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 280
+                    },
+                    "conditions_revasc_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "conditions_devices_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 183
+                    },
+                    "conditions_aidshiv_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "conditions_copd_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 381
+                    },
+                    "conditions_diabetes_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 331
+                    },
+                    "conditions_dem_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "conditions_dep_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "conditions_dia_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 458
+                    },
+                    "conditions_hthyroid_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 529
+                    },
+                    "conditions_ibd_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 2
+                    },
+                    "conditions_ld_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "conditions_mc_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 516
+                    },
+                    "conditions_osa_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "conditions_rd_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 544
+                    },
+                    "conditions_ckd_chronic_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 567
+                    },
+                    "med_rasi_used_any": {
+                        "numOfNotNull": 43,
+                        "numOfTrue": 12
+                    },
+                    "med_arni_used_any": {
+                        "numOfNotNull": 43,
+                        "numOfTrue": 0
+                    },
+                    "med_acei_used_any": {
+                        "numOfNotNull": 43,
+                        "numOfTrue": 8
+                    },
+                    "med_arb_used_any": {
+                        "numOfNotNull": 43,
+                        "numOfTrue": 4
+                    },
+                    "med_mra_used_any": {
+                        "numOfNotNull": 43,
+                        "numOfTrue": 0
+                    },
+                    "med_diuretics_used_any": {
+                        "numOfNotNull": 43,
+                        "numOfTrue": 3
+                    },
+                    "med_diuretics_loop_used_any": {
+                        "numOfNotNull": 43,
+                        "numOfTrue": 2
+                    },
+                    "med_anti_coag_used_any": {
+                        "numOfNotNull": 43,
+                        "numOfTrue": 0
+                    },
+                    "med_anti_plat_used_any": {
+                        "numOfNotNull": 43,
+                        "numOfTrue": 0
+                    },
+                    "med_thrombolytic_used_any": {
+                        "numOfNotNull": 43,
+                        "numOfTrue": 0
+                    },
+                    "med_bb_used_any": {
+                        "numOfNotNull": 43,
+                        "numOfTrue": 3
+                    },
+                    "med_ccb_used_any": {
+                        "numOfNotNull": 43,
+                        "numOfTrue": 3
+                    },
+                    "med_digitalis_used_any": {
+                        "numOfNotNull": 43,
+                        "numOfTrue": 1
+                    },
+                    "med_antiarrhytmic_used_any": {
+                        "numOfNotNull": 43,
+                        "numOfTrue": 0
+                    },
+                    "med_inotropes_used_any": {
+                        "numOfNotNull": 43,
+                        "numOfTrue": 0
+                    },
+                    "med_vasodil_used_any": {
+                        "numOfNotNull": 43,
+                        "numOfTrue": 0
+                    },
+                    "med_platelet_used_any": {
+                        "numOfNotNull": 43,
+                        "numOfTrue": 2
+                    },
+                    "med_ll_used_any": {
+                        "numOfNotNull": 43,
+                        "numOfTrue": 6
+                    },
+                    "med_ivabradine_used_any": {
+                        "numOfNotNull": 43,
+                        "numOfTrue": 0
+                    },
+                    "med_potassium_binders_used_any": {
+                        "numOfNotNull": 43,
+                        "numOfTrue": 0
+                    },
+                    "med_insulins_used_any": {
+                        "numOfNotNull": 43,
+                        "numOfTrue": 0
+                    },
+                    "med_oral_antidiabetic_used_any": {
+                        "numOfNotNull": 43,
+                        "numOfTrue": 3
+                    },
+                    "med_ari_used_any": {
+                        "numOfNotNull": 43,
+                        "numOfTrue": 0
+                    },
+                    "med_rdoad_used_any": {
+                        "numOfNotNull": 43,
+                        "numOfTrue": 3
+                    },
+                    "med_rdoad_syst_used_any": {
+                        "numOfNotNull": 43,
+                        "numOfTrue": 1
+                    },
+                    "med_cortico_syst_used_any": {
+                        "numOfNotNull": 43,
+                        "numOfTrue": 0
+                    },
+                    "med_antiinfl_used_any": {
+                        "numOfNotNull": 43,
+                        "numOfTrue": 12
+                    }
+                },
+                "outcomeStats": {
+                    "encounters_hosp_for_heart_failure_f_w7d_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "encounters_hosp_for_heart_failure_f_w1mo_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "encounters_hosp_for_heart_failure_f_w3mo_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "encounters_hosp_for_heart_failure_f_w6mo_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "encounters_hosp_for_heart_failure_f_w1a_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "encounters_hosp_for_heart_failure_f_w3a_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "encounters_hosp_for_heart_failure_f_w5a_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "encounters_hosp_for_CV_disease_f_w7d_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "encounters_hosp_for_CV_disease_f_w1mo_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "encounters_hosp_for_CV_disease_f_w3mo_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "encounters_hosp_for_CV_disease_f_w6mo_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "encounters_hosp_for_CV_disease_f_w1a_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "encounters_hosp_for_CV_disease_f_w3a_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "encounters_hosp_for_CV_disease_f_w5a_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "encounters_hosp_for_non_cv_disease_f_w7d_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "encounters_hosp_for_non_cv_disease_f_w1mo_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "encounters_hosp_for_non_cv_disease_f_w3mo_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "encounters_hosp_for_non_cv_disease_f_w6mo_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "encounters_hosp_for_non_cv_disease_f_w1a_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "encounters_hosp_for_non_cv_disease_f_w3a_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "encounters_hosp_for_non_cv_disease_f_w5a_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "encounters_hosp_for_renal_complications_f_w7d_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "encounters_hosp_for_renal_complications_f_w1mo_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "encounters_hosp_for_renal_complications_f_w3mo_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "encounters_hosp_for_renal_complications_f_w6mo_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "encounters_hosp_for_renal_complications_f_w1a_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "encounters_hosp_for_renal_complications_f_w3a_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "encounters_hosp_for_renal_complications_f_w5a_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "cause_of_death_isCardivascular_f_w7d_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "cause_of_death_isCardivascular_f_w1mo_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "cause_of_death_isCardivascular_f_w3mo_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "cause_of_death_isCardivascular_f_w6mo_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "cause_of_death_isCardivascular_f_w1a_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "cause_of_death_isCardivascular_f_w3a_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "cause_of_death_isCardivascular_f_w5a_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "cause_of_death_isRenal_f_w7d_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "cause_of_death_isRenal_f_w1mo_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "cause_of_death_isRenal_f_w3mo_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "cause_of_death_isRenal_f_w6mo_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "cause_of_death_isRenal_f_w1a_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "cause_of_death_isRenal_f_w3a_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "cause_of_death_isRenal_f_w5a_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "cause_of_death_isNonRenalAndNonCV_f_w7d_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "cause_of_death_isNonRenalAndNonCV_f_w1mo_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "cause_of_death_isNonRenalAndNonCV_f_w3mo_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "cause_of_death_isNonRenalAndNonCV_f_w6mo_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "cause_of_death_isNonRenalAndNonCV_f_w1a_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "cause_of_death_isNonRenalAndNonCV_f_w3a_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    },
+                    "cause_of_death_isNonRenalAndNonCV_f_w5a_any": {
+                        "numOfNotNull": 3299,
+                        "numOfTrue": 0
+                    }
+                }
+            }
+        }
+    ]
+}
