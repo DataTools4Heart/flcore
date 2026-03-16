@@ -29,8 +29,8 @@ if __name__ == "__main__":
     parser.add_argument("--dataset", type=str, default="dt4h_format", help="Dataloader to use")
     parser.add_argument("--data_id", type=str, default="data_id.parquet" , help="Dataset ID")
     parser.add_argument("--normalization_method",type=str, default="IQR", help="Type of normalization: IQR STD MIN_MAX")
-    parser.add_argument("--train_labels", type=str, nargs='+', default=None, help="Dataloader to use")
-    parser.add_argument("--target_labels", type=str, nargs='+', default=None, help="Dataloader to use")
+    parser.add_argument("--train_labels", type=str, nargs='+', default=[], help="Dataloader to use")
+    parser.add_argument("--target_labels", type=str, nargs='+', default=[], help="Dataloader to use")
     parser.add_argument("--train_size", type=float, default=0.7, help="Fraction of dataset to use for training. [0,1)")
     parser.add_argument("--validation_size", type=float, default=0.2, help="Fraction of dataset to use for validation. [0,1)")
     parser.add_argument("--test_size", type=float, default=0.1, help="Fraction of dataset to use for testing. [0,1)")
@@ -78,8 +78,9 @@ if __name__ == "__main__":
     parser.add_argument("--train_method", type=str, default="bagging", help="Train method: bagging, cyclic")
     parser.add_argument("--eta", type=float, default=0.1, help="ETA value")
     # # Survival
-    parser.add_argument("--time_col", type=str, default="time", help="")
-    parser.add_argument("--event_col", type=str, default="event", help="")
+    parser.add_argument("--time_col", type=str, default=None, help="")
+    parser.add_argument("--event_col", type=str, default=None, help="")
+    parser.add_argument("--accumulative_pattern_col", type=str, default=None, help="")
     parser.add_argument("--negative_duration_strategy", type=str, default="clip", help="")
 
     args = parser.parse_args()
