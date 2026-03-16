@@ -120,12 +120,14 @@ class InferenceEngine:
 
         return preds
 
-model, metadata = load_model("sandbox/")
-
+#**** * * * * * *  *  *   *   *     *  *  * * * * *******  INPUT
+model_path = "sandbox/model"
+model, metadata = load_model(model_path)
+new_data_path = "/home/yuca/DT4H/completo/flcore-main/dataset/bucarest_sintetico/synthetic_dt4h_dataset.csv"
+#**** * * * * * *  *  *   *   *     *  *  * * * * *******  INPUT
 engine = InferenceEngine(model, metadata)
 
-df_new = pd.read_parquet("new_data.parquet")
+df_new = pd.read_csv(new_data_path)
 
 predictions = engine.predict(df_new)
-
 print(predictions)
