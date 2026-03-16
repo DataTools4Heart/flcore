@@ -100,6 +100,7 @@ class MnistClient(fl.client.NumPyClient):
             metrics.update(local_metrics)
             self.first_round = False
 
+        self.save_model()
         return utils.get_model_parameters(self.model), len(self.X_train), metrics
 
     def evaluate(self, parameters, config):
@@ -146,7 +147,7 @@ class MnistClient(fl.client.NumPyClient):
         return loss, len(y_pred),  metrics
 
     def save_model(self):
-        save_path = self.config["sandbox_path"]
+        save_path = Path(self.config["sandbox_path"])/"model"
         save_path.mkdir(parents=True, exist_ok=True)
         model_name = self.config["model"]+"_"+self.config["task"]
         model_path = save_path / f"{model_name}_model.joblib"
