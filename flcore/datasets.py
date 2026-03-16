@@ -4,6 +4,7 @@ import shutil
 import urllib.request
 from typing import Tuple
 import json
+import re
 
 import numpy as np
 import openml
@@ -760,62 +761,99 @@ def load_survival(config):
 
     from sksurv.util import Surv
 
-    metadata_file = Path(config["metadata_file"])
+    # ----------------------------
+    # Sanity check
+    # ----------------------------
+    has_time_event = config["time_col"] is not None and config["event_col"] is not None
+    has_pattern = config["accumulative_pattern_col"] is not None
 
-    with open(metadata_file) as f:
-        metadata = json.load(f)
+    if has_time_event and has_pattern:
+        raise ValueError(
+            "Provide either (--time_col and --event_col) OR --accumulative_pattern_col, not both."
+        )
 
-    entry = metadata["entries"][0]
-
-    features_meta = entry["features"]
-    outcomes_meta = entry["outcomes"]
-
-    features = [f["name"] for f in features_meta]
-
-    nominal_features = [
-        f["name"]
-        for f in features_meta
-        if f["dataType"] == "NOMINAL"
-    ]
-
-    time_col = config["survival"]["time_col"]
-    event_col = config["survival"]["event_col"]
-
-    if time_col is None or event_col is None:
-
-        if time_col is None:
-            time_feature_candidates = [
-                o["name"]
-                for o in outcomes_meta
-                if o["dataType"] == "NUMERIC"
-            ]
-
-            if len(time_feature_candidates) == 0:
-                raise ValueError("No NUMERIC outcome available for survival time")
-
-            time_col = random.choice(time_feature_candidates)
-
-        if event_col is None:
-            event_feature_candidates = [
-                o["name"]
-                for o in outcomes_meta
-                if o["dataType"] == "BOOLEAN"
-            ]
-
-            if len(event_feature_candidates) == 0:
-                raise ValueError("No BOOLEAN outcome available for survival event")
-
-            event_col = random.choice(event_feature_candidates)
+    if not has_time_event and not has_pattern:
+        raise ValueError(
+            "You must provide either (--time_col and --event_col) OR --accumulative_pattern_col."
+        )
 
     data_file = Path(config["data_file"])
+    df = pd.read_parquet(data_file)
 
-    df = pd.read_parquet(data_file)[[*features, time_col, event_col]]
+    # ----------------------------
+    # CASE 1: accumulative horizons
+    # ----------------------------
+    if has_pattern:
 
-    df[features[0]] *= random.uniform(0.7, 1.4)
+        pattern = config["accumulative_pattern_col"]
+
+        horizon_map = {
+            "7d": 7,
+            "1mo": 30,
+            "3mo": 90,
+            "6mo": 180,
+            "1a": 365,
+            "3a": 365 * 3,
+            "5a": 365 * 5,
+        }
+
+        horizon_cols = [c for c in df.columns if c.startswith(pattern)]
+
+        if len(horizon_cols) == 0:
+            raise ValueError(f"No columns found for pattern {pattern}")
+
+        horizon_cols = sorted(
+            horizon_cols,
+            key=lambda c: horizon_map[c.replace(pattern, "")]
+        )
+
+        times = []
+        events = []
+
+        for _, row in df.iterrows():
+
+            t = None
+
+            for c in horizon_cols:
+                suffix = c.replace(pattern, "")
+
+                if row[c]:
+                    t = horizon_map[suffix]
+                    break
+
+            if t is None:
+                t = max(horizon_map.values())
+                e = 0
+            else:
+                e = 1
+
+            times.append(t)
+            events.append(e)
+
+        df["time"] = times
+        df["event"] = events
+
+        time_col = "time"
+        event_col = "event"
+
+    # ----------------------------
+    # CASE 2: already survival
+    # ----------------------------
+    else:
+
+        time_col = config["time_col"]
+        event_col = config["event_col"]
+
+    # ----------------------------
+    # Select columns
+    # ----------------------------
+    feature_cols = config["train_labels"]
+
+    df = df[[*feature_cols, time_col, event_col]]
 
     df_clean = df.replace({None: np.nan}).dropna()
 
-    strategy = config["survival"]["negative_duration_strategy"]
+    strategy = config["negative_duration_strategy"]
 
     if strategy == "remove":
         df_clean = df_clean[df_clean[time_col] >= 0].copy()
@@ -835,13 +873,7 @@ def load_survival(config):
 
     X = df_clean.drop(columns=[time_col, event_col]).copy()
 
-    X[nominal_features] = X[nominal_features].fillna("missing")
-
-    X_encoded = pd.get_dummies(
-        X,
-        columns=nominal_features,
-        drop_first=True
-    )
+    X_encoded = pd.get_dummies(X, drop_first=True)
 
     X_encoded = X_encoded.apply(pd.to_numeric, errors="coerce")
 
