@@ -197,7 +197,7 @@ def CheckClientConfig(config):
         new.append(parsed)
     config["train_labels"] = new
 
-    if len(config["target_labels"]) == 0:
+    if len(config["target_labels"]) == 0 and config["task"] != "survival":
         print("No target labels were provided")
         sys.exit()
 
