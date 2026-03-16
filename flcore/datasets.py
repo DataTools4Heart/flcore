@@ -614,8 +614,8 @@ def load_dt4h(config):
         metadata = json.load(f)
 
     data_file = Path(config["data_file"])
-    # dat = pd.read_parquet(data_file)
-    dat = pd.read_csv("dataset/bucarest_sintetico/synthetic_dt4h_dataset.csv")
+    dat = pd.read_parquet(data_file)
+    #dat = pd.read_csv("dataset/bucarest_sintetico/synthetic_dt4h_dataset.csv")
 
     dat_len = len(dat)
 
