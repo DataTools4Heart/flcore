@@ -614,7 +614,8 @@ def load_dt4h(config):
         metadata = json.load(f)
 
     data_file = Path(config["data_file"])
-    dat = pd.read_parquet(data_file)
+    # dat = pd.read_parquet(data_file)
+    dat = pd.read_csv("dataset/bucarest_sintetico/synthetic_dt4h_dataset.csv")
 
     dat_len = len(dat)
 
@@ -625,6 +626,7 @@ def load_dt4h(config):
     outcome_stats = entry["datasetStats"]["outcomeStats"]
 
     boolean_map = {False: 0, True: 1, "False": 0, "True": 1}
+    n_out = None
 
     for feat in features:
 
@@ -742,6 +744,12 @@ def load_dt4h(config):
 
     X = dat[train_labels]
     y = dat[target_labels].iloc[:, 0]
+
+    # Calculate n_out dynamically
+    if config.get("task") == "multiclass":
+        config["n_out"] = len(np.unique(y))
+    elif config.get("task") == "classification" and len(np.unique(y)) > 2:
+        config["n_out"] = len(np.unique(y))
 
     X_train = X[:split_idx]
     y_train = y[:split_idx]

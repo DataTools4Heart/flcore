@@ -141,6 +141,13 @@ class XGBoostClient(fl.client.NumPyClient):
             k: v for k, v in config.items()
             if k not in ["server_round", "num_local_rounds", "train_method"]
         }
+
+        # If multiclass objective, ensure num_class is correctly set from local data
+        if self.xgb_params.get("objective", "").startswith("multi"):
+            n_classes = len(np.unique(self.local_data['y_train']))
+            if n_classes >= 2:
+                self.xgb_params["num_class"] = n_classes
+            print(f"[Client] Multiclass detected: num_class={n_classes}")
         
         print(f"\n[Client] === Round {server_round} - FIT ===")
         print(f"[Client] Method: {train_method}")
@@ -208,6 +215,7 @@ class XGBoostClient(fl.client.NumPyClient):
         metrics = {
             "num_examples": num_examples,
             "num_trees": self.bst.num_boosted_rounds(),
+            "n_out": len(np.unique(self.local_data['y_train'])),
         }
         
         # Save local model

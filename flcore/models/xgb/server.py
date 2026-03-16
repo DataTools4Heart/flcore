@@ -231,6 +231,9 @@ class FedXgbFullyFederated(FedAvg):
         total_examples = sum(fit_res.num_examples for _, fit_res in results)
 
         for _, fit_res in results:
+            if "n_out" in fit_res.metrics:
+                self.xgb_params["num_class"] = int(fit_res.metrics["n_out"])
+
             for key, value in fit_res.metrics.items():
                 if not isinstance(value, (int, float)):
                     continue
@@ -263,6 +266,9 @@ class FedXgbFullyFederated(FedAvg):
             eval_res.loss * eval_res.num_examples
             for _, eval_res in results
         )
+
+        if total_examples == 0:
+            return None, {}
 
         avg_loss = total_loss / total_examples
 
@@ -359,11 +365,10 @@ def get_server_and_strategy(config: dict) -> FedXgbFullyFederated:
 
     elif task == "multiclass":
         n_out = config.get("n_out")
-        if n_out is None or n_out < 2:
-            raise ValueError("For multiclass you must provide n_out >= 2")
         xgb_params["objective"] = "multi:softmax"
         xgb_params["eval_metric"] = "mlogloss"
-        xgb_params["num_class"] = n_out
+        if n_out is not None and n_out >= 2:
+            xgb_params["num_class"] = n_out
 
     elif task == "regression":
         xgb_params["objective"] = "reg:squarederror"
