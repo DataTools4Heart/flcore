@@ -1,4 +1,7 @@
+import json
+import joblib
 import warnings
+from pathlib import Path
 
 import flwr as fl
 import numpy as np
@@ -42,6 +45,7 @@ class MnistClient(fl.client.Client):
         self.model = utils.get_model(config)
         # Setting initial parameters, akin to model.compile for keras models
         # AQUI DEBERIA INICIALIZAR CON 0, ya que está en fit, que haga 1 iteración
+        self.round = 0
         utils.set_initial_params_client(self.model,self.X_train, self.y_train)
 
     def get_parameters(self, ins: GetParametersIns):  # , config type: ignore
@@ -100,6 +104,11 @@ class MnistClient(fl.client.Client):
         # Serialize to send it to the server
         params = utils.get_model_parameters(self.model)
         parameters_updated = serialize_RF(params)
+
+        if self.round % self.config["save_every_n_rounds"] == 0:
+            self.save_model()
+
+        self.round += 1
 
         # Build and return response
         status = Status(code=Code.OK, message="Success")
@@ -181,6 +190,70 @@ class MnistClient(fl.client.Client):
                     num_examples=len(self.X_test),
                     metrics=metrics,
                 )
+
+    def save_model(self):
+        save_path = Path(self.config["sandbox_path"]) / "model"
+        save_path.mkdir(parents=True, exist_ok=True)
+
+        model_name = f"{self.config['model']}_{self.config['task']}_round_{self.round}"
+
+        model_path = save_path / f"{model_name}_model.joblib"
+        joblib.dump(self.model, model_path)
+
+        with open(self.config["metadata_file"], "r") as f:
+            data_metadata = json.load(f)
+
+        entity = data_metadata.get("entries", [])[0]
+
+        features_list = entity.get("features", [])
+        outcomes_list = entity.get("outcomes", [])
+        dataset_stats = entity.get("datasetStats", {})
+        feature_stats = dataset_stats.get("featureStats", {})
+        outcome_stats = dataset_stats.get("outcomeStats", {})
+
+        all_features_meta = {f['name']: f for f in features_list}
+        all_outcomes_meta = {o['name']: o for o in outcomes_list}
+
+        for f_name, f_meta in all_features_meta.items():
+            stats = feature_stats.get(f_name, {})
+            f_meta['stats'] = stats
+
+        for o_name, o_meta in all_outcomes_meta.items():
+            stats = outcome_stats.get(o_name, {})
+            o_meta['stats'] = stats
+
+        features_meta = {}
+        for label in self.config["train_labels"]:
+            if label in all_features_meta:
+                features_meta[label] = all_features_meta[label]
+            elif label in all_outcomes_meta:
+                features_meta[label] = all_outcomes_meta[label]
+
+        outcomes_meta = {}
+        for label in self.config["target_labels"]:
+            if label in all_outcomes_meta:
+                outcomes_meta[label] = all_outcomes_meta[label]
+            elif label in all_features_meta:
+                outcomes_meta[label] = all_features_meta[label]
+
+        metadata = {
+            "node_name": self.config["node_name"],
+            "task": self.config["task"],
+            "n_out": self.config["n_out"],
+            "n_feats": self.config["n_feats"],  # <-- FIX importante
+            "model_type": self.config["model"],
+            "feature_names": self.config["train_labels"],
+            "target_names": self.config["target_labels"],
+            "metrics": getattr(self, "last_metrics", None),
+            "features_meta": features_meta,
+            "outcomes_meta": outcomes_meta,
+        }
+
+        metadata_path = save_path / f"{model_name}_model_metadata.json"
+        with open(metadata_path, "w") as f:
+            json.dump(metadata, f, indent=4)
+
+        print(f"[Client {self.node_name}] Model saved at round {self.round} -> {model_path}")
 
 def get_client(config,data) -> fl.client.Client:
     return MnistClient(data, config)
