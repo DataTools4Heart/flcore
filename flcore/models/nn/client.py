@@ -23,6 +23,7 @@ from sklearn.preprocessing import StandardScaler
 # ______________________________________________________________
 
 import sys
+import json
 import torch
 import flwr as fl
 import numpy as np
@@ -68,6 +69,8 @@ class FlowerClient(fl.client.NumPyClient):
 
         self.model = BasicNN( config["n_feats"], config["n_out"], config["dropout_p"] ).to(self.device)
         self.optimizer = optim.Adam(self.model.parameters(), lr=self.lr)
+
+        self.round = 0
 
         if self.config["task"] == "classification":
             if config["n_out"] == 1:  # Binario
@@ -144,6 +147,10 @@ class FlowerClient(fl.client.NumPyClient):
 
         dataset_len = self.y_train.shape[0]
 #       return get_weights(self.model), num_examples, metrics
+        if self.round % self.config["save_every_n_rounds"] == 0:
+            self.save_model()
+
+        self.round += 1
         return self.get_parameters(config={}), dataset_len, {}
 
 #    @torch.no_grad()
@@ -187,6 +194,73 @@ class FlowerClient(fl.client.NumPyClient):
 
 #        return total_loss / total, correct / total
         return float(test_loss), dataset_len, metrics
+
+    def save_model(self):
+        save_path = Path(self.config["sandbox_path"]) / "model"
+        save_path.mkdir(parents=True, exist_ok=True)
+
+        model_name = f"{self.config['model']}_{self.config['task']}_round_{getattr(self, 'round', 0)}"
+
+        model_path = save_path / f"{model_name}_model.pt"
+        torch.save(self.model.state_dict(), model_path)
+
+        with open(self.config["metadata_file"], "r") as f:
+            data_metadata = json.load(f)
+
+        entity = data_metadata.get("entries", [])[0]
+
+        features_list = entity.get("features", [])
+        outcomes_list = entity.get("outcomes", [])
+        dataset_stats = entity.get("datasetStats", {})
+        feature_stats = dataset_stats.get("featureStats", {})
+        outcome_stats = dataset_stats.get("outcomeStats", {})
+
+        all_features_meta = {f['name']: f for f in features_list}
+        all_outcomes_meta = {o['name']: o for o in outcomes_list}
+
+        for f_name, f_meta in all_features_meta.items():
+            f_meta['stats'] = feature_stats.get(f_name, {})
+
+        for o_name, o_meta in all_outcomes_meta.items():
+            o_meta['stats'] = outcome_stats.get(o_name, {})
+
+        features_meta = {}
+        for label in self.config["train_labels"]:
+            if label in all_features_meta:
+                features_meta[label] = all_features_meta[label]
+            elif label in all_outcomes_meta:
+                features_meta[label] = all_outcomes_meta[label]
+
+        outcomes_meta = {}
+        for label in self.config["target_labels"]:
+            if label in all_outcomes_meta:
+                outcomes_meta[label] = all_outcomes_meta[label]
+            elif label in all_features_meta:
+                outcomes_meta[label] = all_features_meta[label]
+
+        metadata = {
+            "node_name": self.config["node_name"],
+            "task": self.config["task"],
+            "n_out": self.config["n_out"],
+            "n_feats": self.config["n_feats"],  # FIX
+            "model_type": self.config["model"],
+            "feature_names": self.config["train_labels"],
+            "target_names": self.config["target_labels"],
+            "metrics": getattr(self, "last_metrics", None),
+            "features_meta": features_meta,
+            "outcomes_meta": outcomes_meta,
+        }
+
+        metadata_path = save_path / f"{model_name}_model_metadata.json"
+        with open(metadata_path, "w") as f:
+            json.dump(metadata, f, indent=4)
+
+        print(f"[Client] NN model saved at {model_path}")
+"""
+model = BasicNN(...)
+model.load_state_dict(torch.load("model.pt"))
+model.eval()
+"""
 
 def get_client(config,data) -> fl.client.Client:
 #    client = FlowerClient(params).to_client()
