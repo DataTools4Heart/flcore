@@ -56,6 +56,7 @@ class MnistClient(fl.client.NumPyClient):
         self.model = utils.get_model(config)
         self.round_time = 0
         self.first_round = True
+        self.round = 0
         self.personalize = True
         # Setting initial parameters, akin to model.compile for keras models
         utils.set_initial_params(self.model, config)
@@ -88,6 +89,7 @@ class MnistClient(fl.client.NumPyClient):
             metrics = {f"personalized {key}": metrics[key] for key in metrics}
             self.round_time = (time.time() - start_time)
             metrics["running_time"] = self.round_time
+            self.round += 1
 
         if self.first_round:
             local_model = utils.get_model(self.config)
@@ -99,8 +101,11 @@ class MnistClient(fl.client.NumPyClient):
             local_metrics = {f"local {key}": local_metrics[key] for key in local_metrics}
             metrics.update(local_metrics)
             self.first_round = False
+            self.round += 1
 
-        self.save_model()
+        if self.round % self.config["save_every_n_rounds"] == 0:
+            self.save_model()
+
         return utils.get_model_parameters(self.model), len(self.X_train), metrics
 
     def evaluate(self, parameters, config):
@@ -149,7 +154,7 @@ class MnistClient(fl.client.NumPyClient):
     def save_model(self):
         save_path = Path(self.config["sandbox_path"])/"model"
         save_path.mkdir(parents=True, exist_ok=True)
-        model_name = self.config["model"]+"_"+self.config["task"]
+        model_name = self.config["model"]+"_"+self.config["task"]+"_round_"+str(self.round)
         model_path = save_path / f"{model_name}_model.joblib"
         joblib.dump(self.model, model_path)
 
