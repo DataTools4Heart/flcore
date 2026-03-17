@@ -50,6 +50,7 @@ if __name__ == "__main__":
     parser.add_argument("--local_epochs", type=int, default=10, help="Number of local epochs to train in each round")
     parser.add_argument("--batch_size", type=int, default=8, help="Batch size to train")
     parser.add_argument("--penalty", type=str, default="none", help="Penalties: none, l1, l2, elasticnet, smooth l1")
+    parser.add_argument("--save_every_n_rounds", type=int, default=1, help="Save model checkpoints every N rounds")
 
     # Specific variables model related
     # # Linear models
