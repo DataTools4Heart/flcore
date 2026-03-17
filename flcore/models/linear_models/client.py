@@ -89,7 +89,6 @@ class MnistClient(fl.client.NumPyClient):
             metrics = {f"personalized {key}": metrics[key] for key in metrics}
             self.round_time = (time.time() - start_time)
             metrics["running_time"] = self.round_time
-            self.round += 1
 
         if self.first_round:
             local_model = utils.get_model(self.config)
@@ -101,11 +100,11 @@ class MnistClient(fl.client.NumPyClient):
             local_metrics = {f"local {key}": local_metrics[key] for key in local_metrics}
             metrics.update(local_metrics)
             self.first_round = False
-            self.round += 1
 
         if self.round % self.config["save_every_n_rounds"] == 0:
             self.save_model()
 
+        self.round += 1
         return utils.get_model_parameters(self.model), len(self.X_train), metrics
 
     def evaluate(self, parameters, config):
