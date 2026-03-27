@@ -22,11 +22,7 @@ class XGBoostClient(fl.client.NumPyClient):
     - cyclic: Each client refines the global model sequentially
     """
     
-    def __init__(
-        self,
-        local_data: Dict,
-        saving_path: str = "/sandbox/",
-    ):
+    def __init__(self, local_data, config):
         """
         Initialize XGBoost client.
         
@@ -38,8 +34,9 @@ class XGBoostClient(fl.client.NumPyClient):
                 - y_test: Test labels
             saving_path: Path to save local models and logs
         """
+        self.config = config
         self.local_data = local_data
-        self.saving_path = Path(saving_path)
+        self.saving_path = config["experiment_dir"]
         self.saving_path.mkdir(parents=True, exist_ok=True)
         
         # Create models directory
@@ -336,11 +333,7 @@ class XGBoostClient(fl.client.NumPyClient):
         return loss, num_examples, metrics
 
     def save_model(self):
-        save_path = self.saving_path / "model"
-        save_path.mkdir(parents=True, exist_ok=True)
-
-        # Guardar modelo XGBoost
-        save_path = Path(self.config["sandbox_path"])/"model"
+        save_path = Path(self.config["experiment_dir"])/"models"
         save_path.mkdir(parents=True, exist_ok=True)
 
         model_name = self.config["model"]+"_"+self.config["task"]+"_round_"+str(self.round)
@@ -433,8 +426,7 @@ def get_numpy(X_train, y_train, X_test, y_test, time_col=None, event_col=None) -
         'num_examples': len(X_train),
     }
 
-
-def get_client(config: Dict, data: Tuple) -> fl.client.Client:
+def get_client(config, data) -> fl.client.Client:
     """Create and return XGBoost federated learning client.
     
     Args:
@@ -451,9 +443,5 @@ def get_client(config: Dict, data: Tuple) -> fl.client.Client:
     local_data = get_numpy(X_train, y_train, X_test, y_test)
     
     # Create client
-    client = XGBoostClient(
-        local_data=local_data,
-        saving_path=config.get("experiment_dir", "/sandbox/"),
-    )
-    
+    client = XGBoostClient(local_data,config)
     return client

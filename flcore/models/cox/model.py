@@ -313,3 +313,61 @@ class CoxPHModel(BaseSurvivalModel):
         if self.beta is None:
             raise ValueError("Model not trained or parameters not loaded.")
         return X @ self.beta
+
+    def explain(self, X, horizons=None):
+        """
+        Generate SHAP values for the CoxPH model.
+        """
+        import shap
+        import pandas as pd
+        
+        if horizons is None:
+            horizons = [1, 3, 5]
+            
+        if self.beta is None:
+            raise ValueError("Model not trained or parameters not loaded.")
+            
+        # Convert to numpy if it's a dataframe to ensure matrix multiplication works as expected
+        X_val = X.values if isinstance(X, pd.DataFrame) else X
+        
+        try:
+            # Linear Explainer is the most appropriate for CoxPH
+            explainer = shap.LinearExplainer((self.beta, 0.0), X_val)
+            shap_values = explainer.shap_values(X_val)
+        except Exception as e:
+            if self.verbose:
+                print(f"[CoxPHModel] LinearExplainer failed, falling back to Explainer: {e}")
+            explainer = shap.Explainer(self.predict_risk, X_val)
+            shap_values = explainer(X_val).values
+            
+        import numpy as np
+        shap_values_np = np.array(shap_values)
+        if shap_values_np.ndim > 2:
+            shap_values_np = shap_values_np[:, :, 0]
+            
+        mean_abs_shap = np.abs(shap_values_np).mean(axis=0)
+        total_shap = mean_abs_shap.sum()
+        
+        if total_shap > 0:
+            relative_contribution = (mean_abs_shap / total_shap) * 100
+        else:
+            relative_contribution = np.zeros_like(mean_abs_shap)
+            
+        n_samples = X_val.shape[0]
+        risk_scores = self.predict_risk(X_val)
+        
+        results = []
+        for i in range(n_samples):
+            patient_result = []
+            for h in horizons:
+                patient_result.append({
+                    "horizon": str(h),
+                    "score": float(risk_scores[i]),
+                    "shap_data": shap_values_np[i].tolist(),
+                    "contribution_data": relative_contribution.tolist(),
+                    "whatever_data": [],
+                    "distribution_data": []
+                })
+            results.append(patient_result)
+            
+        return results if n_samples > 1 else results[0]

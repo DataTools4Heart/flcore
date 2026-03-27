@@ -154,6 +154,8 @@ def get_server_and_strategy(
     strategy = CustomStrategy(
         on_fit_config_fn=get_fit_config_fn(config['l1_penalty']),
         rounds = config['num_rounds'],
+        min_fit_clients = config["min_fit_clients"],
+        min_evaluate_clients = config["min_evaluate_clients"],
         min_available_clients=config['num_clients'],
         saving_path=config['experiment_dir'],
         l1_penalty=config['l1_penalty']

@@ -151,7 +151,7 @@ class MnistClient(fl.client.NumPyClient):
         return loss, len(y_pred),  metrics
 
     def save_model(self):
-        save_path = Path(self.config["sandbox_path"])/"model"
+        save_path = Path(self.config["experiment_dir"])/"models"
         save_path.mkdir(parents=True, exist_ok=True)
         model_name = self.config["model"]+"_"+self.config["task"]+"_round_"+str(self.round)
         model_path = save_path / f"{model_name}_model.joblib"

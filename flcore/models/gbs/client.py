@@ -19,7 +19,7 @@ import sys
 import json
 import joblib
 import argparse
-import flwr as f
+import flwr as fl
 from typing import Dict
 from pathlib import Path
 
@@ -32,13 +32,13 @@ from flcore.models.gbs.data_formatter import get_numpy
 # -------------------------------
 
 class FLClient(fl.client.NumPyClient):
-    def __init__(self, local_data: Dict, client_id: str = "client", saving_path: str = "/sandbox/"):
+    def __init__(self, local_data, config):
+        self.config = config
         self.model_wrapper = None  # will be set later
         self.local_data = local_data
-        self.id = client_id
-        self.saving_path = saving_path
+        self.id = config["node_name"]
+        self.saving_path = config["experiment_dir"]
         self.round = 0
-        os.makedirs(f"{self.saving_path}", exist_ok=True)
         os.makedirs(f"{self.saving_path}/models/", exist_ok=True)
 
     def get_parameters(self, config=None):
@@ -86,7 +86,7 @@ class FLClient(fl.client.NumPyClient):
         return 1 - metrics['c_index'], num_examples, metrics
 
     def save_model(self):
-        save_path = Path(self.config["sandbox_path"])/"model"
+        save_path = Path(self.config["experiment_dir"])/"models"
         save_path.mkdir(parents=True, exist_ok=True)
         model_name = self.config["model"]+"_"+self.config["task"]+"_round_"+str(self.round)
         model_path = save_path / f"{model_name}_model.pkl"        
@@ -145,7 +145,8 @@ class FLClient(fl.client.NumPyClient):
 
         print(f"Model and metadata saved for inference at {save_path}")
 
-def get_client(config, data, client_id="client") -> fl.client.Client:
+
+def get_client(config, data) -> fl.client.Client:
     (X_train, y_train), (X_test, y_test), time, event = data
     local_data = get_numpy(X_train, y_train, X_test, y_test, time, event)
-    return FLClient(local_data, client_id=client_id, saving_path=config["experiment_dir"])
+    return FLClient(local_data, config)
