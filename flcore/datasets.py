@@ -618,14 +618,23 @@ def load_dt4h(config):
     #dat = pd.read_csv("dataset/bucarest_sintetico/synthetic_dt4h_dataset.csv")
 
     dat_len = len(dat)
-
-    entry = metadata["entries"][0]
-    features = entry["features"]
-    outcomes = entry["outcomes"]
-    feature_stats = entry["datasetStats"]["featureStats"]
-    outcome_stats = entry["datasetStats"]["outcomeStats"]
+# ...................................................................
+    entries = metadata.get("entries", [])
+    if entries:
+        entry = entries[0]
+        features = entry["features"]
+        outcomes = entry["outcomes"]
+        feature_stats = entry["datasetStats"]["featureStats"]
+        outcome_stats = entry["datasetStats"]["outcomeStats"]
+    else:
+        features = metadata.get("features", [])
+        outcomes = metadata.get("outcomes", [])
+        dataset_stats = metadata.get("datasetStats", {})
+        feature_stats = dataset_stats.get("featureStats", {})
+        outcome_stats = dataset_stats.get("outcomeStats", {})
 
     boolean_map = {False: 0, True: 1, "False": 0, "True": 1}
+# ...................................................................
     n_out = None
 
     for feat in features:
