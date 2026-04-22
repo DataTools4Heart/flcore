@@ -207,14 +207,24 @@ def CheckClientConfig(config):
         new.append(parsed)
     config["target_labels"] = new
 
+# ____________________________________________________________________
     with open(config["metadata_file"]) as f:
         meta = json.load(f)
 
-    entry = meta["entries"][0]
-    feature_stats = entry["datasetStats"]["featureStats"]
-    outcome_stats = entry["datasetStats"]["outcomeStats"]
-    features_meta = {o["name"]: o for o in entry["features"]}
-    outcomes_meta = {o["name"]: o for o in entry["outcomes"]}
+    entries = meta.get("entries", [])
+    if entries:
+        entry = entries[0]
+        feature_stats = entry["datasetStats"]["featureStats"]
+        outcome_stats = entry["datasetStats"]["outcomeStats"]
+        features_meta = {o["name"]: o for o in entry["features"]}
+        outcomes_meta = {o["name"]: o for o in entry["outcomes"]}
+    else:
+        dataset_stats = meta.get("datasetStats", {})
+        feature_stats = dataset_stats.get("featureStats", {})
+        outcome_stats = dataset_stats.get("outcomeStats", {})
+        features_meta = {o["name"]: o for o in meta.get("features", [])}
+    outcomes_meta = {o["name"]: o for o in meta.get("outcomes", [])}
+# ____________________________________________________________________
 
     n_out = 0
     for target in config["target_labels"]:
