@@ -183,6 +183,7 @@ def CheckClientConfig(config):
     if len(parquet_files) == 0:
         print("No parquet files found in ",est)
         sys.exit()
+#    config["data_file"] = "/home/jorge/workdir/flcore-suite/dataset/bucarest_sintetico/synthetic_dt4h_dataset.csv"
 
     # ¿How to choose one of the list?
     config["data_file"] = parquet_files[-1]
@@ -223,16 +224,16 @@ def CheckClientConfig(config):
         feature_stats = dataset_stats.get("featureStats", {})
         outcome_stats = dataset_stats.get("outcomeStats", {})
         features_meta = {o["name"]: o for o in meta.get("features", [])}
-    outcomes_meta = {o["name"]: o for o in meta.get("outcomes", [])}
+        outcomes_meta = {o["name"]: o for o in meta.get("outcomes", [])}
 # ____________________________________________________________________
 
     n_out = 0
     for target in config["target_labels"]:
-        if target in outcomes_meta:
+        if target in outcomes_meta.keys():
             dtype = outcomes_meta[target]["dataType"]
             stats = outcome_stats.get(target, {})
 
-        elif target in features_meta:
+        elif target in features_meta.keys():
             dtype = features_meta[target]["dataType"]
             stats = feature_stats.get(target, {})
         else:
