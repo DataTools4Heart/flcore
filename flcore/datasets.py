@@ -6,12 +6,12 @@ from typing import Tuple
 import json
 import re
 
-import numpy as np
 import openml
 #import torch
-from pathlib import Path
-import pandas as pd
 import random
+import numpy as np
+import pandas as pd
+from pathlib import Path
 
 from sklearn.datasets import load_svmlight_file
 from sklearn.preprocessing import OrdinalEncoder, MinMaxScaler,StandardScaler
@@ -20,12 +20,107 @@ from sklearn.utils import shuffle
 from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.model_selection import StratifiedShuffleSplit, ShuffleSplit
 
-
 #from flcore.models.xgb.utils import TreeDataset, do_fl_partitioning, get_dataloader
 
 XY = Tuple[np.ndarray, np.ndarray]
 Dataset = Tuple[XY, XY]
 
+def filter_nans(df, features, outcomes, verbose=True):
+    print(" ************************************************ ENTRA FILTER NANS")
+    """
+    Filter patients with complete data across all feature and outcome variables.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Input dataframe where each row represents a patient.
+    features : list of str
+        Predictor variable names.
+    outcomes : list of str
+        Outcome variable names.
+    verbose : bool, default=True
+        If True, prints a summary report.
+
+    Returns
+    -------
+    df_filtered : pd.DataFrame
+        Dataframe containing only complete cases.
+    report : dict
+        Summary statistics.
+    """
+
+    # Combine variables preserving order and removing duplicates
+    variables = list(dict.fromkeys(features + outcomes))
+
+    # Validate columns
+    missing_cols = [v for v in variables if v not in df.columns]
+    if missing_cols:
+        raise ValueError(
+            f"Variables not found in dataframe: {missing_cols}"
+        )
+
+    n_initial = len(df)
+
+    # Missing values per variable
+    missing_per_variable = (
+        df[variables]
+        .isna()
+        .sum()
+        .to_dict()
+    )
+
+    # Complete-case filtering
+    df_filtered = df.dropna(subset=variables).copy()
+
+    n_final = len(df_filtered)
+    n_removed = n_initial - n_final
+    reduction_pct = (
+        n_removed / n_initial * 100
+        if n_initial > 0 else 0.0
+    )
+    retention_pct = 100 - reduction_pct
+
+    report = {
+        "features": features,
+        "outcomes": outcomes,
+        "variables_used": variables,
+        "n_initial": n_initial,
+        "n_final": n_final,
+        "n_removed": n_removed,
+        "reduction_pct": round(reduction_pct, 2),
+        "retention_pct": round(retention_pct, 2),
+        "missing_per_variable": missing_per_variable,
+    }
+
+    if verbose:
+        print("=" * 60)
+        print("Complete-case filtering report")
+        print("=" * 60)
+
+        print(f"Features ({len(features)}):")
+        print(features)
+
+        print(f"\nOutcomes ({len(outcomes)}):")
+        print(outcomes)
+
+        print(f"\nTotal variables analysed: {len(variables)}")
+
+        print("\nMissing values per variable:")
+        for var, n_miss in missing_per_variable.items():
+            pct = (
+                n_miss / n_initial * 100
+                if n_initial > 0 else 0
+            )
+            print(f"  - {var}: {n_miss} ({pct:.2f}%)")
+
+        print(f"\nInitial N : {n_initial}")
+        print(f"Final   N : {n_final}")
+        print(f"Removed   : {n_removed} ({reduction_pct:.2f}%)")
+        print(f"Retained  : {n_final} ({retention_pct:.2f}%)")
+
+        print("=" * 60)
+
+    return df_filtered #, report
 
 def load_mnist(center_id=None, num_splits=5):
     """Loads the MNIST dataset using OpenML.
@@ -608,16 +703,16 @@ def load_base(config):
     return (X_train, y_train), (X_test, y_test)
 
 def load_dt4h(config):
-
     metadata_path = Path(config["metadata_file"])
     with open(metadata_path) as f:
         metadata = json.load(f)
 
     data_file = Path(config["data_file"])
-    dat = pd.read_parquet(data_file)
-    #dat = pd.read_csv("dataset/bucarest_sintetico/synthetic_dt4h_dataset.csv")
+    dat_ = pd.read_parquet(data_file)
+#    dat = pd.read_csv("/home/jorge/workdir/flcore-suite/dataset/bucarest_sintetico/synthetic_dt4h_dataset.csv")
 
-    dat_len = len(dat)
+    dat_len = len(dat_)
+    dat = filter_nans(dat_, config["target_labels"], config["train_labels"])
 # ...................................................................
     entries = metadata.get("entries", [])
     if entries:
