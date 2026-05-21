@@ -83,8 +83,10 @@ class StreamToLogger:
         self.level = level
 
     def write(self, message):
-        for line in message.rstrip().splitlines():
-            self.logger.log(self.level, line.rstrip())
+        for line in message.splitlines():
+            line = line.rstrip()
+            if line:
+                self.logger.log(self.level, line)
 
     def flush(self):
         pass

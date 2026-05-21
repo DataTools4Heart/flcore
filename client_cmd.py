@@ -98,17 +98,23 @@ if __name__ == "__main__":
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setLevel(logging.DEBUG)
 
-    # Create a formatter for consistency
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    file_handler.setFormatter(formatter)
-    console_handler.setFormatter(formatter)
+    # Create formatters
+    file_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    console_formatter = logging.Formatter('[%(levelname)s] %(message)s')
+
+    file_handler.setFormatter(file_formatter)
+    console_handler.setFormatter(console_formatter)
 
     # Get the root logger and configure it
     logger = logging.getLogger()
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.INFO)  # Change default level to INFO
     logger.handlers = []  # Clear any default handlers
     logger.addHandler(file_handler)
     logger.addHandler(console_handler)
+
+    # Silence noisy dependencies
+    #    logging.getLogger("flwr").setLevel(logging.WARNING)
+    logging.getLogger("flwr").setLevel(logging.ERROR)
 
     # Create two sub-loggers
     stdout_logger = logging.getLogger("STDOUT")
@@ -119,10 +125,7 @@ if __name__ == "__main__":
     sys.stderr = StreamToLogger(stderr_logger, logging.ERROR)
 
     # Now you can use logging in both places
-    logging.debug("This will be logged to both the console and the file.")
-
-    # Now you can use logging in both places
-    logging.debug("This will be logged to both the console and the file.")
+    logging.info("Starting Flower client...")
 
 #### PODRIAMOS QUITAR ESTO DE PRODUCTION MODE; NO TIENE NINGUN SENTIDO
     #model = config["model"]
