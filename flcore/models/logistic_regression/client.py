@@ -32,7 +32,8 @@ if __name__ == "__main__":
 
 # Define Flower client
 class MnistClient(fl.client.NumPyClient):
-    def __init__(self, data):
+    def __init__(self, data, config=None):
+        self.config = config
         self.model = LogisticRegression(
             penalty="l2",
             max_iter=1,  # local epoch
@@ -47,24 +48,35 @@ class MnistClient(fl.client.NumPyClient):
         return utils.get_model_parameters(self.model)
 
     def fit(self, parameters, config):  # type: ignore
-        utils.set_model_params(self.model, parameters)
-        # Ignore convergence failure due to low local epochs
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            self.model.fit(self.X_train, self.y_train)
-        print(f"Training finished for round {config['server_round']}")
-        
-        if self.round % self.config["save_every_n_rounds"] == 0:
-            self.save_model()
+        try:
+            utils.set_model_params(self.model, parameters)
+            # Ignore convergence failure due to low local epochs
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                self.model.fit(self.X_train, self.y_train)
+            print(f"Training finished for round {config['server_round']}")
+            
+            if self.config and "save_every_n_rounds" in self.config:
+                if self.round % self.config["save_every_n_rounds"] == 0:
+                    self.save_model()
 
-        self.round += 1
-        return utils.get_model_parameters(self.model), len(self.X_train), {}
+            self.round += 1
+            return utils.get_model_parameters(self.model), len(self.X_train), {}
+        except Exception as e:
+            from flcore.utils import log_detailed_error
+            log_detailed_error("Model Fitting (Local Training)", e, config=self.config or config, X=getattr(self, "X_train", None), y=getattr(self, "y_train", None))
+            raise e
 
     def evaluate(self, parameters, config):  # type: ignore
-        utils.set_model_params(self.model, parameters)
-        loss = log_loss(self.y_test, self.model.predict_proba(self.X_test))
-        accuracy = self.model.score(self.X_test, self.y_test)
-        return loss, len(self.X_test), {"accuracy": accuracy}
+        try:
+            utils.set_model_params(self.model, parameters)
+            loss = log_loss(self.y_test, self.model.predict_proba(self.X_test))
+            accuracy = self.model.score(self.X_test, self.y_test)
+            return loss, len(self.X_test), {"accuracy": accuracy}
+        except Exception as e:
+            from flcore.utils import log_detailed_error
+            log_detailed_error("Model Evaluation (Local Validation)", e, config=self.config or config, X=getattr(self, "X_test", None), y=getattr(self, "y_test", None))
+            raise e
 
     def save_model(self):
         save_path = Path(self.config["sandbox_path"])/"model"
@@ -126,7 +138,7 @@ class MnistClient(fl.client.NumPyClient):
 
         print(f"Model and metadata saved for inference at {save_path}")
 
-def get_client(data) -> fl.client.Client:
-    return MnistClient(data)
+def get_client(config, data) -> fl.client.Client:
+    return MnistClient(data, config)
     # # Start Flower client
     # fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=MnistClient())

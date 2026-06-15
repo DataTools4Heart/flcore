@@ -6,6 +6,7 @@ import yaml
 
 import flcore.datasets as datasets
 from flcore.client_selector import get_model_client
+from flcore.utils import log_detailed_error
 
 # Start Flower client but after the server or error
 
@@ -40,21 +41,50 @@ if __name__ == "__main__":
 
     print("Client id:" + str(num_client))
 
-(X_train, y_train), (X_test, y_test) = datasets.load_dataset(config, num_client)
+try:
+    (X_train, y_train), (X_test, y_test) = datasets.load_dataset(config, num_client)
+except Exception as e:
+    log_detailed_error(
+        "Client Dataset Loading",
+        e,
+        config=config,
+        data_path=config.get("data_path")
+    )
+    sys.stderr.flush()
+    sys.stdout.flush()
+    sys.exit(1)
 
 data = (X_train, y_train), (X_test, y_test)
 
-client = get_model_client(config, data, num_client)
+try:
+    client = get_model_client(config, data, num_client)
+except Exception as e:
+    log_detailed_error(
+        "Client Model Setup / Initialization",
+        e,
+        config=config,
+        X=X_train,
+        y=y_train
+    )
+    sys.stderr.flush()
+    sys.stdout.flush()
+    sys.exit(1)
 
-if isinstance(client, fl.client.NumPyClient):
-    fl.client.start_numpy_client(
-        server_address=f"{central_ip}:{central_port}",
-        root_certificates=root_certificate,
-        client=client,
-    )
-else:
-    fl.client.start_client(
-        server_address=f"{central_ip}:{central_port}",
-        root_certificates=root_certificate,
-        client=client,
-    )
+try:
+    if isinstance(client, fl.client.NumPyClient):
+        fl.client.start_numpy_client(
+            server_address=f"{central_ip}:{central_port}",
+            root_certificates=root_certificate,
+            client=client,
+        )
+    else:
+        fl.client.start_client(
+            server_address=f"{central_ip}:{central_port}",
+            root_certificates=root_certificate,
+            client=client,
+        )
+except Exception as e:
+    log_detailed_error("Flower Client Start / Execution Loop", e, config=config, X=X_train, y=y_train)
+    sys.stderr.flush()
+    sys.stdout.flush()
+    sys.exit(1)

@@ -63,133 +63,145 @@ class MnistClient(fl.client.Client):
         )
 
     def fit(self, ins: FitIns):  # , parameters, config type: ignore
-        parameters = ins.parameters
-        #Deserialize to get the real parameters
-        parameters = deserialize_RF(parameters)
-        utils.set_model_params(self.model, parameters)
-        metrics = {}
-        # Ignore convergence failure due to low local epochs
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            train_idx, val_idx = next(self.splits_nested)
-            X_train_2 = self.X_train.iloc[train_idx, :]
-            X_val = self.X_train.iloc[val_idx,:]
-            y_train_2 = self.y_train.iloc[train_idx]
-            y_val = self.y_train.iloc[val_idx]
-            #To implement the center dropout, we need the execution time
-            start_time = time.time()
-            self.model.fit(X_train_2, y_train_2)
-            #accuracy = model.score( X_test, y_test )
-            # accuracy,specificity,sensitivity,balanced_accuracy, precision, F1_score = \
-            # measurements_metrics(self.model,X_val, y_val)
-            # ______________________________________________________________________________________
-            # ESTO o se cambia para que sea consistente entre clasificación/regresión o se elimina
-            #y_pred = self.model.predict(X_val)
-            #metrics = calculate_metrics(y_val, y_pred, self.config)
-            # ______________________________________________________________________________________
+        try:
+            parameters = ins.parameters
+            #Deserialize to get the real parameters
+            parameters = deserialize_RF(parameters)
+            utils.set_model_params(self.model, parameters)
+            metrics = {}
+            # Ignore convergence failure due to low local epochs
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                train_idx, val_idx = next(self.splits_nested)
+                X_train_2 = self.X_train.iloc[train_idx, :]
+                X_val = self.X_train.iloc[val_idx,:]
+                y_train_2 = self.y_train.iloc[train_idx]
+                y_val = self.y_train.iloc[val_idx]
+                #To implement the center dropout, we need the execution time
+                start_time = time.time()
+                self.model.fit(X_train_2, y_train_2)
+                #accuracy = model.score( X_test, y_test )
+                # accuracy,specificity,sensitivity,balanced_accuracy, precision, F1_score = \
+                # measurements_metrics(self.model,X_val, y_val)
+                # ______________________________________________________________________________________
+                # ESTO o se cambia para que sea consistente entre clasificación/regresión o se elimina
+                #y_pred = self.model.predict(X_val)
+                #metrics = calculate_metrics(y_val, y_pred, self.config)
+                # ______________________________________________________________________________________
 
-            # print(f"Accuracy client in fit:  {accuracy}")
-            # print(f"Sensitivity client in fit:  {sensitivity}")
-            # print(f"Specificity client in fit:  {specificity}")
-            # print(f"Balanced_accuracy in fit:  {balanced_accuracy}")
-            # print(f"precision in fit:  {precision}")
-            # print(f"F1_score in fit:  {F1_score}")
-            elapsed_time = (time.time() - start_time)
-            metrics["running_time"] = elapsed_time
+                # print(f"Accuracy client in fit:  {accuracy}")
+                # print(f"Sensitivity client in fit:  {sensitivity}")
+                # print(f"Specificity client in fit:  {specificity}")
+                # print(f"Balanced_accuracy in fit:  {balanced_accuracy}")
+                # print(f"precision in fit:  {precision}")
+                # print(f"F1_score in fit:  {F1_score}")
+                elapsed_time = (time.time() - start_time)
+                metrics["running_time"] = elapsed_time
 
-            print(f"num_client {self.node_name} has an elapsed time {elapsed_time}")
-            
-        print(f"Training finished for round {ins.config['server_round']}")
+                print(f"num_client {self.node_name} has an elapsed time {elapsed_time}")
+                
+            print(f"Training finished for round {ins.config['server_round']}")
 
-        # Serialize to send it to the server
-        params = utils.get_model_parameters(self.model)
-        parameters_updated = serialize_RF(params)
+            # Serialize to send it to the server
+            params = utils.get_model_parameters(self.model)
+            parameters_updated = serialize_RF(params)
 
-        if self.round % self.config["save_every_n_rounds"] == 0:
-            self.save_model()
+            if self.round % self.config["save_every_n_rounds"] == 0:
+                self.save_model()
 
-        self.round += 1
+            self.round += 1
 
-        # Build and return response
-        status = Status(code=Code.OK, message="Success")
-        return FitRes(
-            status=status,
-            parameters=parameters_updated,
-            num_examples=len(self.X_train),
-            metrics=metrics,
-        )
+            # Build and return response
+            status = Status(code=Code.OK, message="Success")
+            return FitRes(
+                status=status,
+                parameters=parameters_updated,
+                num_examples=len(self.X_train),
+                metrics=metrics,
+            )
+        except Exception as e:
+            from flcore.utils import log_detailed_error
+            X_diag = locals().get("X_train_2", getattr(self, "X_train", None))
+            y_diag = locals().get("y_train_2", getattr(self, "y_train", None))
+            log_detailed_error("Model Fitting (Local Training)", e, config=getattr(self, "config", None), X=X_diag, y=y_diag)
+            raise e
         
 
     def evaluate(self, ins: EvaluateIns):  # , parameters, config type: ignore
-        parameters = ins.parameters
-        #Deserialize to get the real parameters
-        parameters = deserialize_RF(parameters)
-        utils.set_model_params(self.model, parameters)
-                
-        ## AQUI TAMBIEN TENDRIAMOS QUE ADAPTAR PARA REGRESOR/CLASIFICADOR
-        if self.config["task"] == "classification":
-            if self.config["n_out"] == 1: # Binario
-                y_pred_prob = self.model.predict_proba(self.X_test)
-                loss = log_loss(self.y_test, y_pred_prob)
-                # accuracy,specificity,sensitivity,balanced_accuracy, precision, F1_score = \
-                # measurements_metrics(self.model,self.X_test, self.y_test)
-                y_pred = self.model.predict(self.X_test)
-                metrics = calculate_metrics(self.y_test, y_pred, self.config)
-                # print(f"Accuracy client in evaluate:  {accuracy}")
-                # print(f"Sensitivity client in evaluate:  {sensitivity}")
-                # print(f"Specificity client in evaluate:  {specificity}")
-                # print(f"Balanced_accuracy in evaluate:  {balanced_accuracy}")
-                # print(f"precision in evaluate:  {precision}")
-                # print(f"F1_score in evaluate:  {F1_score}")
+        try:
+            parameters = ins.parameters
+            #Deserialize to get the real parameters
+            parameters = deserialize_RF(parameters)
+            utils.set_model_params(self.model, parameters)
+                    
+            ## AQUI TAMBIEN TENDRIAMOS QUE ADAPTAR PARA REGRESOR/CLASIFICADOR
+            if self.config["task"] == "classification":
+                if self.config["n_out"] == 1: # Binario
+                    y_pred_prob = self.model.predict_proba(self.X_test)
+                    loss = log_loss(self.y_test, y_pred_prob)
+                    # accuracy,specificity,sensitivity,balanced_accuracy, precision, F1_score = \
+                    # measurements_metrics(self.model,self.X_test, self.y_test)
+                    y_pred = self.model.predict(self.X_test)
+                    metrics = calculate_metrics(self.y_test, y_pred, self.config)
+                    # print(f"Accuracy client in evaluate:  {accuracy}")
+                    # print(f"Sensitivity client in evaluate:  {sensitivity}")
+                    # print(f"Specificity client in evaluate:  {specificity}")
+                    # print(f"Balanced_accuracy in evaluate:  {balanced_accuracy}")
+                    # print(f"precision in evaluate:  {precision}")
+                    # print(f"F1_score in evaluate:  {F1_score}")
 
-                # Serialize to send it to the server
-                #params = get_model_parameters(model)
-                #parameters_updated = serialize_RF(params)
-                # Build and return response
-                status = Status(code=Code.OK, message="Success")
-                return EvaluateRes(
-                    status=status,
-                    loss=float(loss),
-                    num_examples=len(self.X_test),
-                    metrics=metrics,
-                )
-            elif self.config["n_out"] > 1: # Multivariable
-                # ************************************************** CORREGIR ADAPTAR
-                # ************************************* Por ahora idéntico al binario
-                y_pred_prob = self.model.predict_proba(self.X_test)
-                loss = log_loss(self.y_test, y_pred_prob,labels=np.arange(self.config["n_out"]))
-                # accuracy,specificity,sensitivity,balanced_accuracy, precision, F1_score = \
-                # measurements_metrics(self.model,self.X_test, self.y_test)
-                y_pred = self.model.predict(self.X_test)
-                metrics = calculate_metrics(self.y_test, y_pred, self.config)
-                # Serialize to send it to the server
-                #params = get_model_parameters(model)
-                #parameters_updated = serialize_RF(params)
-                # Build and return response
-                status = Status(code=Code.OK, message="Success")
-                return EvaluateRes(
-                    status=status,
-                    loss=float(loss),
-                    num_examples=len(self.X_test),
-                    metrics=metrics,
-                )
+                    # Serialize to send it to the server
+                    #params = get_model_parameters(model)
+                    #parameters_updated = serialize_RF(params)
+                    # Build and return response
+                    status = Status(code=Code.OK, message="Success")
+                    return EvaluateRes(
+                        status=status,
+                        loss=float(loss),
+                        num_examples=len(self.X_test),
+                        metrics=metrics,
+                    )
+                elif self.config["n_out"] > 1: # Multivariable
+                    # ************************************************** CORREGIR ADAPTAR
+                    # ************************************* Por ahora idéntico al binario
+                    y_pred_prob = self.model.predict_proba(self.X_test)
+                    loss = log_loss(self.y_test, y_pred_prob,labels=np.arange(self.config["n_out"]))
+                    # accuracy,specificity,sensitivity,balanced_accuracy, precision, F1_score = \
+                    # measurements_metrics(self.model,self.X_test, self.y_test)
+                    y_pred = self.model.predict(self.X_test)
+                    metrics = calculate_metrics(self.y_test, y_pred, self.config)
+                    # Serialize to send it to the server
+                    #params = get_model_parameters(model)
+                    #parameters_updated = serialize_RF(params)
+                    # Build and return response
+                    status = Status(code=Code.OK, message="Success")
+                    return EvaluateRes(
+                        status=status,
+                        loss=float(loss),
+                        num_examples=len(self.X_test),
+                        metrics=metrics,
+                    )
 
-                # ************************************************** CORREGIR ADAPTAR
-        elif self.config["task"] == "regression":
-                y_pred = self.model.predict(self.X_test)
-                loss = mean_squared_error(self.y_test, y_pred)
-                metrics = calculate_metrics(self.y_test, y_pred, self.config)
-                # Serialize to send it to the server
-                #params = get_model_parameters(model)
-                #parameters_updated = serialize_RF(params)
-                # Build and return response
-                status = Status(code=Code.OK, message="Success")
-                return EvaluateRes(
-                    status=status,
-                    loss=float(loss),
-                    num_examples=len(self.X_test),
-                    metrics=metrics,
-                )
+                    # ************************************************** CORREGIR ADAPTAR
+            elif self.config["task"] == "regression":
+                    y_pred = self.model.predict(self.X_test)
+                    loss = mean_squared_error(self.y_test, y_pred)
+                    metrics = calculate_metrics(self.y_test, y_pred, self.config)
+                    # Serialize to send it to the server
+                    #params = get_model_parameters(model)
+                    #parameters_updated = serialize_RF(params)
+                    # Build and return response
+                    status = Status(code=Code.OK, message="Success")
+                    return EvaluateRes(
+                        status=status,
+                        loss=float(loss),
+                        num_examples=len(self.X_test),
+                        metrics=metrics,
+                    )
+        except Exception as e:
+            from flcore.utils import log_detailed_error
+            log_detailed_error("Model Evaluation (Local Validation)", e, config=getattr(self, "config", None), X=getattr(self, "X_test", None), y=getattr(self, "y_test", None))
+            raise e
 
     def save_model(self):
         save_path = Path(self.config["experiment_dir"]) / "models"

@@ -72,83 +72,92 @@ class MnistClient(fl.client.NumPyClient):
         return utils.get_model_parameters(self.model)
 
     def fit(self, parameters, config):  # type: ignore
+        try:
+            utils.set_model_params(self.model, parameters)
+            # Ignore convergence failure due to low local epochs
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                #To implement the center dropout, we need the execution time
+                start_time = time.time()
+                self.model.fit(self.X_train, self.y_train)
+                # self.model.fit(self.X_train.loc[:, parameters[2].astype(bool)], self.y_train)
+                # y_pred = self.model.predict(self.X_test.loc[:, parameters[2].astype(bool)])
+                y_pred = self.model.predict(self.X_test)
 
-        utils.set_model_params(self.model, parameters)
-        # Ignore convergence failure due to low local epochs
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            #To implement the center dropout, we need the execution time
-            start_time = time.time()
-            self.model.fit(self.X_train, self.y_train)
-            # self.model.fit(self.X_train.loc[:, parameters[2].astype(bool)], self.y_train)
-            # y_pred = self.model.predict(self.X_test.loc[:, parameters[2].astype(bool)])
-            y_pred = self.model.predict(self.X_test)
+                metrics = calculate_metrics(self.y_test, y_pred,self.config)
+                # Add 'personalized' to the metrics to identify them
+                metrics = {f"personalized {key}": metrics[key] for key in metrics}
+                self.round_time = (time.time() - start_time)
+                metrics["running_time"] = self.round_time
 
-            metrics = calculate_metrics(self.y_test, y_pred,self.config)
-            # Add 'personalized' to the metrics to identify them
-            metrics = {f"personalized {key}": metrics[key] for key in metrics}
-            self.round_time = (time.time() - start_time)
-            metrics["running_time"] = self.round_time
+            if self.first_round:
+                local_model = utils.get_model(self.config)
+                utils.set_initial_params(self.model, self.config)
+                local_model.fit(self.X_train, self.y_train)
+                y_pred = local_model.predict(self.X_test)
+                local_metrics = calculate_metrics(self.y_test, y_pred,self.config)
+                #Add 'local' to the metrics to identify them
+                local_metrics = {f"local {key}": local_metrics[key] for key in local_metrics}
+                metrics.update(local_metrics)
+                self.first_round = False
 
-        if self.first_round:
-            local_model = utils.get_model(self.config)
-            utils.set_initial_params(self.model, self.config)
-            local_model.fit(self.X_train, self.y_train)
-            y_pred = local_model.predict(self.X_test)
-            local_metrics = calculate_metrics(self.y_test, y_pred,self.config)
-            #Add 'local' to the metrics to identify them
-            local_metrics = {f"local {key}": local_metrics[key] for key in local_metrics}
-            metrics.update(local_metrics)
-            self.first_round = False
+            if self.round % self.config["save_every_n_rounds"] == 0:
+                self.save_model()
 
-        if self.round % self.config["save_every_n_rounds"] == 0:
-            self.save_model()
-
-        self.round += 1
-        return utils.get_model_parameters(self.model), len(self.X_train), metrics
+            self.round += 1
+            return utils.get_model_parameters(self.model), len(self.X_train), metrics
+        except Exception as e:
+            from flcore.utils import log_detailed_error
+            log_detailed_error("Model Fitting (Local Training)", e, config=getattr(self, "config", None), X=getattr(self, "X_train", None), y=getattr(self, "y_train", None))
+            raise e
 
     def evaluate(self, parameters, config):
-        utils.set_model_params(self.model, parameters)
-        # Calculate validation set metrics
-        pred = self.model.predict(self.X_test)
-        y_pred = pred
-        metrics = calculate_metrics(self.y_test, y_pred, self.config)
-        if self.config["task"] == "classification":
-            if self.config["n_out"] > 1: # Multivariable
-                if hasattr(self.model, "predict_proba"):
-                    y_score = self.model.predict_proba(self.X_test)
-                    loss = log_loss(self.y_test,y_score,labels=np.arange(self.config["n_out"]))
-                else:
-                    decision = self.model.decision_function(self.X_test)
-                    y_score = softmax(decision, axis=1)
-                    loss = log_loss(
-                    self.y_test,
-                    y_score,
-                    labels=np.arange(self.config["n_out"])
-                    )
-
-            elif self.config["n_out"] == 1: # Binario
-                if hasattr(self.model, "predict_proba"):
-                    loss = log_loss(
+        try:
+            utils.set_model_params(self.model, parameters)
+            # Calculate validation set metrics
+            pred = self.model.predict(self.X_test)
+            y_pred = pred
+            metrics = calculate_metrics(self.y_test, y_pred, self.config)
+            if self.config["task"] == "classification":
+                if self.config["n_out"] > 1: # Multivariable
+                    if hasattr(self.model, "predict_proba"):
+                        y_score = self.model.predict_proba(self.X_test)
+                        loss = log_loss(self.y_test,y_score,labels=np.arange(self.config["n_out"]))
+                    else:
+                        decision = self.model.decision_function(self.X_test)
+                        y_score = softmax(decision, axis=1)
+                        loss = log_loss(
                         self.y_test,
-                        self.model.predict_proba(self.X_test)
-                    )
-                else:
-                    loss = 1.0 - accuracy_score(
-                        self.y_test,
-                        y_pred
-                    )
+                        y_score,
+                        labels=np.arange(self.config["n_out"])
+                        )
 
-        elif self.config["task"] == "regression":
-            loss = mean_squared_error(self.y_test, y_pred)
+                elif self.config["n_out"] == 1: # Binario
+                    if hasattr(self.model, "predict_proba"):
+                        loss = log_loss(
+                            self.y_test,
+                            self.model.predict_proba(self.X_test)
+                        )
+                    else:
+                        loss = 1.0 - accuracy_score(
+                            self.y_test,
+                            y_pred
+                        )
 
-        metrics["round_time [s]"] = self.round_time
-        # No tiene sentido agregar el client ID
-        # metrics["client_id"] = self.node_name
+            elif self.config["task"] == "regression":
+                loss = mean_squared_error(self.y_test, y_pred)
 
-#        print(f"Client {self.node_name} Evaluation after aggregated model: {metrics['balanced_accuracy']}")
+            metrics["round_time [s]"] = self.round_time
+            # No tiene sentido agregar el client ID
+            # metrics["client_id"] = self.node_name
 
-        return loss, len(y_pred),  metrics
+    #        print(f"Client {self.node_name} Evaluation after aggregated model: {metrics['balanced_accuracy']}")
+
+            return loss, len(y_pred),  metrics
+        except Exception as e:
+            from flcore.utils import log_detailed_error
+            log_detailed_error("Model Evaluation (Local Validation)", e, config=getattr(self, "config", None), X=getattr(self, "X_test", None), y=getattr(self, "y_test", None))
+            raise e
 
     def save_model(self):
         save_path = Path(self.config["experiment_dir"])/"models"

@@ -12,7 +12,7 @@ import logging
 #import grpc
 
 import flcore.datasets as datasets
-from flcore.utils import StreamToLogger, GetModelClient, CheckClientConfig, survival_models_list
+from flcore.utils import StreamToLogger, GetModelClient, CheckClientConfig, survival_models_list, log_detailed_error
 
 if __name__ == "__main__":
 
@@ -86,7 +86,13 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     config = vars(args)
-    config = CheckClientConfig(config)
+    try:
+        config = CheckClientConfig(config)
+    except Exception as e:
+        log_detailed_error("Client Configuration Verification", e, config)
+        sys.stderr.flush()
+        sys.stdout.flush()
+        os._exit(1)
 
     # Create sandbox log file path
     sandbox_log_file = Path(os.path.join(config["sandbox_path"], "log_client.txt"))
@@ -166,8 +172,36 @@ if __name__ == "__main__":
 # *******************************************************************************************
 # Aquí lo correcto es cargar todo como instancias de dataloader de torch
 num_client = 0 # config["client_id"]
-data = datasets.load_dataset(config, num_client)
-client = GetModelClient(config, data)
+try:
+    data = datasets.load_dataset(config, num_client)
+except Exception as e:
+    log_detailed_error(
+        "Client Dataset Loading",
+        e,
+        config=config,
+        data_path=config.get("data_id") or config.get("data_path")
+    )
+    sys.stderr.flush()
+    sys.stdout.flush()
+    os._exit(1)
+
+try:
+    client = GetModelClient(config, data)
+except Exception as e:
+    X_train_diag, y_train_diag = None, None
+    if data and isinstance(data, tuple) and len(data) >= 1:
+        if isinstance(data[0], tuple) and len(data[0]) >= 2:
+            X_train_diag, y_train_diag = data[0][0], data[0][1]
+    log_detailed_error(
+        "Client Model Setup / Initialization",
+        e,
+        config=config,
+        X=X_train_diag,
+        y=y_train_diag
+    )
+    sys.stderr.flush()
+    sys.stdout.flush()
+    os._exit(1)
 # *******************************************************************************************
 for attempt in range(3):
     try:
@@ -194,7 +228,14 @@ for attempt in range(3):
             time.sleep(2)  # Espera un poco antes de reintentar
         else:
             print("All connection attempts failed.")
-            raise
+            X_train_diag, y_train_diag = None, None
+            if 'data' in locals() and data and isinstance(data, tuple) and len(data) >= 1:
+                if isinstance(data[0], tuple) and len(data[0]) >= 2:
+                    X_train_diag, y_train_diag = data[0][0], data[0][1]
+            log_detailed_error("Flower Client Start / Execution Loop", e, config=config, X=X_train_diag, y=y_train_diag)
+            sys.stderr.flush()
+            sys.stdout.flush()
+            os._exit(1)
 
 sys.stdout.flush()
 sys.stderr.flush()

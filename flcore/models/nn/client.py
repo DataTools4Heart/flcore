@@ -107,15 +107,75 @@ class FlowerClient(fl.client.NumPyClient):
         self.model.load_state_dict(state_dict, strict=True)
 
     def fit(self, parameters, params):
-        self.set_parameters(parameters)
-        #train(self.model,self.params,self.dataset)
-# ****** * * * * *  * *  *  *   *   *    *    *  * * * * * * * * ********
-        for epoch in range(self.epochs):
-            self.model.train()
-            total_loss, correct, total = 0, 0, 0
+        try:
+            self.set_parameters(parameters)
+    # ****** * * * * *  * *  *  *   *   *    *    *  * * * * * * * * ********
+            for epoch in range(self.epochs):
+                self.model.train()
+                total_loss, correct, total = 0, 0, 0
 
-            for X, y in self.train_loader:
+                for X, y in self.train_loader:
+                    X, y = X.to(self.device), y.to(self.device)
+                    if self.config["task"] == "classification":
+                        logits = self.model(X)
+                        if self.config["n_out"] == 1:  # Binario
+                            loss = F.binary_cross_entropy_with_logits(logits.squeeze(1), y)
+                            probs = torch.sigmoid(logits.squeeze(1))
+                            preds = (probs > 0.5).long()
+                        else:           # Multiclase
+                            loss = F.cross_entropy(logits, y)
+                            preds = torch.argmax(logits, dim=1)
+                    elif self.config["task"] == "regression":
+                        preds = self.model(X)
+                        loss = F.mse_loss(preds, y)
+
+                    self.optimizer.zero_grad()
+                    loss.backward()
+                    self.optimizer.step()
+
+                    total_loss += loss.item() * X.size(0)
+                    correct += (preds == y).sum().item()
+                    total += y.size(0)
+
+                train_loss = total_loss / total
+                train_acc = correct / total
+                #test_loss, test_acc = self.evaluate()
+
+                print(f"Epoch {epoch+1:02d} | "
+                      f"Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.4f} ")
+                #      f"Test Loss: {test_loss:.4f}, Test Acc: {test_acc:.4f}")
+
+            dataset_len = self.y_train.shape[0]
+    #       return get_weights(self.model), num_examples, metrics
+            if self.round % self.config["save_every_n_rounds"] == 0:
+                self.save_model()
+
+            self.round += 1
+            return self.get_parameters(config={}), dataset_len, {}
+        except Exception as e:
+            from flcore.utils import log_detailed_error
+            X_diag = self.X_train.cpu().numpy() if hasattr(self, 'X_train') and hasattr(self.X_train, 'cpu') else None
+            y_diag = self.y_train.cpu().numpy() if hasattr(self, 'y_train') and hasattr(self.y_train, 'cpu') else None
+            log_detailed_error("Model Fitting (Local Training)", e, config=getattr(self, "config", None), X=X_diag, y=y_diag)
+            raise e
+
+#    @torch.no_grad()
+    def evaluate(self, parameters, params):
+        try:
+            self.set_parameters(parameters)
+    # ****** * * * * *  * *  *  *   *   *    *    *  * * * * * * * * ********
+            self.model.eval()
+            if self.config["dropout_p"] > 0.0:
+                metrics = uncertainty_metrics(self.model, self.val_loader, device=self.device, T=int(self.config["T"]))
+            else:
+                pred = self.model(self.X_test)
+                y_pred = pred[:,0]
+                metrics = calculate_metrics(self.y_test, y_pred, self.config)
+
+            total_loss, correct, total = 0, 0, 0
+            for X, y in self.test_loader:
                 X, y = X.to(self.device), y.to(self.device)
+
                 if self.config["task"] == "classification":
                     logits = self.model(X)
                     if self.config["n_out"] == 1:  # Binario
@@ -123,77 +183,30 @@ class FlowerClient(fl.client.NumPyClient):
                         probs = torch.sigmoid(logits.squeeze(1))
                         preds = (probs > 0.5).long()
                     else:           # Multiclase
+                            #y = y.squeeze()
+                        y = y.long()
                         loss = F.cross_entropy(logits, y)
                         preds = torch.argmax(logits, dim=1)
+                    correct += (preds == y).sum().item()
                 elif self.config["task"] == "regression":
                     preds = self.model(X)
                     loss = F.mse_loss(preds, y)
-
-                self.optimizer.zero_grad()
-                loss.backward()
-                self.optimizer.step()
+                    #loss = F.l1_loss(preds, y)
 
                 total_loss += loss.item() * X.size(0)
-                correct += (preds == y).sum().item()
                 total += y.size(0)
 
-            train_loss = total_loss / total
-            train_acc = correct / total
-            #test_loss, test_acc = self.evaluate()
+            test_loss = total_loss / total
+            dataset_len = self.y_test.shape[0]
 
-            print(f"Epoch {epoch+1:02d} | "
-                  f"Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.4f} ")
-            #      f"Test Loss: {test_loss:.4f}, Test Acc: {test_acc:.4f}")
-
-        dataset_len = self.y_train.shape[0]
-#       return get_weights(self.model), num_examples, metrics
-        if self.round % self.config["save_every_n_rounds"] == 0:
-            self.save_model()
-
-        self.round += 1
-        return self.get_parameters(config={}), dataset_len, {}
-
-#    @torch.no_grad()
-    def evaluate(self, parameters, params):
-        self.set_parameters(parameters)
-# ****** * * * * *  * *  *  *   *   *    *    *  * * * * * * * * ********
-        self.model.eval()
-        if self.config["dropout_p"] > 0.0:
-            metrics = uncertainty_metrics(self.model, self.val_loader, device=self.device, T=int(self.config["T"]))
-        else:
-            pred = self.model(self.X_test)
-            y_pred = pred[:,0]
-            metrics = calculate_metrics(self.y_test, y_pred, self.config)
-
-        total_loss, correct, total = 0, 0, 0
-        for X, y in self.test_loader:
-            X, y = X.to(self.device), y.to(self.device)
-
-            if self.config["task"] == "classification":
-                logits = self.model(X)
-                if self.config["n_out"] == 1:  # Binario
-                    loss = F.binary_cross_entropy_with_logits(logits.squeeze(1), y)
-                    probs = torch.sigmoid(logits.squeeze(1))
-                    preds = (probs > 0.5).long()
-                else:           # Multiclase
-                        #y = y.squeeze()
-                    y = y.long()
-                    loss = F.cross_entropy(logits, y)
-                    preds = torch.argmax(logits, dim=1)
-                correct += (preds == y).sum().item()
-            elif self.config["task"] == "regression":
-                preds = self.model(X)
-                loss = F.mse_loss(preds, y)
-                #loss = F.l1_loss(preds, y)
-
-            total_loss += loss.item() * X.size(0)
-            total += y.size(0)
-
-        test_loss = total_loss / total
-        dataset_len = self.y_test.shape[0]
-
-#        return total_loss / total, correct / total
-        return float(test_loss), dataset_len, metrics
+    #        return total_loss / total, correct / total
+            return float(test_loss), dataset_len, metrics
+        except Exception as e:
+            from flcore.utils import log_detailed_error
+            X_diag = self.X_test.cpu().numpy() if hasattr(self, 'X_test') and hasattr(self.X_test, 'cpu') else None
+            y_diag = self.y_test.cpu().numpy() if hasattr(self, 'y_test') and hasattr(self.y_test, 'cpu') else None
+            log_detailed_error("Model Evaluation (Local Validation)", e, config=getattr(self, "config", None), X=X_diag, y=y_diag)
+            raise e
 
     def save_model(self):
         save_path = Path(self.config["sandbox_path"]) / "model"

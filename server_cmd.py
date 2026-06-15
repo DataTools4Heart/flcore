@@ -9,7 +9,7 @@ import argparse
 import flwr as fl
 from pathlib import Path
 
-from flcore.utils import StreamToLogger, CheckServerConfig, GetModelServerStrategy
+from flcore.utils import StreamToLogger, CheckServerConfig, GetModelServerStrategy, log_detailed_error
 
 warnings.filterwarnings("ignore")
 
@@ -65,7 +65,13 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     config = vars(args)
-    config = CheckServerConfig(config)
+    try:
+        config = CheckServerConfig(config)
+    except Exception as e:
+        log_detailed_error("Server Configuration Verification", e, config)
+        sys.stderr.flush()
+        sys.stdout.flush()
+        os._exit(1)
 
     # Create sandbox log file path
 # Originalmente estaba asi:
@@ -151,16 +157,28 @@ if __name__ == "__main__":
     # history_dir = experiment_dir / "history"
     # history_dir.mkdir(parents=True, exist_ok=True)
 
-    server, strategy = GetModelServerStrategy(config)
+    try:
+        server, strategy = GetModelServerStrategy(config)
+    except Exception as e:
+        log_detailed_error("Server Strategy / Model Setup", e, config)
+        sys.stderr.flush()
+        sys.stdout.flush()
+        os._exit(1)
 
     # Start Flower server for three rounds of federated learning
-    history = fl.server.start_server(
-        server_address=f"{central_ip}:{central_port}",
-        config=fl.server.ServerConfig(num_rounds=config["num_rounds"], round_timeout=None ),
-        server=server,
-        strategy=strategy,
-        certificates = certificates,
-    )
+    try:
+        history = fl.server.start_server(
+            server_address=f"{central_ip}:{central_port}",
+            config=fl.server.ServerConfig(num_rounds=config["num_rounds"], round_timeout=None ),
+            server=server,
+            strategy=strategy,
+            certificates = certificates,
+        )
+    except Exception as e:
+        log_detailed_error("Flower Server Start / Execution Loop", e, config)
+        sys.stderr.flush()
+        sys.stdout.flush()
+        os._exit(1)
     # # Save the model and the history
     # filename = os.path.join( checkpoint_dir, 'final_model.pt' )
     # joblib.dump(model, filename)

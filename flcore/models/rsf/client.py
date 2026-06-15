@@ -34,42 +34,64 @@ class FLClient(fl.client.NumPyClient):
         return self.model_wrapper.get_parameters()
 
     def fit(self, parameters, config):
-        # Get model type from server
-        model_kwargs = {k: v for k, v in config.items() if k != "model_type"}
-        if self.model_wrapper is None:
-            self.model_wrapper = RSFModel(**model_kwargs)
-            print(f"[Client] Initialized model type from server: rsf")
+        try:
+            # Get model type from server
+            model_kwargs = {k: v for k, v in config.items() if k != "model_type"}
+            if self.model_wrapper is None:
+                self.model_wrapper = RSFModel(**model_kwargs)
+                print(f"[Client] Initialized model type from server: rsf")
 
-        if parameters:
-            self.model_wrapper.set_parameters(parameters)
+            if parameters:
+                self.model_wrapper.set_parameters(parameters)
 
-        data = self.local_data
-        self.model_wrapper.fit(data)
+            data = self.local_data
+            self.model_wrapper.fit(data)
 
-        params = self.get_parameters()
-        num_examples = data.get("num_examples", len(data.get("X", [])) if "X" in data else len(data.get("df")))
+            params = self.get_parameters()
+            num_examples = data.get("num_examples", len(data.get("X", [])) if "X" in data else len(data.get("df")))
 
-        if self.round % self.config["save_every_n_rounds"] == 0:
-            self.save_model()
+            if self.round % self.config["save_every_n_rounds"] == 0:
+                self.save_model()
 
-        self.round += 1
-        return params, num_examples, {}
+            self.round += 1
+            return params, num_examples, {}
+        except Exception as e:
+            from flcore.utils import log_detailed_error
+            log_detailed_error(
+                "Model Fitting (Local Training)",
+                e,
+                config=getattr(self, "config", None),
+                X=self.local_data.get("X") if isinstance(self.local_data, dict) else None,
+                y=self.local_data.get("y") if isinstance(self.local_data, dict) else None
+            )
+            raise e
 
     def evaluate(self, parameters, config):
-        model_kwargs = {k: v for k, v in config.items() if k != "model_type"}
-        if self.model_wrapper is None:
-            self.model_wrapper = RSFModel(**model_kwargs)
-            print(f"[Client] Initialized model type from server (evaluate): rsf")
+        try:
+            model_kwargs = {k: v for k, v in config.items() if k != "model_type"}
+            if self.model_wrapper is None:
+                self.model_wrapper = RSFModel(**model_kwargs)
+                print(f"[Client] Initialized model type from server (evaluate): rsf")
 
-        if parameters:
-            self.model_wrapper.set_parameters(parameters)
+            if parameters:
+                self.model_wrapper.set_parameters(parameters)
 
-        data = self.local_data
-        metrics = self.model_wrapper.evaluate(data)
-        metrics['client_id'] = self.id
+            data = self.local_data
+            metrics = self.model_wrapper.evaluate(data)
+            metrics['client_id'] = self.id
 
-        num_examples = data.get("num_examples", len(data.get("X", [])) if "X" in data else len(data.get("df")))
-        return 1 - metrics['c_index'], num_examples, metrics
+            num_examples = data.get("num_examples", len(data.get("X", [])) if "X" in data else len(data.get("df")))
+            return 1 - metrics['c_index'], num_examples, metrics
+        except Exception as e:
+            from flcore.utils import log_detailed_error
+            log_detailed_error(
+                "Model Evaluation (Local Validation)",
+                e,
+                config=getattr(self, "config", None),
+                X=self.local_data.get("X_test") if isinstance(self.local_data, dict) else None,
+                y=self.local_data.get("y_test") if isinstance(self.local_data, dict) else None
+            )
+            raise e
 
     def save_model(self):
         save_path = Path(self.config["experiment_dir"])/"models"

@@ -357,3 +357,134 @@ def CheckServerConfig(config):
             config["strategy"] = "bagging"
 # Tendriamos que añadir que se verifique que las tasks sean consistentes con los label y el tipo de dato
     return config
+
+
+def log_detailed_error(stage_name, exception, config=None, X=None, y=None, data_path=None):
+    """
+    Logs a highly visible and detailed error message, including system information,
+    configuration variables, dataset characteristics, and a clean traceback.
+    """
+    import os
+    import sys
+    import logging
+    import traceback
+    import numpy as np
+    import pandas as pd
+
+    logger = logging.getLogger("ERROR_DIAGNOSTICS")
+    
+    border = "=" * 80
+    logger.error(border)
+    logger.error(f"  CRITICAL ERROR IN STAGE: {stage_name.upper()}  ".center(80, "="))
+    logger.error(border)
+    
+    # Error Message
+    logger.error(f"Error Type: {type(exception).__name__}")
+    logger.error(f"Error Message: {str(exception)}")
+    logger.error(border)
+    
+    # Configuration Diagnostics
+    if config:
+        logger.error("  CONFIGURATION PARAMETERS  ".center(80, "-"))
+        for key in ["model", "task", "dataset", "data_id", "data_path", "train_labels", "target_labels", "train_size"]:
+            if key in config:
+                logger.error(f"  * {key}: {config[key]}")
+        logger.error(border)
+
+    # Data Diagnostics
+    if X is not None or y is not None:
+        logger.error("  DATASET DIAGNOSTICS  ".center(80, "-"))
+        
+        # Diagnostics for X
+        if X is not None:
+            if isinstance(X, (pd.DataFrame, pd.Series)):
+                logger.error(f"  * X type: {type(X)}")
+                logger.error(f"  * X shape: {X.shape}")
+                logger.error(f"  * X columns: {list(X.columns) if hasattr(X, 'columns') else 'No columns'}")
+                # Check NaNs
+                nan_cols = X.isna().sum()
+                nan_total = nan_cols.sum()
+                logger.error(f"  * X total missing (NaN) values: {nan_total}")
+                if nan_total > 0:
+                    logger.error(f"    - Columns with NaNs: {nan_cols[nan_cols > 0].to_dict()}")
+                # Check infinite values (for numeric columns only)
+                num_cols = X.select_dtypes(include=[np.number]).columns
+                if len(num_cols) > 0:
+                    try:
+                        inf_total = np.isinf(X[num_cols]).sum().sum()
+                        logger.error(f"  * X total infinite values: {inf_total}")
+                    except Exception:
+                        pass
+            elif isinstance(X, np.ndarray):
+                logger.error(f"  * X type: numpy.ndarray")
+                logger.error(f"  * X shape: {X.shape}")
+                try:
+                    nan_total = np.isnan(X).sum()
+                    logger.error(f"  * X total missing (NaN) values: {nan_total}")
+                    if np.issubdtype(X.dtype, np.number):
+                        logger.error(f"  * X total infinite values: {np.isinf(X).sum()}")
+                except Exception:
+                    pass
+            else:
+                logger.error(f"  * X type (raw): {type(X)}")
+                try:
+                    logger.error(f"  * X length: {len(X)}")
+                except Exception:
+                    pass
+
+        # Diagnostics for y
+        if y is not None:
+            if isinstance(y, (pd.Series, pd.DataFrame)):
+                logger.error(f"  * y type: {type(y)}")
+                logger.error(f"  * y shape: {y.shape}")
+                try:
+                    nan_total = y.isna().sum().sum() if isinstance(y, pd.DataFrame) else y.isna().sum()
+                    logger.error(f"  * y total missing (NaN) values: {nan_total}")
+                except Exception:
+                    pass
+                # Class / label distribution
+                try:
+                    unique_vals = y.value_counts().to_dict()
+                    logger.error(f"  * y class distribution / values: {unique_vals}")
+                except Exception:
+                    pass
+            elif isinstance(y, np.ndarray):
+                logger.error(f"  * y type: numpy.ndarray")
+                logger.error(f"  * y shape: {y.shape}")
+                try:
+                    logger.error(f"  * y total missing (NaN) values: {np.isnan(y).sum()}")
+                except Exception:
+                    pass
+                try:
+                    vals, counts = np.unique(y, return_counts=True)
+                    logger.error(f"  * y class distribution: {dict(zip(vals.tolist(), counts.tolist()))}")
+                except Exception:
+                    pass
+            else:
+                logger.error(f"  * y type (raw): {type(y)}")
+                try:
+                    logger.error(f"  * y length: {len(y)}")
+                except Exception:
+                    pass
+        logger.error(border)
+
+    # System/File diagnostics
+    if data_path:
+        logger.error("  FILE SYSTEM DIAGNOSTICS  ".center(80, "-"))
+        logger.error(f"  * target file/dir path: {data_path}")
+        try:
+            exists = os.path.exists(data_path)
+            logger.error(f"  * path exists: {exists}")
+            if exists:
+                logger.error(f"  * is file: {os.path.isfile(data_path)}")
+                logger.error(f"  * is directory: {os.path.isdir(data_path)}")
+        except Exception as file_err:
+            logger.error(f"  * failed to run path checks: {file_err}")
+        logger.error(border)
+
+    # Detailed traceback
+    logger.error("  DETAILED TRACEBACK  ".center(80, "-"))
+    tb_lines = traceback.format_exception(type(exception), exception, exception.__traceback__)
+    for line in "".join(tb_lines).splitlines():
+        logger.error(f"    {line}")
+    logger.error(border)
