@@ -1,6 +1,7 @@
 import os
 import sys
 import glob
+import json
 import numpy as np
 from pathlib import Path
 
@@ -82,15 +83,17 @@ class StreamToLogger:
         self.level = level
 
     def write(self, message):
-        for line in message.rstrip().splitlines():
-            self.logger.log(self.level, line.rstrip())
+        for line in message.splitlines():
+            line = line.rstrip()
+            if line:
+                self.logger.log(self.level, line)
 
     def flush(self):
         pass
 
 def CheckClientConfig(config):
     # Compaibilidad de logistic regression y elastic net con sus parámetros
-    assert config["task"] in ["classification","regression","none"], "Task not valid"
+    assert config["task"] in ["classification","regression","none","survival"], "Task not valid"
 
     if config["model"] == "logistic_regression":
         if (config["task"] == "classification" or config["task"].lower() == "none"):
@@ -116,7 +119,7 @@ def CheckClientConfig(config):
         elif config["task"] == "regression":
             print("The nature of the selected ML models does not allow to perform regression")
             print("if you want to perform regression with a linear model you can change to linear_regression")
-            sys.exit()
+            sys.exit(1)
     elif config["model"] == "lsvc":
         if (config["task"] == "classification"  or config["task"].lower() == "none"):
             if config["task"].lower() == "none":
@@ -125,24 +128,24 @@ def CheckClientConfig(config):
             # verificar variables
         elif config["task"] == "regression":
             print("The nature of the selected ML models does not allow to perform regression")
-            sys.exit()
+            sys.exit(1)
     elif config["model"] in linear_regression_models_list:
         if config["task"] == "classification" and config["model"] != "svm":
             print("The nature of the selected ML model does not allow to perform classification")
             print("if you want to perform classification with a linear model you can change to logistic_regression")
-            sys.exit()
+            sys.exit(1)
         elif (config["task"] == "regression"  or config["task"].lower() == "none"):
             if config["task"].lower() == "none":
                 print("Since this model only supports regression assigning task automatically to regression")
 
             if config["model"] == "lasso_regression":
-                config["model"] == "linear_regression"
+                config["model"] = "linear_regression"
                 config["penalty"] = "l1"
             elif config["model"] == "ridge_regression":
-                config["model"] == "linear_regression"
+                config["model"] = "linear_regression"
                 config["penalty"] = "l2"
             elif config["model"] == "linear_regression_elasticnet":
-                config["model"] == "linear_regression"
+                config["model"] = "linear_regression"
                 config["penalty"] = "elasticnet"
             elif config["model"] == "svm":
                 if config["kernel"] != "linear":
@@ -159,7 +162,7 @@ def CheckClientConfig(config):
             config["solver"] = "saga"
         elif config["task"] == "regression":
             print("The nature of the selected ML model does not allow to perform regression despite its name")
-            sys.exit()
+            sys.exit(1)
     elif config["model"] == "nn":
         config["n_feats"] = len(config["train_labels"])
         config["n_out"] = 1 # Quizás añadir como parámetro también
@@ -181,14 +184,15 @@ def CheckClientConfig(config):
     # Saniy check, empty list
     if len(parquet_files) == 0:
         print("No parquet files found in ",est)
-        sys.exit()
+        sys.exit(1)
+#    config["data_file"] = "/home/jorge/workdir/flcore-suite/dataset/bucarest_sintetico/synthetic_dt4h_dataset.csv"
 
     # ¿How to choose one of the list?
     config["data_file"] = parquet_files[-1]
 
     if len(config["train_labels"]) == 0:
         print("No training labels were provided")
-        sys.exit()
+        sys.exit(1)
 
     new = []
     for i in config["train_labels"]:
@@ -196,9 +200,9 @@ def CheckClientConfig(config):
         new.append(parsed)
     config["train_labels"] = new
 
-    if len(config["target_labels"]) == 0:
+    if len(config["target_labels"]) == 0 and config["task"] != "survival":
         print("No target labels were provided")
-        sys.exit()
+        sys.exit(1)
 
     new = []        
     for i in config["target_labels"]:
@@ -206,20 +210,71 @@ def CheckClientConfig(config):
         new.append(parsed)
     config["target_labels"] = new
 
-    # VERIFICAR EL TASK SI HACE FALTA CAMBIARLO SEGUN EL NUMERO DE LABELS, binario bmulticlase¿?¿?¿?¿?
+# ____________________________________________________________________
+    with open(config["metadata_file"]) as f:
+        meta = json.load(f)
+
+    entries = meta.get("entries", [])
+    if entries:
+        entry = entries[0]
+        feature_stats = entry["datasetStats"]["featureStats"]
+        outcome_stats = entry["datasetStats"]["outcomeStats"]
+        features_meta = {o["name"]: o for o in entry["features"]}
+        outcomes_meta = {o["name"]: o for o in entry["outcomes"]}
+    else:
+        dataset_stats = meta.get("datasetStats", {})
+        feature_stats = dataset_stats.get("featureStats", {})
+        outcome_stats = dataset_stats.get("outcomeStats", {})
+        features_meta = {o["name"]: o for o in meta.get("features", [])}
+        outcomes_meta = {o["name"]: o for o in meta.get("outcomes", [])}
+# ____________________________________________________________________
+
+    n_out = 0
+    for target in config["target_labels"]:
+        if target in outcomes_meta.keys():
+            dtype = outcomes_meta[target]["dataType"]
+            stats = outcome_stats.get(target, {})
+
+        elif target in features_meta.keys():
+            dtype = features_meta[target]["dataType"]
+            stats = feature_stats.get(target, {})
+        else:
+            raise ValueError(f"Target {target} no encontrado en metadata['outcomes']")
+
+        if dtype == "BOOLEAN":
+            n_out += 1
+        elif dtype == "NOMINAL":
+            n_out += len(stats.get("valueSet", []))
+        elif dtype == "NUMERIC":
+            n_out += 1
+
+        if config["task"] == "regression":
+            if dtype != "NUMERIC":
+                raise ValueError(
+                    f"Inconsistent configuration: task='regression' but target '{target}' "
+                    f"has dtype '{dtype}'. Regression requires NUMERIC targets."
+                )
+
+        elif config["task"] == "classification":
+            if dtype == "NUMERIC":
+                raise ValueError(
+                    f"Inconsistent configuration: task='classification' but target '{target}' "
+                    f"has dtype NUMERIC. Classification requires BOOLEAN or NOMINAL targets."
+                )
+
+    config["n_out"] = n_out
     config["n_feats"] = len(config["train_labels"])
-    config["n_out"] = len(config["target_labels"])
 
     if config["model"] in ["svm","svr","lsvr"]:
         if config["task"] == "regression":
             if config["kernel"] in ["poly", "rbf", "sigmoid", "precomputed"] and config["n_out"] > 1:
                 print("Those kernels only support 1-variable as output")
-                sys.exit()
+                sys.exit(1)
 
     if config["model"] in survival_models_list:
         if config["time_col"] == "None" or config["event_col"] == "None":
             print("Time col and Event col needed when survival model is choosen")
-            sys.exit()
+            sys.exit(1)
         else:
             config["survival"] = {}
             config["survival"]["time_col"] = config["time_col"]
@@ -235,7 +290,7 @@ def CheckClientConfig(config):
 
     if config["task"].lower() == "none":
         print("Task not assigned. The  ML model  selection requieres a task to perform")
-        sys.exit()  
+        sys.exit(1)  
 
     if config["penalty"] != "none":
         valid_values = ["l1", "l2"]
@@ -245,7 +300,7 @@ def CheckClientConfig(config):
             valid_values.append("SmoothL1Loss")
         elif config["model"] == "random_forest":
             print("Random forest does not admit L1, L2 or ElasticNet regularization ... ignoring this variable")
-            sys.exit()
+            sys.exit(1)
         assert config["penalty"] in valid_values, "Penalty is not valid or available for the selected model"
     return config
 
@@ -302,3 +357,134 @@ def CheckServerConfig(config):
             config["strategy"] = "bagging"
 # Tendriamos que añadir que se verifique que las tasks sean consistentes con los label y el tipo de dato
     return config
+
+
+def log_detailed_error(stage_name, exception, config=None, X=None, y=None, data_path=None):
+    """
+    Logs a highly visible and detailed error message, including system information,
+    configuration variables, dataset characteristics, and a clean traceback.
+    """
+    import os
+    import sys
+    import logging
+    import traceback
+    import numpy as np
+    import pandas as pd
+
+    logger = logging.getLogger("ERROR_DIAGNOSTICS")
+    
+    border = "=" * 80
+    logger.error(border)
+    logger.error(f"  CRITICAL ERROR IN STAGE: {stage_name.upper()}  ".center(80, "="))
+    logger.error(border)
+    
+    # Error Message
+    logger.error(f"Error Type: {type(exception).__name__}")
+    logger.error(f"Error Message: {str(exception)}")
+    logger.error(border)
+    
+    # Configuration Diagnostics
+    if config:
+        logger.error("  CONFIGURATION PARAMETERS  ".center(80, "-"))
+        for key in ["model", "task", "dataset", "data_id", "data_path", "train_labels", "target_labels", "train_size"]:
+            if key in config:
+                logger.error(f"  * {key}: {config[key]}")
+        logger.error(border)
+
+    # Data Diagnostics
+    if X is not None or y is not None:
+        logger.error("  DATASET DIAGNOSTICS  ".center(80, "-"))
+        
+        # Diagnostics for X
+        if X is not None:
+            if isinstance(X, (pd.DataFrame, pd.Series)):
+                logger.error(f"  * X type: {type(X)}")
+                logger.error(f"  * X shape: {X.shape}")
+                logger.error(f"  * X columns: {list(X.columns) if hasattr(X, 'columns') else 'No columns'}")
+                # Check NaNs
+                nan_cols = X.isna().sum()
+                nan_total = nan_cols.sum()
+                logger.error(f"  * X total missing (NaN) values: {nan_total}")
+                if nan_total > 0:
+                    logger.error(f"    - Columns with NaNs: {nan_cols[nan_cols > 0].to_dict()}")
+                # Check infinite values (for numeric columns only)
+                num_cols = X.select_dtypes(include=[np.number]).columns
+                if len(num_cols) > 0:
+                    try:
+                        inf_total = np.isinf(X[num_cols]).sum().sum()
+                        logger.error(f"  * X total infinite values: {inf_total}")
+                    except Exception:
+                        pass
+            elif isinstance(X, np.ndarray):
+                logger.error(f"  * X type: numpy.ndarray")
+                logger.error(f"  * X shape: {X.shape}")
+                try:
+                    nan_total = np.isnan(X).sum()
+                    logger.error(f"  * X total missing (NaN) values: {nan_total}")
+                    if np.issubdtype(X.dtype, np.number):
+                        logger.error(f"  * X total infinite values: {np.isinf(X).sum()}")
+                except Exception:
+                    pass
+            else:
+                logger.error(f"  * X type (raw): {type(X)}")
+                try:
+                    logger.error(f"  * X length: {len(X)}")
+                except Exception:
+                    pass
+
+        # Diagnostics for y
+        if y is not None:
+            if isinstance(y, (pd.Series, pd.DataFrame)):
+                logger.error(f"  * y type: {type(y)}")
+                logger.error(f"  * y shape: {y.shape}")
+                try:
+                    nan_total = y.isna().sum().sum() if isinstance(y, pd.DataFrame) else y.isna().sum()
+                    logger.error(f"  * y total missing (NaN) values: {nan_total}")
+                except Exception:
+                    pass
+                # Class / label distribution
+                try:
+                    unique_vals = y.value_counts().to_dict()
+                    logger.error(f"  * y class distribution / values: {unique_vals}")
+                except Exception:
+                    pass
+            elif isinstance(y, np.ndarray):
+                logger.error(f"  * y type: numpy.ndarray")
+                logger.error(f"  * y shape: {y.shape}")
+                try:
+                    logger.error(f"  * y total missing (NaN) values: {np.isnan(y).sum()}")
+                except Exception:
+                    pass
+                try:
+                    vals, counts = np.unique(y, return_counts=True)
+                    logger.error(f"  * y class distribution: {dict(zip(vals.tolist(), counts.tolist()))}")
+                except Exception:
+                    pass
+            else:
+                logger.error(f"  * y type (raw): {type(y)}")
+                try:
+                    logger.error(f"  * y length: {len(y)}")
+                except Exception:
+                    pass
+        logger.error(border)
+
+    # System/File diagnostics
+    if data_path:
+        logger.error("  FILE SYSTEM DIAGNOSTICS  ".center(80, "-"))
+        logger.error(f"  * target file/dir path: {data_path}")
+        try:
+            exists = os.path.exists(data_path)
+            logger.error(f"  * path exists: {exists}")
+            if exists:
+                logger.error(f"  * is file: {os.path.isfile(data_path)}")
+                logger.error(f"  * is directory: {os.path.isdir(data_path)}")
+        except Exception as file_err:
+            logger.error(f"  * failed to run path checks: {file_err}")
+        logger.error(border)
+
+    # Detailed traceback
+    logger.error("  DETAILED TRACEBACK  ".center(80, "-"))
+    tb_lines = traceback.format_exception(type(exception), exception, exception.__traceback__)
+    for line in "".join(tb_lines).splitlines():
+        logger.error(f"    {line}")
+    logger.error(border)

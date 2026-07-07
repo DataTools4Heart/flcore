@@ -50,7 +50,6 @@ class UncertaintyWeightedFedAvg(fl.server.strategy.FedAvg):
             num_examples = fitres.num_examples
             entropy = fitres.metrics.get("entropy", 1.0)
             # peso = más datos y menor entropía => mayor confianza
-            print(" *********************** ENTROPIA", entropy)
             w = num_examples / (self.epsilon + entropy)
             weights_results.append((ndarrays, w))
             agg_weights.append(w)

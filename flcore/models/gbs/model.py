@@ -220,3 +220,70 @@ class GBSModel(BaseSurvivalModel):
         with open(path, 'rb') as f:
             import pickle
             self.set_parameters(pickle.load(f))
+
+    def explain(self, X, horizons=None):
+        """
+        Generate SHAP values for the GBS model (FPBoost).
+        """
+        import shap
+        import pandas as pd
+        
+        if horizons is None:
+            horizons = [1, 3, 5]
+        
+        try:
+            # TreeExplainer is efficient for tree-based models
+            explainer = shap.TreeExplainer(self.model)
+            shap_values = explainer.shap_values(X)
+        except Exception as e:
+            print(f"[GBSModel] TreeExplainer failed, falling back to Explainer: {e}")
+            X_val = X.values if isinstance(X, pd.DataFrame) else X
+            background = shap.sample(X_val, 100) if len(X_val) > 100 else X_val
+            explainer = shap.Explainer(self.predict_risk, background)
+            shap_values = explainer(X).values
+            
+        import numpy as np
+        shap_values_np = np.array(shap_values)
+        if shap_values_np.ndim > 2:
+            shap_values_np = shap_values_np[:, :, 0]
+            
+        mean_abs_shap = np.abs(shap_values_np).mean(axis=0)
+        total_shap = mean_abs_shap.sum()
+        
+        if total_shap > 0:
+            relative_contribution = (mean_abs_shap / total_shap) * 100
+        else:
+            relative_contribution = np.zeros_like(mean_abs_shap)
+            
+        X_val = X.values if hasattr(X, "values") else X
+        n_samples = X_val.shape[0]
+        scores_at_horizons = {h: [] for h in horizons}
+        
+        try:
+            from scipy.interpolate import interp1d
+            surv_funcs = self.model.predict_survival_function(X) # pass original X in case of pd.DataFrame
+            for fn in surv_funcs:
+                for h in horizons:
+                    f = interp1d(fn.x, fn.y, bounds_error=False, fill_value=(1.0, 0.0))
+                    scores_at_horizons[h].append(float(f(h)))
+        except Exception as e:
+            print(f"[GBSModel] Fallback to risk scores for horizon evaluation: {e}")
+            risk_scores = self.predict_risk(X)
+            for h in horizons:
+                scores_at_horizons[h] = risk_scores.tolist()
+
+        results = []
+        for i in range(n_samples):
+            patient_result = []
+            for h in horizons:
+                patient_result.append({
+                    "horizon": str(h),
+                    "score": scores_at_horizons[h][i],
+                    "shap_data": shap_values_np[i].tolist(),
+                    "contribution_data": relative_contribution.tolist(),
+                    "whatever_data": [],
+                    "distribution_data": []
+                })
+            results.append(patient_result)
+            
+        return results if n_samples > 1 else results[0]

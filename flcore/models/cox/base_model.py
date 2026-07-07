@@ -17,3 +17,22 @@ class BaseSurvivalModel(ABC):
     @abstractmethod
     def set_parameters(self, params):
         pass
+
+    @abstractmethod
+    def explain(self, X, horizons=None):
+        """
+        Generate local explainability (SHAP values) for the given instances.
+        
+        Parameters:
+        -----------
+        X : array-like or pd.DataFrame
+            Features of the instances to be explained.
+        horizons : list
+            List of horizons (e.g. [1, 3, 5]).
+            
+        Returns:
+        --------
+        list
+            Structured list of dictionaries with predictions and explainability per horizon.
+        """
+        pass

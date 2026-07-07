@@ -4,26 +4,123 @@ import shutil
 import urllib.request
 from typing import Tuple
 import json
+import re
 
-import numpy as np
 import openml
 #import torch
-from pathlib import Path
-import pandas as pd
 import random
+import numpy as np
+import pandas as pd
+from pathlib import Path
 
 from sklearn.datasets import load_svmlight_file
 from sklearn.preprocessing import OrdinalEncoder, MinMaxScaler,StandardScaler
-from sklearn.model_selection import KFold, StratifiedShuffleSplit, train_test_split
+from sklearn.model_selection import KFold, train_test_split
 from sklearn.utils import shuffle
 from sklearn.feature_selection import SelectKBest, f_classif
-
+from sklearn.model_selection import StratifiedShuffleSplit, ShuffleSplit
 
 #from flcore.models.xgb.utils import TreeDataset, do_fl_partitioning, get_dataloader
 
 XY = Tuple[np.ndarray, np.ndarray]
 Dataset = Tuple[XY, XY]
 
+def filter_nans(df, features, outcomes, verbose=True):
+    print(" ************************************************ ENTRA FILTER NANS")
+    """
+    Filter patients with complete data across all feature and outcome variables.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Input dataframe where each row represents a patient.
+    features : list of str
+        Predictor variable names.
+    outcomes : list of str
+        Outcome variable names.
+    verbose : bool, default=True
+        If True, prints a summary report.
+
+    Returns
+    -------
+    df_filtered : pd.DataFrame
+        Dataframe containing only complete cases.
+    report : dict
+        Summary statistics.
+    """
+
+    # Combine variables preserving order and removing duplicates
+    variables = list(dict.fromkeys(features + outcomes))
+
+    # Validate columns
+    missing_cols = [v for v in variables if v not in df.columns]
+    if missing_cols:
+        raise ValueError(
+            f"Variables not found in dataframe: {missing_cols}"
+        )
+
+    n_initial = len(df)
+
+    # Missing values per variable
+    missing_per_variable = (
+        df[variables]
+        .isna()
+        .sum()
+        .to_dict()
+    )
+
+    # Complete-case filtering
+    df_filtered = df.dropna(subset=variables).copy()
+
+    n_final = len(df_filtered)
+    n_removed = n_initial - n_final
+    reduction_pct = (
+        n_removed / n_initial * 100
+        if n_initial > 0 else 0.0
+    )
+    retention_pct = 100 - reduction_pct
+
+    report = {
+        "features": features,
+        "outcomes": outcomes,
+        "variables_used": variables,
+        "n_initial": n_initial,
+        "n_final": n_final,
+        "n_removed": n_removed,
+        "reduction_pct": round(reduction_pct, 2),
+        "retention_pct": round(retention_pct, 2),
+        "missing_per_variable": missing_per_variable,
+    }
+
+    if verbose:
+        print("=" * 60)
+        print("Complete-case filtering report")
+        print("=" * 60)
+
+        print(f"Features ({len(features)}):")
+        print(features)
+
+        print(f"\nOutcomes ({len(outcomes)}):")
+        print(outcomes)
+
+        print(f"\nTotal variables analysed: {len(variables)}")
+
+        print("\nMissing values per variable:")
+        for var, n_miss in missing_per_variable.items():
+            pct = (
+                n_miss / n_initial * 100
+                if n_initial > 0 else 0
+            )
+            print(f"  - {var}: {n_miss} ({pct:.2f}%)")
+
+        print(f"\nInitial N : {n_initial}")
+        print(f"Final   N : {n_final}")
+        print(f"Removed   : {n_removed} ({reduction_pct:.2f}%)")
+        print(f"Retained  : {n_final} ({retention_pct:.2f}%)")
+
+        print("=" * 60)
+
+    return df_filtered #, report
 
 def load_mnist(center_id=None, num_splits=5):
     """Loads the MNIST dataset using OpenML.
@@ -549,83 +646,47 @@ def std_normalize(col, mean, std):
     return (col - mean) / std
 
 def iqr_normalize(col, Q1, Q2, Q3):
-    return (col - Q2) / (Q3 - Q1)
+    col = col.astype(float)
+    Q1, Q2, Q3 = float(Q1), float(Q2), float(Q3)
+
+    denom = (Q3 - Q1)
+    if denom == 0:
+        return col * 0
+
+    return (col - Q2) / denom
 
 def min_max_normalize(col, min_val, max_val):
     return (col - min_val) / (max_val - min_val)
 
-def load_dt4h(config):
-    metadata = Path(config['metadata_file'])
-    with open(metadata, 'r') as file:
+def load_base(config):
+    """
+    Things to take into account:
+       * In DT4H / AI4HF datasets the categorical variables can be "nominal" or "boolean"
+       * In DT4H / AI4HF this function maps strings into numbers, e.g. "category1" to 1,
+         "False" to 0, etc.
+       * In DT4H / AI4HF the datasets are normalized and standarized with STD and quartils
+    """
+    with open("dataset_description.json", 'r') as file:
         metadata = json.load(file)
 
-    data_file = Path(config['data_file'])
-    dat = pd.read_parquet(data_file)
-
+    dat = pd.read_csv("data.csv")
     dat_len = len(dat)
-    # Numerical variables
-    numeric_columns_non_zero = {}
-    for feat in metadata["entries"][0]["featureSet"]["features"]:
-        if feat["dataType"] == "NUMERIC" and feat["statistics"]["numOfNotNull"] != 0:
-            # statistic keys = ['Q1', 'avg', 'min', 'Q2', 'max', 'Q3', 'numOfNotNull']
-            numeric_columns_non_zero[feat["name"]] = (
-                feat["statistics"]["Q1"],
-                feat["statistics"]["avg"],
-                feat["statistics"]["min"],
-                feat["statistics"]["Q2"],
-                feat["statistics"]["max"],
-                feat["statistics"]["Q3"],
-                feat["statistics"]["numOfNotNull"],
-            )
 
-    for col, (q1,avg,mini,q2,maxi,q3,numOfNotNull) in numeric_columns_non_zero.items():
-        if col in dat.columns:
-            if config["normalization_method"] == "IQR":
-               dat[col] = iqr_normalize(dat[col], q1,q2,q3 )
-            elif config["normalization_method"] == "STD":
-                pass # no std found in data set
-            elif config["normalization_method"] == "MIN_MAX":
-               dat[col] = min_max_normalize(col, mini, maxi)
-    tipos=[]
-    map_variables = {}
-    for feat in metadata["entries"][0]["featureSet"]["features"]:
-        tipos.append(feat["dataType"])
-        if feat["dataType"] == "NOMINAL" and feat["statistics"]["numOfNotNull"] != 0:
-            num_cat = len(feat["statistics"]["valueset"])
-            map_cat = {}
-            for ind, cat in enumerate(feat["statistics"]["valueset"]):
-                map_cat[cat] = ind
-            map_variables[feat["name"]] = map_cat
-    for col,mapa in map_variables.items():
-        dat[col] = dat[col].map(mapa)
-    
-    dat[map_variables.keys()].dropna()
-    
-    tipos=[]
-    map_variables = {}
-    boolean_map = {np.bool_(False) :0, np.bool_(True):1, "False":0,"True":1}
-    for feat in metadata["entries"][0]["featureSet"]["features"]:
-        tipos.append(feat["dataType"])
-        if feat["dataType"] == "BOOLEAN" and feat["statistics"]["numOfNotNull"] != 0:
-            map_variables[feat["name"]] = boolean_map
-    for col,mapa in map_variables.items():
-        dat[col] = dat[col].map(boolean_map)
-    
-    dat[map_variables.keys()].dropna()
+    cat_map = {}
+    for feat in metadata:
+        col = feat["name"]
+        categories = feat.get("categories", {})
+        label_to_int = {v: int(k) for k, v in categories.items()}
+        label_to_int.update({int(k): int(k) for k in categories})
+        label_to_int.update({k: int(k) for k in categories})
+        cat_map[col] = label_to_int
+        for col, mapa in cat_map.items():
+            dat[col] = dat[col].map(mapa)
 
-    """    # Print statistics
-    for i in dat.keys():
-        maxim = dat[i].max()
-        minim = dat[i].min()
-        mean = dat[i].mean()
-        estd = dat[i].std()
-        print(f"Column: {i}")
-        print(f"  Maximum:          {maxim:10.2f}")
-        print(f"  Minimum:          {minim:10.2f}")
-        print(f"  Mean:             {mean:10.2f}")
-        print(f"  Std dev:          {estd:10.2f}")
-        print("-" * 40)
-    """
+        for feat in metadata:
+            if feat["type"] == "continuous":
+                # Should we normalize?
+                pass
 
     dat_shuffled = dat.sample(frac=1).reset_index(drop=True)
 
@@ -641,6 +702,167 @@ def load_dt4h(config):
     y_test = data_target[int(dat_len*config["train_size"]):].iloc[:, 0]
     return (X_train, y_train), (X_test, y_test)
 
+def load_dt4h(config):
+    metadata_path = Path(config["metadata_file"])
+    with open(metadata_path) as f:
+        metadata = json.load(f)
+
+    data_file = Path(config["data_file"])
+    dat_ = pd.read_parquet(data_file)
+#    dat = pd.read_csv("/home/jorge/workdir/flcore-suite/dataset/bucarest_sintetico/synthetic_dt4h_dataset.csv")
+
+    dat_len = len(dat_)
+    dat = filter_nans(dat_, config["target_labels"], config["train_labels"])
+# ...................................................................
+    entries = metadata.get("entries", [])
+    if entries:
+        entry = entries[0]
+        features = entry["features"]
+        outcomes = entry["outcomes"]
+        feature_stats = entry["datasetStats"]["featureStats"]
+        outcome_stats = entry["datasetStats"]["outcomeStats"]
+    else:
+        features = metadata.get("features", [])
+        outcomes = metadata.get("outcomes", [])
+        dataset_stats = metadata.get("datasetStats", {})
+        feature_stats = dataset_stats.get("featureStats", {})
+        outcome_stats = dataset_stats.get("outcomeStats", {})
+
+    boolean_map = {False: 0, True: 1, "False": 0, "True": 1}
+# ...................................................................
+    n_out = None
+
+    for feat in features:
+
+        name = feat["name"]
+        dtype = feat["dataType"]
+
+        if name not in dat.columns:
+            continue
+
+        stats = feature_stats.get(name, {})
+        num_not_null = stats.get("numOfNotNull", 0)
+
+        if num_not_null == 0:
+            continue
+
+        # -------------------
+        # NUMERIC
+        # -------------------
+        if dtype == "NUMERIC":
+
+            if config["normalization_method"] == "IQR":
+
+                q1 = stats.get("q1")
+                q2 = stats.get("q2")
+                q3 = stats.get("q3")
+
+                dat[name] = iqr_normalize(dat[name], q1, q2, q3)
+
+            elif config["normalization_method"] == "MIN_MAX":
+
+                mini = stats.get("min")
+                maxi = stats.get("max")
+
+                dat[name] = min_max_normalize(dat[name], mini, maxi)
+
+        # -------------------
+        # NOMINAL
+        # -------------------
+        elif dtype == "NOMINAL":
+
+            value_set = stats.get("valueSet", [])
+
+            if len(value_set) > 0:
+                cat_map = {cat: i for i, cat in enumerate(value_set)}
+                dat[name] = dat[name].map(cat_map)
+
+        # -------------------
+        # BOOLEAN
+        # -------------------
+        elif dtype == "BOOLEAN":
+
+            dat[name] = dat[name].map(boolean_map)
+
+    for feat in outcomes:
+
+        name = feat["name"]
+        dtype = feat["dataType"]
+
+        if name not in dat.columns:
+            continue
+
+        stats = outcome_stats.get(name, {})
+        num_not_null = stats.get("numOfNotNull", 0)
+
+        if num_not_null == 0:
+            continue
+
+        # -------------------
+        # NUMERIC
+        # -------------------
+        if dtype == "NUMERIC":
+
+            if config["normalization_method"] == "IQR":
+
+                q1 = stats.get("q1")
+                q2 = stats.get("q2")
+                q3 = stats.get("q3")
+
+                dat[name] = iqr_normalize(dat[name], q1, q2, q3)
+
+            elif config["normalization_method"] == "MIN_MAX":
+
+                mini = stats.get("min")
+                maxi = stats.get("max")
+
+                dat[name] = min_max_normalize(dat[name], mini, maxi)
+
+        # -------------------
+        # NOMINAL
+        # -------------------
+        elif dtype == "NOMINAL":
+
+            value_set = stats.get("valueSet", [])
+
+            if len(value_set) > 0:
+                cat_map = {cat: i for i, cat in enumerate(value_set)}
+                dat[name] = dat[name].map(cat_map)
+
+        # -------------------
+        # BOOLEAN
+        # -------------------
+        elif dtype == "BOOLEAN":
+
+            dat[name] = dat[name].map(boolean_map)
+
+    # -------------------
+    # Shuffle dataset
+    # -------------------
+    dat = dat.sample(frac=1).reset_index(drop=True)
+
+    target_labels = config["target_labels"]
+    train_labels = config["train_labels"]
+
+    split_idx = int(dat_len * config["train_size"])
+
+    X = dat[train_labels]
+    y = dat[target_labels].iloc[:, 0]
+
+    # Calculate n_out dynamically
+    if config.get("task") == "multiclass":
+        config["n_out"] = len(np.unique(y))
+    elif config.get("task") == "classification" and len(np.unique(y)) > 2:
+        config["n_out"] = len(np.unique(y))
+
+    X_train = X[:split_idx]
+    y_train = y[:split_idx]
+
+    X_test = X[split_idx:]
+    y_test = y[split_idx:]
+
+    return (X_train, y_train), (X_test, y_test)
+
 def load_survival(config):
     # ********* * * * * *  *  *   *   *    *   *  *  *  * * * * *
     # Survival model
@@ -650,62 +872,134 @@ def load_survival(config):
     # ********* * * * * *  *  *   *   *    *   *  *  *  * * * * *
 
     from sksurv.util import Surv
-    metadata_file = Path(config['metadata_file'])
-    metadata = pd.read_json(metadata_file)
-    features = [mdt['name'] for mdt in metadata['entity']['features']]
-    nominal_features = [mdt['name'] for mdt in metadata['entity']['features'] if mdt['dataType'] == 'NOMINAL']
-    data_file = Path(config['data_file'])
 
-    time_col = config['survival']['time_col']
-    event_col = config['survival']['event_col']
+    # ----------------------------
+    # Sanity check
+    # ----------------------------
+    has_time_event = config["time_col"] is not None and config["event_col"] is not None
+    has_pattern = config["accumulative_pattern_col"] is not None
 
-    if time_col is None or event_col is None:
-        if 'outcomes' in metadata['entity'].keys():
-            outcomes = metadata['entity']['outcomes']
-        elif 'foutcomes' in metadata['entity'].keys():
-            outcomes = metadata['entity']['foutcomes']
-        else:
-            raise KeyError("outcomes/foutcomes key not found in metadata")
-        
-        if time_col is None:
-            time_feature_candidates = [outcome['name'] for outcome in outcomes
-                                    if outcome['dataType'] == 'NUMERIC']
-            time_col = random.sample(time_feature_candidates, 1)[0]
+    if has_time_event and has_pattern:
+        raise ValueError(
+            "Provide either (--time_col and --event_col) OR --accumulative_pattern_col, not both."
+        )
 
-        if event_col is None:
-            event_feature_candidates = [outcome['name'] for outcome in outcomes
-                                    if outcome['dataType'] == 'BOOLEAN']
-            event_col = random.sample(event_feature_candidates, 1)[0]
+    if not has_time_event and not has_pattern:
+        raise ValueError(
+            "You must provide either (--time_col and --event_col) OR --accumulative_pattern_col."
+        )
 
-    df = pd.read_parquet(data_file)[[*features, time_col, event_col]]
-    df[features[0]] *= random.uniform(0.7, 1.4)  #! slight random change to CHECK
+    data_file = Path(config["data_file"])
+    df = pd.read_parquet(data_file)
+
+    # ----------------------------
+    # CASE 1: accumulative horizons
+    # ----------------------------
+    if has_pattern:
+
+        pattern = config["accumulative_pattern_col"]
+
+        horizon_map = {
+            "7d": 7,
+            "1mo": 30,
+            "3mo": 90,
+            "6mo": 180,
+            "1a": 365,
+            "3a": 365 * 3,
+            "5a": 365 * 5,
+        }
+
+        horizon_cols = [c for c in df.columns if c.startswith(pattern)]
+
+        if len(horizon_cols) == 0:
+            raise ValueError(f"No columns found for pattern {pattern}")
+
+        horizon_cols = sorted(
+            horizon_cols,
+            key=lambda c: horizon_map[c.replace(pattern, "")]
+        )
+
+        times = []
+        events = []
+
+        for _, row in df.iterrows():
+
+            t = None
+
+            for c in horizon_cols:
+                suffix = c.replace(pattern, "")
+
+                if row[c]:
+                    t = horizon_map[suffix]
+                    break
+
+            if t is None:
+                t = max(horizon_map.values())
+                e = 0
+            else:
+                e = 1
+
+            times.append(t)
+            events.append(e)
+
+        df["time"] = times
+        df["event"] = events
+
+        time_col = "time"
+        event_col = "event"
+
+    # ----------------------------
+    # CASE 2: already survival
+    # ----------------------------
+    else:
+
+        time_col = config["time_col"]
+        event_col = config["event_col"]
+
+    # ----------------------------
+    # Select columns
+    # ----------------------------
+    feature_cols = config["train_labels"]
+
+    df = df[[*feature_cols, time_col, event_col]]
 
     df_clean = df.replace({None: np.nan}).dropna()
-    if config['survival']['negative_duration_strategy'] == "remove":
+
+    strategy = config["negative_duration_strategy"]
+
+    if strategy == "remove":
         df_clean = df_clean[df_clean[time_col] >= 0].copy()
-    elif config['survival']['negative_duration_strategy'] == "shift":
+
+    elif strategy == "shift":
         min_time = df_clean[time_col].min()
         if min_time < 0:
             df_clean[time_col] = df_clean[time_col] - min_time
-    elif config['survival']['negative_duration_strategy'] == "clip":
+
+    elif strategy == "clip":
         df_clean[time_col] = df_clean[time_col].clip(lower=0)
+
     else:
-        raise ValueError(f"Unknown negative_duration_strategy: {config['survival']['negative_duration_strategy']}")
+        raise ValueError(f"Unknown negative_duration_strategy: {strategy}")
+
     df_clean = df_clean.reset_index(drop=True)
-    
-    X = df_clean.drop(columns=[time_col, event_col])
-    X = X.copy()
-    X[nominal_features] = X[nominal_features].fillna("missing")
-    X_encoded = pd.get_dummies(X, columns=nominal_features, drop_first=True)
-    #! SAFEGUARD: Ensure all data is numeric after encoding
+
+    X = df_clean.drop(columns=[time_col, event_col]).copy()
+
+    X_encoded = pd.get_dummies(X, drop_first=True)
+
     X_encoded = X_encoded.apply(pd.to_numeric, errors="coerce")
+
     if X_encoded.isna().any().any():
         print("Numeric coercion introduced NaNs:")
         print(X_encoded.isna().sum()[X_encoded.isna().sum() > 0])
+
     y_struct = Surv.from_dataframe(event_col, time_col, df_clean)
 
     X_train, X_test, y_train, y_test = train_test_split(
-        X_encoded, y_struct, test_size=1 - config['train_size']
+        X_encoded,
+        y_struct,
+        test_size=1 - config["train_size"],
+        random_state=config.get("seed", 42)
     )
 
     return (X_train, y_train), (X_test, y_test), time_col, event_col
@@ -770,16 +1064,35 @@ def load_dataset(config, id=None):
 #        return load_libsvm(config, id)
     elif config["dataset"] == "dt4h_format":
         return load_dt4h(config)
+    elif config["dataset"] == "base_format":
+        return load_base(config)
     elif config["dataset"] == "survival":
         return load_survival(config)
     else:
         raise ValueError("Invalid dataset name")
+  
+def get_partitions(n_splits, test_size, random_state, task):
 
-def get_stratifiedPartitions(n_splits,test_size, random_state):
-    sss = StratifiedShuffleSplit(n_splits=n_splits,test_size=test_size, random_state=random_state)
-    return sss
+    if task == "classification":
+        splitter = StratifiedShuffleSplit(
+            n_splits=n_splits,
+            test_size=test_size,
+            random_state=random_state
+        )
 
-def split_partitions(n_splits,test_size, random_state,X_data, y_data):
-    sss = get_stratifiedPartitions(n_splits,test_size, random_state)
-    splits_nested = (sss.split(X_data, y_data))
+    elif task == "regression":
+        splitter = ShuffleSplit(
+            n_splits=n_splits,
+            test_size=test_size,
+            random_state=random_state
+        )
+    else:
+        raise ValueError(f"Unknown task type: {task}")
+
+    return splitter
+
+
+def split_partitions(n_splits, test_size, random_state, X_data, y_data, task):
+    splitter = get_partitions(n_splits, test_size, random_state, task)
+    splits_nested = splitter.split(X_data, y_data)
     return splits_nested

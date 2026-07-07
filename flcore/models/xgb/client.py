@@ -6,13 +6,13 @@
 # ********* * * * * *  *  *   *   *    *   *  *  *  * * * * *
 
 import os
-from typing import Dict, Tuple, List
+import json
 import flwr as fl
-from flwr.common import NDArrays, Scalar
-import xgboost as xgb
 import numpy as np
+import xgboost as xgb
 from pathlib import Path
-
+from typing import Dict, Tuple, List
+from flwr.common import NDArrays, Scalar
 
 class XGBoostClient(fl.client.NumPyClient):
     """Flower client for federated XGBoost training.
@@ -22,11 +22,7 @@ class XGBoostClient(fl.client.NumPyClient):
     - cyclic: Each client refines the global model sequentially
     """
     
-    def __init__(
-        self,
-        local_data: Dict,
-        saving_path: str = "/sandbox/",
-    ):
+    def __init__(self, local_data, config):
         """
         Initialize XGBoost client.
         
@@ -38,8 +34,9 @@ class XGBoostClient(fl.client.NumPyClient):
                 - y_test: Test labels
             saving_path: Path to save local models and logs
         """
+        self.config = config
         self.local_data = local_data
-        self.saving_path = Path(saving_path)
+        self.saving_path = config["experiment_dir"]
         self.saving_path.mkdir(parents=True, exist_ok=True)
         
         # Create models directory
@@ -52,7 +49,8 @@ class XGBoostClient(fl.client.NumPyClient):
         self.dtrain = None
         self.dtest = None
         self.label_encoder = None  # For categorical target encoding
-        
+        self.round = 0
+
         # Prepare data
         self._prepare_data()
         
@@ -130,92 +128,110 @@ class XGBoostClient(fl.client.NumPyClient):
         Returns:
             Tuple of (updated_parameters, num_examples, metrics)
         """
-        
-        # Extract config
-        server_round = int(config.get("server_round", 1))
-        num_local_rounds = int(config.get("num_local_rounds", 5))
-        train_method = config.get("train_method", "bagging")
-        
-        # Update XGBoost parameters from config
-        self.xgb_params = {
-            k: v for k, v in config.items()
-            if k not in ["server_round", "num_local_rounds", "train_method"]
-        }
-        
-        print(f"\n[Client] === Round {server_round} - FIT ===")
-        print(f"[Client] Method: {train_method}")
-        print(f"[Client] Local rounds: {num_local_rounds}")
-        
-        if server_round == 1:
-            # First round: train from scratch
-            print(f"[Client] Training from scratch...")
-            self.bst = xgb.train(
-                self.xgb_params,
-                self.dtrain,
-                num_boost_round=num_local_rounds,
-            )
-        else:
-            # Subsequent rounds: load global model and continue training
-            self.set_parameters(parameters)
+        try:
+            # Extract config
+            server_round = int(config.get("server_round", 1))
+            num_local_rounds = int(config.get("num_local_rounds", 5))
+            train_method = config.get("train_method", "bagging")
             
-            if self.bst is None:
-                # Fallback: train from scratch if loading failed
-                print(f"[Client] Warning: Could not load model, training from scratch")
+            # Update XGBoost parameters from config
+            self.xgb_params = {
+                k: v for k, v in config.items()
+                if k not in ["server_round", "num_local_rounds", "train_method"]
+            }
+
+            # If multiclass objective, ensure num_class is correctly set from local data
+            if self.xgb_params.get("objective", "").startswith("multi"):
+                n_classes = len(np.unique(self.local_data['y_train']))
+                if n_classes >= 2:
+                    self.xgb_params["num_class"] = n_classes
+                print(f"[Client] Multiclass detected: num_class={n_classes}")
+            
+            print(f"\n[Client] === Round {server_round} - FIT ===")
+            print(f"[Client] Method: {train_method}")
+            print(f"[Client] Local rounds: {num_local_rounds}")
+            
+            if server_round == 1:
+                # First round: train from scratch
+                print(f"[Client] Training from scratch...")
                 self.bst = xgb.train(
                     self.xgb_params,
                     self.dtrain,
                     num_boost_round=num_local_rounds,
                 )
             else:
-                # Continue training
-                print(f"[Client] Continuing training from global model...")
-                initial_trees = self.bst.num_boosted_rounds()
+                # Subsequent rounds: load global model and continue training
+                self.set_parameters(parameters)
                 
-                # Update trees based on local training data
-                for i in range(num_local_rounds):
-                    self.bst.update(self.dtrain, self.bst.num_boosted_rounds())
-                
-                final_trees = self.bst.num_boosted_rounds()
-                print(f"[Client] Trained {final_trees - initial_trees} new trees (total: {final_trees})")
-        
-        print(f"[Client] Total trees in model: {self.bst.num_boosted_rounds()}")
-        
-        # For bagging: return only the last N trees
-        # For cyclic: return the entire model
-        if train_method == "bagging":
-            # Extract only the newly trained trees
-            num_trees = self.bst.num_boosted_rounds()
-            if num_trees > num_local_rounds:
-                # Slice to get last num_local_rounds trees
-                model_to_send = self.bst[num_trees - num_local_rounds : num_trees]
-                print(f"[Client] Sending last {num_local_rounds} trees (bagging mode)")
+                if self.bst is None:
+                    # Fallback: train from scratch if loading failed
+                    print(f"[Client] Warning: Could not load model, training from scratch")
+                    self.bst = xgb.train(
+                        self.xgb_params,
+                        self.dtrain,
+                        num_boost_round=num_local_rounds,
+                    )
+                else:
+                    # Continue training
+                    print(f"[Client] Continuing training from global model...")
+                    initial_trees = self.bst.num_boosted_rounds()
+                    
+                    # Update trees based on local training data
+                    for i in range(num_local_rounds):
+                        self.bst.update(self.dtrain, self.bst.num_boosted_rounds())
+                    
+                    final_trees = self.bst.num_boosted_rounds()
+                    print(f"[Client] Trained {final_trees - initial_trees} new trees (total: {final_trees})")
+            
+            print(f"[Client] Total trees in model: {self.bst.num_boosted_rounds()}")
+            
+            # For bagging: return only the last N trees
+            # For cyclic: return the entire model
+            if train_method == "bagging":
+                # Extract only the newly trained trees
+                num_trees = self.bst.num_boosted_rounds()
+                if num_trees > num_local_rounds:
+                    # Slice to get last num_local_rounds trees
+                    model_to_send = self.bst[num_trees - num_local_rounds : num_trees]
+                    print(f"[Client] Sending last {num_local_rounds} trees (bagging mode)")
+                else:
+                    model_to_send = self.bst
+                    print(f"[Client] Sending all {num_trees} trees")
             else:
+                # Cyclic: send entire model
                 model_to_send = self.bst
-                print(f"[Client] Sending all {num_trees} trees")
-        else:
-            # Cyclic: send entire model
-            model_to_send = self.bst
-            print(f"[Client] Sending entire model (cyclic mode)")
-        
-        # Serialize model
-        model_bytes = model_to_send.save_raw("json")
-        model_array = np.frombuffer(model_bytes, dtype=np.uint8)
-        
-        # Get number of training examples
-        num_examples = len(self.local_data['X_train'])
-        
-        # Prepare metrics
-        metrics = {
-            "num_examples": num_examples,
-            "num_trees": self.bst.num_boosted_rounds(),
-        }
-        
-        # Save local model
-        local_model_path = self.saving_path / "models" / f"xgboost_client__round_{server_round}.json"
-        self.bst.save_model(str(local_model_path))
-        print(f"[Client] Saved local model to {local_model_path}")
-        
-        return [model_array], num_examples, metrics
+                print(f"[Client] Sending entire model (cyclic mode)")
+            
+            # Serialize model
+            model_bytes = model_to_send.save_raw("json")
+            model_array = np.frombuffer(model_bytes, dtype=np.uint8)
+            
+            # Get number of training examples
+            num_examples = len(self.local_data['X_train'])
+            
+            # Prepare metrics
+            metrics = {
+                "num_examples": num_examples,
+                "num_trees": self.bst.num_boosted_rounds(),
+                "n_out": len(np.unique(self.local_data['y_train'])),
+            }
+            
+            # Save local model
+            if self.round % self.config["save_every_n_rounds"] == 0:
+                self.save_model()
+
+            self.round += 1
+            return [model_array], num_examples, metrics
+        except Exception as e:
+            from flcore.utils import log_detailed_error
+            log_detailed_error(
+                "Model Fitting (Local Training)",
+                e,
+                config=getattr(self, "config", None),
+                X=self.local_data.get('X_train') if hasattr(self, 'local_data') else None,
+                y=self.local_data.get('y_train') if hasattr(self, 'local_data') else None
+            )
+            raise e
     
     def evaluate(
         self,
@@ -231,101 +247,171 @@ class XGBoostClient(fl.client.NumPyClient):
         Returns:
             Tuple of (loss, num_examples, metrics)
         """
-        
-        server_round = int(config.get("server_round", 0))
-        
-        print(f"\n[Client] === Round {server_round} - EVALUATE ===")
-        
-        # Update XGBoost parameters
-        self.xgb_params = {
-            k: v for k, v in config.items()
-            if k not in ["server_round"]
-        }
-        
-        # Load global model
-        self.set_parameters(parameters)
-        
-        if self.bst is None:
-            print(f"[Client] Warning: No model to evaluate")
-            return 0.0, 0, {}
-        
-        # Evaluate on test set
-        eval_results = self.bst.eval_set(
-            evals=[(self.dtest, "test")],
-            iteration=self.bst.num_boosted_rounds() - 1,
-        )
-        
-        print(f"[Client] Evaluation results: {eval_results}")
-        
-        # Parse evaluation results
-        # Format: "[0]\ttest-auc:0.85123"
-        metrics = {}
         try:
-            parts = eval_results.split("\t")
-            for part in parts[1:]:  # Skip the iteration number
-                metric_name, metric_value = part.split(":")
-                metric_name = metric_name.replace("test-", "")
-                metrics[metric_name] = float(metric_value)
+            server_round = int(config.get("server_round", 0))
+            
+            print(f"\n[Client] === Round {server_round} - EVALUATE ===")
+            
+            # Update XGBoost parameters
+            self.xgb_params = {
+                k: v for k, v in config.items()
+                if k not in ["server_round"]
+            }
+            
+            # Load global model
+            self.set_parameters(parameters)
+            
+            if self.bst is None:
+                print(f"[Client] Warning: No model to evaluate")
+                return 0.0, 0, {}
+            
+            # Evaluate on test set
+            eval_results = self.bst.eval_set(
+                evals=[(self.dtest, "test")],
+                iteration=self.bst.num_boosted_rounds() - 1,
+            )
+            
+            print(f"[Client] Evaluation results: {eval_results}")
+            
+            # Parse evaluation results
+            # Format: "[0]\ttest-auc:0.85123"
+            metrics = {}
+            try:
+                parts = eval_results.split("\t")
+                for part in parts[1:]:  # Skip the iteration number
+                    metric_name, metric_value = part.split(":")
+                    metric_name = metric_name.replace("test-", "")
+                    metrics[metric_name] = float(metric_value)
+            except Exception as e:
+                print(f"[Client] Warning: Could not parse metrics: {e}")
+            
+            
+            # Get predictions for additional metrics
+            y_pred = self.bst.predict(self.dtest)
+            y_true = self.local_data['y_test']
+            
+            # Determine task type from objective
+            objective = self.xgb_params.get("objective", "")
+            
+            # Calculate additional metrics based on task type
+            if objective.startswith("binary"):
+                # Binary classification
+                from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+                
+                y_pred_binary = (y_pred > 0.5).astype(int)
+                metrics['accuracy'] = float(accuracy_score(y_true, y_pred_binary))
+                metrics['precision'] = float(precision_score(y_true, y_pred_binary, zero_division=0))
+                metrics['recall'] = float(recall_score(y_true, y_pred_binary, zero_division=0))
+                metrics['f1'] = float(f1_score(y_true, y_pred_binary, zero_division=0))
+                
+                # Loss is 1 - AUC for binary
+                primary_metric = metrics.get('auc', 0)
+                loss = 1 - primary_metric
+                
+            elif objective.startswith("multi"):
+                # Multiclass classification
+                from sklearn.metrics import accuracy_score, f1_score
+                
+                # y_pred is already the predicted class (not probabilities)
+                y_pred_class = y_pred.astype(int)
+                metrics['accuracy'] = float(accuracy_score(y_true, y_pred_class))
+                metrics['f1_macro'] = float(f1_score(y_true, y_pred_class, average='macro', zero_division=0))
+                metrics['f1_weighted'] = float(f1_score(y_true, y_pred_class, average='weighted', zero_division=0))
+                
+                # Loss is mlogloss (already calculated by XGBoost)
+                loss = metrics.get('mlogloss', 1.0)
+                
+            elif objective.startswith("reg"):
+                # Regression
+                from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+                
+                metrics['mse'] = float(mean_squared_error(y_true, y_pred))
+                metrics['mae'] = float(mean_absolute_error(y_true, y_pred))
+                metrics['r2'] = float(r2_score(y_true, y_pred))
+                
+                # Loss is RMSE (primary metric for regression)
+                loss = metrics.get('rmse', metrics['mse'] ** 0.5)
+            else:
+                # Unknown task, use default loss
+                loss = 1.0
+            
+            num_examples = len(self.local_data['X_test'])
+            
+            print(f"[Client] Metrics: {metrics}")
+            print(f"[Client] Loss: {loss:.4f}")
+            
+            return loss, num_examples, metrics
         except Exception as e:
-            print(f"[Client] Warning: Could not parse metrics: {e}")
-        
-        
-        # Get predictions for additional metrics
-        y_pred = self.bst.predict(self.dtest)
-        y_true = self.local_data['y_test']
-        
-        # Determine task type from objective
-        objective = self.xgb_params.get("objective", "")
-        
-        # Calculate additional metrics based on task type
-        if objective.startswith("binary"):
-            # Binary classification
-            from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
-            
-            y_pred_binary = (y_pred > 0.5).astype(int)
-            metrics['accuracy'] = float(accuracy_score(y_true, y_pred_binary))
-            metrics['precision'] = float(precision_score(y_true, y_pred_binary, zero_division=0))
-            metrics['recall'] = float(recall_score(y_true, y_pred_binary, zero_division=0))
-            metrics['f1'] = float(f1_score(y_true, y_pred_binary, zero_division=0))
-            
-            # Loss is 1 - AUC for binary
-            primary_metric = metrics.get('auc', 0)
-            loss = 1 - primary_metric
-            
-        elif objective.startswith("multi"):
-            # Multiclass classification
-            from sklearn.metrics import accuracy_score, f1_score
-            
-            # y_pred is already the predicted class (not probabilities)
-            y_pred_class = y_pred.astype(int)
-            metrics['accuracy'] = float(accuracy_score(y_true, y_pred_class))
-            metrics['f1_macro'] = float(f1_score(y_true, y_pred_class, average='macro', zero_division=0))
-            metrics['f1_weighted'] = float(f1_score(y_true, y_pred_class, average='weighted', zero_division=0))
-            
-            # Loss is mlogloss (already calculated by XGBoost)
-            loss = metrics.get('mlogloss', 1.0)
-            
-        elif objective.startswith("reg"):
-            # Regression
-            from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
-            
-            metrics['mse'] = float(mean_squared_error(y_true, y_pred))
-            metrics['mae'] = float(mean_absolute_error(y_true, y_pred))
-            metrics['r2'] = float(r2_score(y_true, y_pred))
-            
-            # Loss is RMSE (primary metric for regression)
-            loss = metrics.get('rmse', metrics['mse'] ** 0.5)
-        else:
-            # Unknown task, use default loss
-            loss = 1.0
-        
-        num_examples = len(self.local_data['X_test'])
-        
-        print(f"[Client] Metrics: {metrics}")
-        print(f"[Client] Loss: {loss:.4f}")
-        
-        return loss, num_examples, metrics
+            from flcore.utils import log_detailed_error
+            log_detailed_error(
+                "Model Evaluation (Local Validation)",
+                e,
+                config=getattr(self, "config", None),
+                X=self.local_data.get('X_test') if hasattr(self, 'local_data') else None,
+                y=self.local_data.get('y_test') if hasattr(self, 'local_data') else None
+            )
+            raise e
 
+    def save_model(self):
+        save_path = Path(self.config["experiment_dir"])/"models"
+        save_path.mkdir(parents=True, exist_ok=True)
+
+        model_name = self.config["model"]+"_"+self.config["task"]+"_round_"+str(self.round)
+        model_path = save_path / f"{model_name}_model.json"
+        self.bst.save_model(str(model_path))
+
+        data_metadata = json.load(open(self.config["metadata_file"], "r"))
+        entity = data_metadata.get("entries", {})[0]
+        features_list = entity.get("features", [])
+        outcomes_list = entity.get("outcomes", [])
+        dataset_stats = entity.get("datasetStats", {})
+        feature_stats = dataset_stats.get("featureStats", {})
+        outcome_stats = dataset_stats.get("outcomeStats", {})
+
+        all_features_meta = {f['name']: f for f in features_list}
+        all_outcomes_meta = {o['name']: o for o in outcomes_list}
+
+        for f_name, f_meta in all_features_meta.items():
+            stats = feature_stats.get(f_name, {})
+            f_meta['stats'] = stats
+
+        for o_name, o_meta in all_outcomes_meta.items():
+            stats = outcome_stats.get(o_name, {})
+            o_meta['stats'] = stats
+
+        features_meta = {}
+        for label in self.config["train_labels"]:
+            if label in all_features_meta:
+                features_meta[label] = all_features_meta[label]
+            elif label in all_outcomes_meta:
+                features_meta[label] = all_outcomes_meta[label]
+
+        outcomes_meta = {}
+        for label in self.config["target_labels"]:
+            if label in all_outcomes_meta:
+                outcomes_meta[label] = all_outcomes_meta[label]
+            elif label in all_features_meta:
+                outcomes_meta[label] = all_features_meta[label]
+
+#>>> features_meta["patient_demographics_age"]["stats"]["min"]
+        metadata = {
+            "node_name": self.config["node_name"],
+            "task": self.config["task"],
+            "n_out": self.config["n_out"],
+            "n_out": self.config["n_feats"],
+            "model_type": self.config["model"],
+            "feature_names": self.config["train_labels"],
+            "target_names":self.config["target_labels"],
+            "metrics": getattr(self, "last_metrics", None),
+            "features_meta": features_meta,
+            "outcomes_meta": outcomes_meta
+        }
+
+        metadata_path = save_path / f"{model_name}_model_metadata.json"
+        with open(metadata_path, "w") as f:
+            json.dump(metadata, f, indent=4)
+
+        #print(f"[Client] XGBoost model saved at {model_path}")
 
 def get_numpy(X_train, y_train, X_test, y_test, time_col=None, event_col=None) -> Dict:
     """Convert data to dictionary format expected by client.
@@ -360,8 +446,7 @@ def get_numpy(X_train, y_train, X_test, y_test, time_col=None, event_col=None) -
         'num_examples': len(X_train),
     }
 
-
-def get_client(config: Dict, data: Tuple) -> fl.client.Client:
+def get_client(config, data) -> fl.client.Client:
     """Create and return XGBoost federated learning client.
     
     Args:
@@ -378,9 +463,5 @@ def get_client(config: Dict, data: Tuple) -> fl.client.Client:
     local_data = get_numpy(X_train, y_train, X_test, y_test)
     
     # Create client
-    client = XGBoostClient(
-        local_data=local_data,
-        saving_path=config.get("experiment_dir", "/sandbox/"),
-    )
-    
+    client = XGBoostClient(local_data,config)
     return client

@@ -9,7 +9,7 @@ import argparse
 import flwr as fl
 from pathlib import Path
 
-from flcore.utils import StreamToLogger, CheckServerConfig, GetModelServerStrategy
+from flcore.utils import StreamToLogger, CheckServerConfig, GetModelServerStrategy, log_detailed_error
 
 warnings.filterwarnings("ignore")
 
@@ -65,7 +65,13 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     config = vars(args)
-    config = CheckServerConfig(config)
+    try:
+        config = CheckServerConfig(config)
+    except Exception as e:
+        log_detailed_error("Server Configuration Verification", e, config)
+        sys.stderr.flush()
+        sys.stdout.flush()
+        os._exit(1)
 
     # Create sandbox log file path
 # Originalmente estaba asi:
@@ -81,17 +87,23 @@ if __name__ == "__main__":
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setLevel(logging.DEBUG)
 
-    # Create a formatter for consistency
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    file_handler.setFormatter(formatter)
-    console_handler.setFormatter(formatter)
+    # Create formatters
+    file_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    console_formatter = logging.Formatter('[%(levelname)s] %(message)s')
+
+    file_handler.setFormatter(file_formatter)
+    console_handler.setFormatter(console_formatter)
 
     # Get the root logger and configure it
     logger = logging.getLogger()
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.INFO)  # Change default level to INFO
     logger.handlers = []  # Clear any default handlers
     logger.addHandler(file_handler)
     logger.addHandler(console_handler)
+
+    # Silence noisy dependencies
+#    logging.getLogger("flwr").setLevel(logging.WARNING)
+    logging.getLogger("flwr").setLevel(logging.ERROR)
 
     # Create two sub-loggers
     stdout_logger = logging.getLogger("STDOUT")
@@ -102,14 +114,9 @@ if __name__ == "__main__":
     sys.stderr = StreamToLogger(stderr_logger, logging.ERROR)
 
     # Now you can use logging in both places
-    logging.debug("This will be logged to both the console and the file.")
-
-    # Your existing code continues here...
-    # For example, the following logs will go to both stdout and file:
-    logging.debug("Starting Flower server...")
+    logging.info("Starting Flower server...")
 
     if config["production_mode"] == "True":
-        print("TRUE")
         #data_path = ""
         central_ip = os.getenv("FLOWER_CENTRAL_SERVER_IP")
         central_port = os.getenv("FLOWER_CENTRAL_SERVER_PORT")
@@ -127,7 +134,6 @@ if __name__ == "__main__":
 #            Path('.cache/certificates/server_cert.pem').read_bytes(),
 #            Path('.cache/certificates/server_key.pem').read_bytes(),
     else:
-        print("ELSE")
         #data_path = config["data_path"]
         central_ip = "LOCALHOST"
         central_port = config["local_port"]
@@ -151,16 +157,28 @@ if __name__ == "__main__":
     # history_dir = experiment_dir / "history"
     # history_dir.mkdir(parents=True, exist_ok=True)
 
-    server, strategy = GetModelServerStrategy(config)
+    try:
+        server, strategy = GetModelServerStrategy(config)
+    except Exception as e:
+        log_detailed_error("Server Strategy / Model Setup", e, config)
+        sys.stderr.flush()
+        sys.stdout.flush()
+        os._exit(1)
 
     # Start Flower server for three rounds of federated learning
-    history = fl.server.start_server(
-        server_address=f"{central_ip}:{central_port}",
-        config=fl.server.ServerConfig(num_rounds=config["num_rounds"], round_timeout=None ),
-        server=server,
-        strategy=strategy,
-        certificates = certificates,
-    )
+    try:
+        history = fl.server.start_server(
+            server_address=f"{central_ip}:{central_port}",
+            config=fl.server.ServerConfig(num_rounds=config["num_rounds"], round_timeout=None ),
+            server=server,
+            strategy=strategy,
+            certificates = certificates,
+        )
+    except Exception as e:
+        log_detailed_error("Flower Server Start / Execution Loop", e, config)
+        sys.stderr.flush()
+        sys.stdout.flush()
+        os._exit(1)
     # # Save the model and the history
     # filename = os.path.join( checkpoint_dir, 'final_model.pt' )
     # joblib.dump(model, filename)
@@ -210,6 +228,9 @@ if __name__ == "__main__":
                 metric_value = history.metrics_centralized[metric][best_round][1]
             if type(metric_value) in [int, float, numpy.float64]:
                 f.write(f"{metric} {metric_value:.4f} \n")
+# Compile the results
+compile_results(experiment_dir)
+"""
 
 dict_history = {}
 history = history.__dict__
@@ -230,6 +251,3 @@ for logs in history.keys():
 with open(experiment_dir / "history.yaml", "w") as f:
     yaml.dump(history, f)
 
-# Compile the results
-compile_results(experiment_dir)
-"""

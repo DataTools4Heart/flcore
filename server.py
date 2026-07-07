@@ -9,6 +9,7 @@ import yaml
 import flcore.datasets as datasets
 from flcore.server_selector import get_model_server_and_strategy
 from flcore.compile_results import compile_results
+from flcore.utils import log_detailed_error
 
 warnings.filterwarnings("ignore")
 
@@ -43,7 +44,13 @@ if __name__ == "__main__":
         config = yaml.safe_load(f)
 
     #Check the config file
-    check_config(config)
+    try:
+        check_config(config)
+    except Exception as e:
+        log_detailed_error("Server Configuration Verification", e, config)
+        sys.stderr.flush()
+        sys.stdout.flush()
+        sys.exit(1)
 
     if config["production_mode"]:
         data_path = os.getenv("DATA_PATH")
@@ -75,20 +82,43 @@ if __name__ == "__main__":
     # Copy the config file to the experiment directory
     os.system(f"cp {config_path} {experiment_dir}")
 
-    (X_train, y_train), (X_test, y_test) = datasets.load_dataset(config)
+    try:
+        (X_train, y_train), (X_test, y_test) = datasets.load_dataset(config)
+    except Exception as e:
+        log_detailed_error(
+            "Server Dataset Loading",
+            e,
+            config=config,
+            data_path=config.get("data_path")
+        )
+        sys.stderr.flush()
+        sys.stdout.flush()
+        sys.exit(1)
 
     data = (X_train, y_train), (X_test, y_test)
 
-    server, strategy = get_model_server_and_strategy(config, data)
+    try:
+        server, strategy = get_model_server_and_strategy(config, data)
+    except Exception as e:
+        log_detailed_error("Server Strategy / Model Setup", e, config, X=X_train, y=y_train)
+        sys.stderr.flush()
+        sys.stdout.flush()
+        sys.exit(1)
 
     # Start Flower server for three rounds of federated learning
-    history = fl.server.start_server(
-        server_address=f"{central_ip}:{central_port}",
-        config=fl.server.ServerConfig(num_rounds=config["num_rounds"]),
-        server=server,
-        strategy=strategy,
-        certificates = certificates,
-    )
+    try:
+        history = fl.server.start_server(
+            server_address=f"{central_ip}:{central_port}",
+            config=fl.server.ServerConfig(num_rounds=config["num_rounds"]),
+            server=server,
+            strategy=strategy,
+            certificates = certificates,
+        )
+    except Exception as e:
+        log_detailed_error("Flower Server Start / Execution Loop", e, config, X=X_train, y=y_train)
+        sys.stderr.flush()
+        sys.stdout.flush()
+        sys.exit(1)
     # # Save the model and the history
     # filename = os.path.join( checkpoint_dir, 'final_model.pt' )
     # joblib.dump(model, filename)

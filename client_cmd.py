@@ -12,7 +12,7 @@ import logging
 #import grpc
 
 import flcore.datasets as datasets
-from flcore.utils import StreamToLogger, GetModelClient, CheckClientConfig, survival_models_list
+from flcore.utils import StreamToLogger, GetModelClient, CheckClientConfig, survival_models_list, log_detailed_error
 
 if __name__ == "__main__":
 
@@ -29,8 +29,8 @@ if __name__ == "__main__":
     parser.add_argument("--dataset", type=str, default="dt4h_format", help="Dataloader to use")
     parser.add_argument("--data_id", type=str, default="data_id.parquet" , help="Dataset ID")
     parser.add_argument("--normalization_method",type=str, default="IQR", help="Type of normalization: IQR STD MIN_MAX")
-    parser.add_argument("--train_labels", type=str, nargs='+', default=None, help="Dataloader to use")
-    parser.add_argument("--target_labels", type=str, nargs='+', default=None, help="Dataloader to use")
+    parser.add_argument("--train_labels", type=str, nargs='+', default=[], help="Dataloader to use")
+    parser.add_argument("--target_labels", type=str, nargs='+', default=[], help="Dataloader to use")
     parser.add_argument("--train_size", type=float, default=0.7, help="Fraction of dataset to use for training. [0,1)")
     parser.add_argument("--validation_size", type=float, default=0.2, help="Fraction of dataset to use for validation. [0,1)")
     parser.add_argument("--test_size", type=float, default=0.1, help="Fraction of dataset to use for testing. [0,1)")
@@ -50,6 +50,7 @@ if __name__ == "__main__":
     parser.add_argument("--local_epochs", type=int, default=10, help="Number of local epochs to train in each round")
     parser.add_argument("--batch_size", type=int, default=8, help="Batch size to train")
     parser.add_argument("--penalty", type=str, default="none", help="Penalties: none, l1, l2, elasticnet, smooth l1")
+    parser.add_argument("--save_every_n_rounds", type=int, default=1, help="Save model checkpoints every N rounds")
 
     # Specific variables model related
     # # Linear models
@@ -78,13 +79,20 @@ if __name__ == "__main__":
     parser.add_argument("--train_method", type=str, default="bagging", help="Train method: bagging, cyclic")
     parser.add_argument("--eta", type=float, default=0.1, help="ETA value")
     # # Survival
-    parser.add_argument("--time_col", type=str, default="time", help="")
-    parser.add_argument("--event_col", type=str, default="event", help="")
+    parser.add_argument("--time_col", type=str, default=None, help="")
+    parser.add_argument("--event_col", type=str, default=None, help="")
+    parser.add_argument("--accumulative_pattern_col", type=str, default=None, help="")
     parser.add_argument("--negative_duration_strategy", type=str, default="clip", help="")
 
     args = parser.parse_args()
     config = vars(args)
-    config = CheckClientConfig(config)
+    try:
+        config = CheckClientConfig(config)
+    except Exception as e:
+        log_detailed_error("Client Configuration Verification", e, config)
+        sys.stderr.flush()
+        sys.stdout.flush()
+        os._exit(1)
 
     # Create sandbox log file path
     sandbox_log_file = Path(os.path.join(config["sandbox_path"], "log_client.txt"))
@@ -96,17 +104,23 @@ if __name__ == "__main__":
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setLevel(logging.DEBUG)
 
-    # Create a formatter for consistency
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    file_handler.setFormatter(formatter)
-    console_handler.setFormatter(formatter)
+    # Create formatters
+    file_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    console_formatter = logging.Formatter('[%(levelname)s] %(message)s')
+
+    file_handler.setFormatter(file_formatter)
+    console_handler.setFormatter(console_formatter)
 
     # Get the root logger and configure it
     logger = logging.getLogger()
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.INFO)  # Change default level to INFO
     logger.handlers = []  # Clear any default handlers
     logger.addHandler(file_handler)
     logger.addHandler(console_handler)
+
+    # Silence noisy dependencies
+    #    logging.getLogger("flwr").setLevel(logging.WARNING)
+    logging.getLogger("flwr").setLevel(logging.ERROR)
 
     # Create two sub-loggers
     stdout_logger = logging.getLogger("STDOUT")
@@ -117,10 +131,7 @@ if __name__ == "__main__":
     sys.stderr = StreamToLogger(stderr_logger, logging.ERROR)
 
     # Now you can use logging in both places
-    logging.debug("This will be logged to both the console and the file.")
-
-    # Now you can use logging in both places
-    logging.debug("This will be logged to both the console and the file.")
+    logging.info("Starting Flower client...")
 
 #### PODRIAMOS QUITAR ESTO DE PRODUCTION MODE; NO TIENE NINGUN SENTIDO
     #model = config["model"]
@@ -161,8 +172,36 @@ if __name__ == "__main__":
 # *******************************************************************************************
 # Aquí lo correcto es cargar todo como instancias de dataloader de torch
 num_client = 0 # config["client_id"]
-data = datasets.load_dataset(config, num_client)
-client = GetModelClient(config, data)
+try:
+    data = datasets.load_dataset(config, num_client)
+except Exception as e:
+    log_detailed_error(
+        "Client Dataset Loading",
+        e,
+        config=config,
+        data_path=config.get("data_id") or config.get("data_path")
+    )
+    sys.stderr.flush()
+    sys.stdout.flush()
+    os._exit(1)
+
+try:
+    client = GetModelClient(config, data)
+except Exception as e:
+    X_train_diag, y_train_diag = None, None
+    if data and isinstance(data, tuple) and len(data) >= 1:
+        if isinstance(data[0], tuple) and len(data[0]) >= 2:
+            X_train_diag, y_train_diag = data[0][0], data[0][1]
+    log_detailed_error(
+        "Client Model Setup / Initialization",
+        e,
+        config=config,
+        X=X_train_diag,
+        y=y_train_diag
+    )
+    sys.stderr.flush()
+    sys.stdout.flush()
+    os._exit(1)
 # *******************************************************************************************
 for attempt in range(3):
     try:
@@ -189,7 +228,14 @@ for attempt in range(3):
             time.sleep(2)  # Espera un poco antes de reintentar
         else:
             print("All connection attempts failed.")
-            raise
+            X_train_diag, y_train_diag = None, None
+            if 'data' in locals() and data and isinstance(data, tuple) and len(data) >= 1:
+                if isinstance(data[0], tuple) and len(data[0]) >= 2:
+                    X_train_diag, y_train_diag = data[0][0], data[0][1]
+            log_detailed_error("Flower Client Start / Execution Loop", e, config=config, X=X_train_diag, y=y_train_diag)
+            sys.stderr.flush()
+            sys.stdout.flush()
+            os._exit(1)
 
 sys.stdout.flush()
 sys.stderr.flush()

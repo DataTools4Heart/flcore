@@ -1,11 +1,15 @@
-FROM ubuntu:22.04
+FROM python:3.11-slim
 
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends --assume-yes \
-    pip iputils-ping curl wget wkhtmltopdf
-
-COPY requirements.txt /home/requirements.txt
-RUN pip3 install -r /home/requirements.txt
-RUN ln -s /usr/bin/python3 /usr/bin/python
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    iputils-ping curl wget \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /flcore
-COPY . /flcore
+
+COPY requirements.txt .
+
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+RUN ln -s /usr/bin/python3 /usr/bin/python

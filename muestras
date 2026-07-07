@@ -1,0 +1,294 @@
+>>> metadata["entries"][0]["datasetStats"]["featureStats"]["med_admins_history_diuretics_loop_any"]
+{'numOfNotNull': 7845, 'numOfTrue': 0}
+>>> metadata["entries"][0]["datasetStats"]["featureStats"]["lab_results_tropIHs_value_max"]
+{'numOfNotNull': 232, 'min': 0.012, 'max': 61.4, 'avg': 1.4874525862068966, 'q1': 0.012, 'q2': 0.042, 'q3': 0.428, 'histogram': [{'bin': 0.11627748691099472, 'count': 191}, {'bin': 1.9938888888888893, 'count': 18}, {'bin': 4.438333333333333, 'count': 12}, {'bin': 8.576666666666666, 'count': 3}, {'bin': 10.9, 'count': 1}, {'bin': 12.7, 'count': 1}, {'bin': 15.666666666666668, 'count': 3}, {'bin': 21.0, 'count': 1}, {'bin': 55.0, 'count': 1}, {'bin': 61.4, 'count': 1}]}
+>>> metadata["entries"][0]["features"][0]["dataType"]
+'NOMINAL'
+>>> metadata["entries"][0]["datasetStats"]["featureStats"]["patient_demographics_gender"]["valueSet"]
+['female', 'male']
+
+
+nominales: patient_demographics_gender encounters_encounterClass encounters_admissionYear 
+electrocardiographs_ecg_type_of_rhythm_pET_first electrocardiographs_ecg_type_of_rhythm_pET_last
+nyha_nyha_pET hyperkalemia_severity_categorizedValue ckd_severity_categorizedValue
+numerics: patient_demographics_age encounters_lengthOfStay vital_signs_weight_value_p6mo_min
+vital_signs_weight_value_p6mo_max
+vital_signs_weight_value_p6mo_first
+vital_signs_weight_value_p6mo_stddev
+vital_signs_weight_value_p6mo_avg
+vital_signs_weight_value_p6mo_last
+vital_signs_height_value_p1a_avg
+vital_signs_systolicBp_value_stddev
+vital_signs_systolicBp_value_first
+vital_signs_systolicBp_value_avg
+vital_signs_systolicBp_value_max
+vital_signs_systolicBp_value_min
+vital_signs_systolicBp_value_last
+vital_signs_diastolicBp_value_stddev
+vital_signs_diastolicBp_value_first
+vital_signs_diastolicBp_value_avg
+vital_signs_diastolicBp_value_max
+vital_signs_diastolicBp_value_min
+vital_signs_diastolicBp_value_last
+vital_signs_heartRate_value_stddev
+vital_signs_heartRate_value_first
+vital_signs_heartRate_value_avg
+vital_signs_heartRate_value_max
+vital_signs_heartRate_value_min
+vital_signs_heartRate_value_last
+vital_signs_oxygenSaturation_value_stddev
+vital_signs_oxygenSaturation_value_first
+vital_signs_oxygenSaturation_value_avg
+vital_signs_oxygenSaturation_value_max
+vital_signs_oxygenSaturation_value_min
+vital_signs_oxygenSaturation_value_last
+lab_results_hemoglobin_value_min
+lab_results_hemoglobin_value_stddev
+lab_results_hemoglobin_value_avg
+lab_results_hemoglobin_value_max
+lab_results_hemoglobin_value_first
+lab_results_hemoglobin_value_last
+lab_results_ferritin_value_min
+lab_results_ferritin_value_stddev
+lab_results_ferritin_value_avg
+lab_results_ferritin_value_max
+lab_results_ferritin_value_first
+lab_results_ferritin_value_last
+lab_results_tfs_value_min
+lab_results_tfs_value_stddev
+lab_results_tfs_value_avg
+lab_results_tfs_value_max
+lab_results_tfs_value_first
+lab_results_tfs_value_last
+lab_results_ntProBnp_value_min
+lab_results_ntProBnp_value_stddev
+lab_results_ntProBnp_value_avg
+lab_results_ntProBnp_value_max
+lab_results_ntProBnp_value_first
+lab_results_ntProBnp_value_last
+lab_results_bnp_value_min
+lab_results_bnp_value_stddev
+lab_results_bnp_value_avg
+lab_results_bnp_value_max
+lab_results_bnp_value_first
+lab_results_bnp_value_last
+lab_results_crpNonHs_value_min
+lab_results_crpNonHs_value_stddev
+lab_results_crpNonHs_value_avg
+lab_results_crpNonHs_value_max
+lab_results_crpNonHs_value_first
+lab_results_crpNonHs_value_last
+lab_results_crpHs_value_min
+lab_results_crpHs_value_stddev
+lab_results_crpHs_value_avg
+lab_results_crpHs_value_max
+lab_results_crpHs_value_first
+lab_results_crpHs_value_last
+lab_results_tropIHs_value_min
+lab_results_tropIHs_value_stddev
+lab_results_tropIHs_value_avg
+lab_results_tropIHs_value_max
+lab_results_tropIHs_value_first
+lab_results_tropIHs_value_last
+lab_results_tropInHs_value_min
+lab_results_tropInHs_value_stddev
+lab_results_tropInHs_value_avg
+lab_results_tropInHs_value_max
+lab_results_tropInHs_value_first
+lab_results_tropInHs_value_last
+lab_results_tropTHs_value_min
+lab_results_tropTHs_value_stddev
+lab_results_tropTHs_value_avg
+lab_results_tropTHs_value_max
+lab_results_tropTHs_value_first
+lab_results_tropTHs_value_last
+lab_results_tropTnHs_value_min
+lab_results_tropTnHs_value_stddev
+lab_results_tropTnHs_value_avg
+lab_results_tropTnHs_value_max
+lab_results_tropTnHs_value_first
+lab_results_tropTnHs_value_last
+lab_results_triGly_value_min
+lab_results_triGly_value_stddev
+lab_results_triGly_value_avg
+lab_results_triGly_value_max
+lab_results_triGly_value_first
+lab_results_triGly_value_last
+lab_results_cholTot_value_min
+lab_results_cholTot_value_stddev
+lab_results_cholTot_value_avg
+lab_results_cholTot_value_max
+lab_results_cholTot_value_first
+lab_results_cholTot_value_last
+lab_results_hdl_value_min
+lab_results_hdl_value_stddev
+lab_results_hdl_value_avg
+lab_results_hdl_value_max
+lab_results_hdl_value_first
+lab_results_hdl_value_last
+lab_results_ldl_value_min
+lab_results_ldl_value_stddev
+lab_results_ldl_value_avg
+lab_results_ldl_value_max
+lab_results_ldl_value_first
+lab_results_ldl_value_last
+lab_results_potassium_value_min
+lab_results_potassium_value_stddev
+lab_results_potassium_value_avg
+lab_results_potassium_value_max
+lab_results_potassium_value_first
+lab_results_potassium_value_last
+lab_results_sodium_value_min
+lab_results_sodium_value_stddev
+lab_results_sodium_value_avg
+lab_results_sodium_value_max
+lab_results_sodium_value_first
+lab_results_sodium_value_last
+lab_results_creatBS_value_min
+lab_results_creatBS_value_stddev
+lab_results_creatBS_value_avg
+lab_results_creatBS_value_max
+lab_results_creatBS_value_first
+lab_results_creatBS_value_last
+lab_results_creatUS_value_min
+lab_results_creatUS_value_stddev
+lab_results_creatUS_value_avg
+lab_results_creatUS_value_max
+lab_results_creatUS_value_first
+lab_results_creatUS_value_last
+lab_results_albuminBS_value_min
+lab_results_albuminBS_value_stddev
+lab_results_albuminBS_value_avg lab_results_albuminBS_value_max lab_results_albuminBS_value_first
+lab_results_albuminBS_value_last lab_results_albuminUS_value_min lab_results_albuminUS_value_stddev
+lab_results_albuminUS_value_avg lab_results_albuminUS_value_max lab_results_albuminUS_value_first
+lab_results_albuminUS_value_last lab_results_eGFR_value_min lab_results_eGFR_value_stddev
+lab_results_eGFR_value_avg lab_results_eGFR_value_max lab_results_eGFR_value_first lab_results_eGFR_value_last
+lab_results_bun_value_min lab_results_bun_value_stddev
+lab_results_bun_value_avg lab_results_bun_value_max lab_results_bun_value_first lab_results_bun_value_last lab_results_acr_value_min
+lab_results_acr_value_stddev lab_results_acr_value_avg lab_results_acr_value_max lab_results_acr_value_first lab_results_acr_value_last lab_results_hba1c%_value_min lab_results_hba1c%_value_stddev
+lab_results_hba1c%_value_avg lab_results_hba1c%_value_max lab_results_hba1c%_value_first lab_results_hba1c%_value_last lab_results_hba1c_value_min lab_results_hba1c_value_stddev lab_results_hba1c_value_avg lab_results_hba1c_value_max
+lab_results_hba1c_value_first lab_results_hba1c_value_last
+echocardiographs_lvef_pET_max echocardiographs_lvef_pET_avg
+echocardiographs_lvef_pET_last echocardiographs_lvef_pET_min
+echocardiographs_lvef_pET_stddev echocardiographs_lvef_pET_first
+electrocardiographs_ecg_qrs_duration_pET_avg
+electrocardiographs_ecg_qrs_duration_pET_min
+electrocardiographs_ecg_qrs_duration_pET_stddev
+electrocardiographs_ecg_qrs_duration_pET_first
+electrocardiographs_ecg_qrs_duration_pET_last
+electrocardiographs_ecg_qrs_duration_pET_max
+electrocardiographs_ecg_qrs_axis_pET_last
+electrocardiographs_ecg_qrs_axis_pET_avg
+electrocardiographs_ecg_qrs_axis_pET_min
+electrocardiographs_ecg_qrs_axis_pET_stddev
+electrocardiographs_ecg_qrs_axis_pET_first
+electrocardiographs_ecg_qrs_axis_pET_max electrocardiographs_ecg_qt_duration_corrected_pET_last
+electrocardiographs_ecg_qt_duration_corrected_pET_first electrocardiographs_ecg_qt_duration_corrected_pET_min
+electrocardiographs_ecg_qt_duration_corrected_pET_max electrocardiographs_ecg_qt_duration_corrected_pET_avg
+electrocardiographs_ecg_qt_duration_corrected_pET_stddev smoking_status_smoker_totalSmokingDuration_sum
+smoking_status_smoker_startTime_count conditions_heartFailure_timeFromEarliest_first
+
+
+
+metadata["entries"][0]["datasetStats"]["featureStats"]["patient_demographics_sourceIdentifier"].keys()
+dict_keys(['numOfNotNull', 'valueSet', 'cardinalityPerItem'])
+
+
+algo raro en esto: patient_demographics_sourceIdentifier
+
+metadata_file = "metadata.json"
+
+with open(metadata_file) as f:
+    metadata = json.load(f)
+
+for feat in metadata["entries"][0]["features"]:
+    if feat["dataType"] == "BOOLEAN":
+        print("=====================")
+        print(feat)
+
+for feat in metadata["entries"][0]["outcomes"]:
+    if feat["dataType"] == "NOMINAL":
+        print("=====================")
+        print(feat)
+
+
+
+{'name': 'encounter_primary_reason_HF_Disease_f5a_w7d_first', 'description': 'Whether the patient is hospitalized because of heart failure after the discharge', 'dataType': 'BOOLEAN', 'generatedDescription': ['earliest value', 'within 1st next 7 day period']}
+{'name': 'encounter_primary_reason_HF_Disease_f5a_w1mo_first', 'description': 'Whether the patient is hospitalized because of heart failure after the discharge', 'dataType': 'BOOLEAN', 'generatedDescription': ['earliest value', 'within 1st next 1 month period']}
+{'name': 'encounter_primary_reason_HF_Disease_f5a_w3mo_first', 'description': 'Whether the patient is hospitalized because of heart failure after the discharge', 'dataType': 'BOOLEAN', 'generatedDescription': ['earliest value', 'within 1st next 3 month period']}
+{'name': 'encounter_primary_reason_HF_Disease_f5a_w6mo_first', 'description': 'Whether the patient is hospitalized because of heart failure after the discharge', 'dataType': 'BOOLEAN', 'generatedDescription': ['earliest value', 'within 1st next 6 month period']}
+{'name': 'encounter_primary_reason_HF_Disease_f5a_w1a_first', 'description': 'Whether the patient is hospitalized because of heart failure after the discharge', 'dataType': 'BOOLEAN', 'generatedDescription': ['earliest value', 'within 1st next 1 year period']}
+{'name': 'encounter_primary_reason_HF_Disease_f5a_w3a_first', 'description': 'Whether the patient is hospitalized because of heart failure after the discharge', 'dataType': 'BOOLEAN', 'generatedDescription': ['earliest value', 'within 1st next 3 year period']}
+{'name': 'encounter_primary_reason_HF_Disease_f5a_w5a_first', 'description': 'Whether the patient is hospitalized because of heart failure after the discharge', 'dataType': 'BOOLEAN', 'generatedDescription': ['earliest value', 'within 1st next 5 year period']}
+{'name': 'encounter_primary_reason_number_of_days_to_rehosp_for_heart_failure_f5a_first', 'description': 'Number of days from discharge until rehospitalization due to heart failure', 'dataType': 'NUMERIC', 'generatedDescription': ['earliest value', 'within next 5 year']}
+{'name': 'encounter_primary_reason_CV_Disease_f5a_w7d_first', 'description': 'Whether the patient is hospitalized because of any cardiovascular condition after the discharge', 'dataType': 'BOOLEAN', 'generatedDescription': ['earliest value', 'within 1st next 7 day period']}
+{'name': 'encounter_primary_reason_CV_Disease_f5a_w1mo_first', 'description': 'Whether the patient is hospitalized because of any cardiovascular condition after the discharge', 'dataType': 'BOOLEAN', 'generatedDescription': ['earliest value', 'within 1st next 1 month period']}
+{'name': 'encounter_primary_reason_CV_Disease_f5a_w3mo_first', 'description': 'Whether the patient is hospitalized because of any cardiovascular condition after the discharge', 'dataType': 'BOOLEAN', 'generatedDescription': ['earliest value', 'within 1st next 3 month period']}
+{'name': 'encounter_primary_reason_CV_Disease_f5a_w6mo_first', 'description': 'Whether the patient is hospitalized because of any cardiovascular condition after the discharge', 'dataType': 'BOOLEAN', 'generatedDescription': ['earliest value', 'within 1st next 6 month period']}
+{'name': 'encounter_primary_reason_CV_Disease_f5a_w1a_first', 'description': 'Whether the patient is hospitalized because of any cardiovascular condition after the discharge', 'dataType': 'BOOLEAN', 'generatedDescription': ['earliest value', 'within 1st next 1 year period']}
+{'name': 'encounter_primary_reason_CV_Disease_f5a_w3a_first', 'description': 'Whether the patient is hospitalized because of any cardiovascular condition after the discharge', 'dataType': 'BOOLEAN', 'generatedDescription': ['earliest value', 'within 1st next 3 year period']}
+{'name': 'encounter_primary_reason_CV_Disease_f5a_w5a_first', 'description': 'Whether the patient is hospitalized because of any cardiovascular condition after the discharge', 'dataType': 'BOOLEAN', 'generatedDescription': ['earliest value', 'within 1st next 5 year period']}
+{'name': 'encounter_primary_reason_number_of_days_to_rehosp_for_CV_f5a_first', 'description': 'Number of days from discharge until rehospitalization due to CV disease', 'dataType': 'NUMERIC', 'generatedDescription': ['earliest value', 'within next 5 year']}
+{'name': 'encounter_primary_reason_non_CV_Disease_f5a_w7d_first', 'description': 'Whether the patient is hospitalized because of any non-cardiovascular condition after the discharge', 'dataType': 'BOOLEAN', 'generatedDescription': ['earliest value', 'within 1st next 7 day period']}
+{'name': 'encounter_primary_reason_non_CV_Disease_f5a_w1mo_first', 'description': 'Whether the patient is hospitalized because of any non-cardiovascular condition after the discharge', 'dataType': 'BOOLEAN', 'generatedDescription': ['earliest value', 'within 1st next 1 month period']}
+{'name': 'encounter_primary_reason_non_CV_Disease_f5a_w3mo_first', 'description': 'Whether the patient is hospitalized because of any non-cardiovascular condition after the discharge', 'dataType': 'BOOLEAN', 'generatedDescription': ['earliest value', 'within 1st next 3 month period']}
+{'name': 'encounter_primary_reason_non_CV_Disease_f5a_w6mo_first', 'description': 'Whether the patient is hospitalized because of any non-cardiovascular condition after the discharge', 'dataType': 'BOOLEAN', 'generatedDescription': ['earliest value', 'within 1st next 6 month period']}
+{'name': 'encounter_primary_reason_non_CV_Disease_f5a_w1a_first', 'description': 'Whether the patient is hospitalized because of any non-cardiovascular condition after the discharge', 'dataType': 'BOOLEAN', 'generatedDescription': ['earliest value', 'within 1st next 1 year period']}
+{'name': 'encounter_primary_reason_non_CV_Disease_f5a_w3a_first', 'description': 'Whether the patient is hospitalized because of any non-cardiovascular condition after the discharge', 'dataType': 'BOOLEAN', 'generatedDescription': ['earliest value', 'within 1st next 3 year period']}
+{'name': 'encounter_primary_reason_non_CV_Disease_f5a_w5a_first', 'description': 'Whether the patient is hospitalized because of any non-cardiovascular condition after the discharge', 'dataType': 'BOOLEAN', 'generatedDescription': ['earliest value', 'within 1st next 5 year period']}
+{'name': 'encounter_primary_reason_number_of_days_to_rehosp_for_non_CV_f5a_first', 'description': 'Number of days from discharge until rehospitalization due to non-CV disease', 'dataType': 'NUMERIC', 'generatedDescription': ['earliest value', 'within next 5 year']}
+{'name': 'encounter_primary_reason_renal_complications_f5a_w7d_first', 'description': 'Whether the patient is hospitalized because of any renal complication after the discharge', 'dataType': 'BOOLEAN', 'generatedDescription': ['earliest value', 'within 1st next 7 day period']}
+{'name': 'encounter_primary_reason_renal_complications_f5a_w1mo_first', 'description': 'Whether the patient is hospitalized because of any renal complication after the discharge', 'dataType': 'BOOLEAN', 'generatedDescription': ['earliest value', 'within 1st next 1 month period']}
+{'name': 'encounter_primary_reason_renal_complications_f5a_w3mo_first', 'description': 'Whether the patient is hospitalized because of any renal complication after the discharge', 'dataType': 'BOOLEAN', 'generatedDescription': ['earliest value', 'within 1st next 3 month period']}
+{'name': 'encounter_primary_reason_renal_complications_f5a_w6mo_first', 'description': 'Whether the patient is hospitalized because of any renal complication after the discharge', 'dataType': 'BOOLEAN', 'generatedDescription': ['earliest value', 'within 1st next 6 month period']}
+{'name': 'encounter_primary_reason_renal_complications_f5a_w1a_first', 'description': 'Whether the patient is hospitalized because of any renal complication after the discharge', 'dataType': 'BOOLEAN', 'generatedDescription': ['earliest value', 'within 1st next 1 year period']}
+{'name': 'encounter_primary_reason_renal_complications_f5a_w3a_first', 'description': 'Whether the patient is hospitalized because of any renal complication after the discharge', 'dataType': 'BOOLEAN', 'generatedDescription': ['earliest value', 'within 1st next 3 year period']}
+{'name': 'encounter_primary_reason_renal_complications_f5a_w5a_first', 'description': 'Whether the patient is hospitalized because of any renal complication after the discharge', 'dataType': 'BOOLEAN', 'generatedDescription': ['earliest value', 'within 1st next 5 year period']}
+{'name': 'encounter_primary_reason_number_of_days_to_rehosp_for_renal_complications_f5a_first', 'description': 'Number of days from discharge until rehospitalization due to renal complications', 'dataType': 'NUMERIC', 'generatedDescription': ['earliest value', 'within next 5 year']}
+{'name': 'cause_of_death_isCV_f5a_w7d_first', 'description': 'Whether the patient dies because of any cardiovascular condition after the discharge', 'dataType': 'BOOLEAN', 'generatedDescription': ['earliest value', 'within 1st next 7 day period']}
+{'name': 'cause_of_death_isCV_f5a_w1mo_first', 'description': 'Whether the patient dies because of any cardiovascular condition after the discharge', 'dataType': 'BOOLEAN', 'generatedDescription': ['earliest value', 'within 1st next 1 month period']}
+{'name': 'cause_of_death_isCV_f5a_w3mo_first', 'description': 'Whether the patient dies because of any cardiovascular condition after the discharge', 'dataType': 'BOOLEAN', 'generatedDescription': ['earliest value', 'within 1st next 3 month period']}
+{'name': 'cause_of_death_isCV_f5a_w6mo_first', 'description': 'Whether the patient dies because of any cardiovascular condition after the discharge', 'dataType': 'BOOLEAN', 'generatedDescription': ['earliest value', 'within 1st next 6 month period']}
+{'name': 'cause_of_death_isCV_f5a_w1a_first', 'description': 'Whether the patient dies because of any cardiovascular condition after the discharge', 'dataType': 'BOOLEAN', 'generatedDescription': ['earliest value', 'within 1st next 1 year period']}
+{'name': 'cause_of_death_isCV_f5a_w3a_first', 'description': 'Whether the patient dies because of any cardiovascular condition after the discharge', 'dataType': 'BOOLEAN', 'generatedDescription': ['earliest value', 'within 1st next 3 year period']}
+{'name': 'cause_of_death_isCV_f5a_w5a_first', 'description': 'Whether the patient dies because of any cardiovascular condition after the discharge', 'dataType': 'BOOLEAN', 'generatedDescription': ['earliest value', 'within 1st next 5 year period']}
+{'name': 'cause_of_death_number_of_days_to_death_for_CV_f5a_first', 'description': 'Number of days from discharge until death due to CV disease', 'dataType': 'NUMERIC', 'generatedDescription': ['earliest value', 'within next 5 year']}
+{'name': 'cause_of_death_isRenal_f5a_w7d_first', 'description': 'Whether the patient dies because of any renal complication after the discharge', 'dataType': 'BOOLEAN', 'generatedDescription': ['earliest value', 'within 1st next 7 day period']}
+{'name': 'cause_of_death_isRenal_f5a_w1mo_first', 'description': 'Whether the patient dies because of any renal complication after the discharge', 'dataType': 'BOOLEAN', 'generatedDescription': ['earliest value', 'within 1st next 1 month period']}
+{'name': 'cause_of_death_isRenal_f5a_w3mo_first', 'description': 'Whether the patient dies because of any renal complication after the discharge', 'dataType': 'BOOLEAN', 'generatedDescription': ['earliest value', 'within 1st next 3 month period']}
+{'name': 'cause_of_death_isRenal_f5a_w6mo_first', 'description': 'Whether the patient dies because of any renal complication after the discharge', 'dataType': 'BOOLEAN', 'generatedDescription': ['earliest value', 'within 1st next 6 month period']}
+{'name': 'cause_of_death_isRenal_f5a_w1a_first', 'description': 'Whether the patient dies because of any renal complication after the discharge', 'dataType': 'BOOLEAN', 'generatedDescription': ['earliest value', 'within 1st next 1 year period']}
+{'name': 'cause_of_death_isRenal_f5a_w3a_first', 'description': 'Whether the patient dies because of any renal complication after the discharge', 'dataType': 'BOOLEAN', 'generatedDescription': ['earliest value', 'within 1st next 3 year period']}
+{'name': 'cause_of_death_isRenal_f5a_w5a_first', 'description': 'Whether the patient dies because of any renal complication after the discharge', 'dataType': 'BOOLEAN', 'generatedDescription': ['earliest value', 'within 1st next 5 year period']}
+{'name': 'cause_of_death_number_of_days_to_death_for_renal_f5a_first', 'description': 'Number of days from discharge until death due to renal complications', 'dataType': 'NUMERIC', 'generatedDescription': ['earliest value', 'within next 5 year']}
+{'name': 'cause_of_death_isNonRenalAndNonCV_f5a_w7d_first', 'description': 'Whether the patient dies because of any non-cardiovascular and non-renal condition after the discharge', 'dataType': 'BOOLEAN', 'generatedDescription': ['earliest value', 'within 1st next 7 day period']}
+{'name': 'cause_of_death_isNonRenalAndNonCV_f5a_w1mo_first', 'description': 'Whether the patient dies because of any non-cardiovascular and non-renal condition after the discharge', 'dataType': 'BOOLEAN', 'generatedDescription': ['earliest value', 'within 1st next 1 month period']}
+{'name': 'cause_of_death_isNonRenalAndNonCV_f5a_w3mo_first', 'description': 'Whether the patient dies because of any non-cardiovascular and non-renal condition after the discharge', 'dataType': 'BOOLEAN', 'generatedDescription': ['earliest value', 'within 1st next 3 month period']}
+{'name': 'cause_of_death_isNonRenalAndNonCV_f5a_w6mo_first', 'description': 'Whether the patient dies because of any non-cardiovascular and non-renal condition after the discharge', 'dataType': 'BOOLEAN', 'generatedDescription': ['earliest value', 'within 1st next 6 month period']}
+{'name': 'cause_of_death_isNonRenalAndNonCV_f5a_w1a_first', 'description': 'Whether the patient dies because of any non-cardiovascular and non-renal condition after the discharge', 'dataType': 'BOOLEAN', 'generatedDescription': ['earliest value', 'within 1st next 1 year period']}
+{'name': 'cause_of_death_isNonRenalAndNonCV_f5a_w3a_first', 'description': 'Whether the patient dies because of any non-cardiovascular and non-renal condition after the discharge', 'dataType': 'BOOLEAN', 'generatedDescription': ['earliest value', 'within 1st next 3 year period']}
+{'name': 'cause_of_death_isNonRenalAndNonCV_f5a_w5a_first', 'description': 'Whether the patient dies because of any non-cardiovascular and non-renal condition after the discharge', 'dataType': 'BOOLEAN', 'generatedDescription': ['earliest value', 'within 1st next 5 year period']}
+{'name': 'cause_of_death_number_of_days_to_death_for_non_renal_and_non_CV_f5a_first', 'description': 'Number of days from discharge until death due to non-CV and non-renal complications', 'dataType': 'NUMERIC', 'generatedDescription': ['earliest value', 'within next 5 year']}
+{'name': 'cause_of_death_isAllCause_f5a_w7d_first', 'description': 'Whether the patient dies because of unspecified condition after the discharge', 'dataType': 'BOOLEAN', 'generatedDescription': ['earliest value', 'within 1st next 7 day period']}
+{'name': 'cause_of_death_isAllCause_f5a_w1mo_first', 'description': 'Whether the patient dies because of unspecified condition after the discharge', 'dataType': 'BOOLEAN', 'generatedDescription': ['earliest value', 'within 1st next 1 month period']}
+{'name': 'cause_of_death_isAllCause_f5a_w3mo_first', 'description': 'Whether the patient dies because of unspecified condition after the discharge', 'dataType': 'BOOLEAN', 'generatedDescription': ['earliest value', 'within 1st next 3 month period']}
+{'name': 'cause_of_death_isAllCause_f5a_w6mo_first', 'description': 'Whether the patient dies because of unspecified condition after the discharge', 'dataType': 'BOOLEAN', 'generatedDescription': ['earliest value', 'within 1st next 6 month period']}
+{'name': 'cause_of_death_isAllCause_f5a_w1a_first', 'description': 'Whether the patient dies because of unspecified condition after the discharge', 'dataType': 'BOOLEAN', 'generatedDescription': ['earliest value', 'within 1st next 1 year period']}
+{'name': 'cause_of_death_isAllCause_f5a_w3a_first', 'description': 'Whether the patient dies because of unspecified condition after the discharge', 'dataType': 'BOOLEAN', 'generatedDescription': ['earliest value', 'within 1st next 3 year period']}
+{'name': 'cause_of_death_isAllCause_f5a_w5a_first', 'description': 'Whether the patient dies because of unspecified condition after the discharge', 'dataType': 'BOOLEAN', 'generatedDescription': ['earliest value', 'within 1st next 5 year period']}
+{'name': 'cause_of_death_number_of_days_to_death_for_all_cause_f5a_first', 'description': 'Number of days from discharge until death due to unspecified condition', 'dataType': 'NUMERIC', 'generatedDescription': ['earliest value', 'within next 5 year']}
+
+FEATURES:
+patient_demographics_gender NOMINAL
+encounters_encounterClass NOMINAL
+encounters_admissionYear NOMINAL
+patient_demographics_age NUMERIC
+encounters_lengthOfStay NUMERIC
+vital_signs_weight_value_p6mo_min NUMERIC
+med_admins_history_diuretics_loop_any BOOLEAN
+patient_flags_smoker BOOLEAN
+OUTCOMES:
+outcome_in_hospital_mortality BOOLEAN
+outcome_readmission_30d BOOLEAN
+outcome_discharge_disposition NOMINAL
+outcome_severity_score NUMERIC
