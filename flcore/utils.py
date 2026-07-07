@@ -119,7 +119,7 @@ def CheckClientConfig(config):
         elif config["task"] == "regression":
             print("The nature of the selected ML models does not allow to perform regression")
             print("if you want to perform regression with a linear model you can change to linear_regression")
-            sys.exit()
+            sys.exit(1)
     elif config["model"] == "lsvc":
         if (config["task"] == "classification"  or config["task"].lower() == "none"):
             if config["task"].lower() == "none":
@@ -128,12 +128,12 @@ def CheckClientConfig(config):
             # verificar variables
         elif config["task"] == "regression":
             print("The nature of the selected ML models does not allow to perform regression")
-            sys.exit()
+            sys.exit(1)
     elif config["model"] in linear_regression_models_list:
         if config["task"] == "classification" and config["model"] != "svm":
             print("The nature of the selected ML model does not allow to perform classification")
             print("if you want to perform classification with a linear model you can change to logistic_regression")
-            sys.exit()
+            sys.exit(1)
         elif (config["task"] == "regression"  or config["task"].lower() == "none"):
             if config["task"].lower() == "none":
                 print("Since this model only supports regression assigning task automatically to regression")
@@ -162,7 +162,7 @@ def CheckClientConfig(config):
             config["solver"] = "saga"
         elif config["task"] == "regression":
             print("The nature of the selected ML model does not allow to perform regression despite its name")
-            sys.exit()
+            sys.exit(1)
     elif config["model"] == "nn":
         config["n_feats"] = len(config["train_labels"])
         config["n_out"] = 1 # Quizás añadir como parámetro también
@@ -184,7 +184,7 @@ def CheckClientConfig(config):
     # Saniy check, empty list
     if len(parquet_files) == 0:
         print("No parquet files found in ",est)
-        sys.exit()
+        sys.exit(1)
 #    config["data_file"] = "/home/jorge/workdir/flcore-suite/dataset/bucarest_sintetico/synthetic_dt4h_dataset.csv"
 
     # ¿How to choose one of the list?
@@ -192,7 +192,7 @@ def CheckClientConfig(config):
 
     if len(config["train_labels"]) == 0:
         print("No training labels were provided")
-        sys.exit()
+        sys.exit(1)
 
     new = []
     for i in config["train_labels"]:
@@ -202,7 +202,7 @@ def CheckClientConfig(config):
 
     if len(config["target_labels"]) == 0 and config["task"] != "survival":
         print("No target labels were provided")
-        sys.exit()
+        sys.exit(1)
 
     new = []        
     for i in config["target_labels"]:
@@ -269,12 +269,12 @@ def CheckClientConfig(config):
         if config["task"] == "regression":
             if config["kernel"] in ["poly", "rbf", "sigmoid", "precomputed"] and config["n_out"] > 1:
                 print("Those kernels only support 1-variable as output")
-                sys.exit()
+                sys.exit(1)
 
     if config["model"] in survival_models_list:
         if config["time_col"] == "None" or config["event_col"] == "None":
             print("Time col and Event col needed when survival model is choosen")
-            sys.exit()
+            sys.exit(1)
         else:
             config["survival"] = {}
             config["survival"]["time_col"] = config["time_col"]
@@ -290,7 +290,7 @@ def CheckClientConfig(config):
 
     if config["task"].lower() == "none":
         print("Task not assigned. The  ML model  selection requieres a task to perform")
-        sys.exit()  
+        sys.exit(1)  
 
     if config["penalty"] != "none":
         valid_values = ["l1", "l2"]
@@ -300,7 +300,7 @@ def CheckClientConfig(config):
             valid_values.append("SmoothL1Loss")
         elif config["model"] == "random_forest":
             print("Random forest does not admit L1, L2 or ElasticNet regularization ... ignoring this variable")
-            sys.exit()
+            sys.exit(1)
         assert config["penalty"] in valid_values, "Penalty is not valid or available for the selected model"
     return config
 
