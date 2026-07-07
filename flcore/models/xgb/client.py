@@ -411,7 +411,7 @@ class XGBoostClient(fl.client.NumPyClient):
         with open(metadata_path, "w") as f:
             json.dump(metadata, f, indent=4)
 
-        print(f"[Client] XGBoost model saved at {model_path}")
+        #print(f"[Client] XGBoost model saved at {model_path}")
 
 def get_numpy(X_train, y_train, X_test, y_test, time_col=None, event_col=None) -> Dict:
     """Convert data to dictionary format expected by client.

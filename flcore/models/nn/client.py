@@ -268,7 +268,7 @@ class FlowerClient(fl.client.NumPyClient):
         with open(metadata_path, "w") as f:
             json.dump(metadata, f, indent=4)
 
-        print(f"[Client] NN model saved at {model_path}")
+        #print(f"[Client] NN model saved at {model_path}")
 """
 model = BasicNN(...)
 model.load_state_dict(torch.load("model.pt"))

@@ -265,7 +265,7 @@ class MnistClient(fl.client.Client):
         with open(metadata_path, "w") as f:
             json.dump(metadata, f, indent=4)
 
-        print(f"[Client {self.node_name}] Model saved at round {self.round} -> {model_path}")
+        #print(f"[Client {self.node_name}] Model saved at round {self.round} -> {model_path}")
 
 def get_client(config,data) -> fl.client.Client:
     return MnistClient(data, config)

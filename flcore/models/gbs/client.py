@@ -165,7 +165,7 @@ class FLClient(fl.client.NumPyClient):
         with open(metadata_path, "w") as f:
             json.dump(metadata, f, indent=4)
 
-        print(f"Model and metadata saved for inference at {save_path}")
+        #print(f"Model and metadata saved for inference at {save_path}")
 
 
 def get_client(config, data) -> fl.client.Client:
