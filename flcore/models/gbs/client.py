@@ -67,6 +67,9 @@ class FLClient(fl.client.NumPyClient):
             if self.round % self.config["save_every_n_rounds"] == 0:
                 self.save_model()
 
+            print(f"num_client {self.node_name} has an elapsed time {elapsed_time}")
+            print(f"Training finished for round {ins.config['server_round']}")
+
             self.round += 1
             return params, num_examples, {}
         except Exception as e:

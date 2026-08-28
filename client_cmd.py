@@ -119,7 +119,7 @@ if __name__ == "__main__":
     logger.addHandler(console_handler)
 
     # Silence noisy dependencies
-    #    logging.getLogger("flwr").setLevel(logging.WARNING)
+#    logging.getLogger("flwr").setLevel(logging.WARNING)
     logging.getLogger("flwr").setLevel(logging.ERROR)
 
     # Create two sub-loggers
