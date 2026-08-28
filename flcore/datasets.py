@@ -26,7 +26,8 @@ XY = Tuple[np.ndarray, np.ndarray]
 Dataset = Tuple[XY, XY]
 
 def filter_nans(df, features, outcomes, verbose=True):
-    print(" ************************************************ ENTRA FILTER NANS")
+    print(" " * 2 + "*" * 80 + " ENERS FILTER NANS")
+
     """
     Filter patients with complete data across all feature and outcome variables.
 
@@ -45,8 +46,6 @@ def filter_nans(df, features, outcomes, verbose=True):
     -------
     df_filtered : pd.DataFrame
         Dataframe containing only complete cases.
-    report : dict
-        Summary statistics.
     """
 
     # Combine variables preserving order and removing duplicates
@@ -74,11 +73,24 @@ def filter_nans(df, features, outcomes, verbose=True):
 
     n_final = len(df_filtered)
     n_removed = n_initial - n_final
+
     reduction_pct = (
         n_removed / n_initial * 100
         if n_initial > 0 else 0.0
     )
+
     retention_pct = 100 - reduction_pct
+
+    # Safety check: removing >99% of observations is highly suspicious
+    if reduction_pct > 99:
+        raise ValueError(
+            f"Complete-case filtering removed {reduction_pct:.2f}% "
+            f"of the observations ({n_removed}/{n_initial}). "
+            "More than 99% of the data has been removed, which strongly "
+            "suggests a potential data, variable-selection, or missing-value "
+            "handling error. Please check the selected features/outcomes "
+            "and the missingness pattern before continuing."
+        )
 
     report = {
         "features": features,
@@ -120,7 +132,7 @@ def filter_nans(df, features, outcomes, verbose=True):
 
         print("=" * 60)
 
-    return df_filtered #, report
+    return df_filtered  # , report
 
 def load_mnist(center_id=None, num_splits=5):
     """Loads the MNIST dataset using OpenML.
@@ -844,7 +856,8 @@ def load_dt4h(config):
     target_labels = config["target_labels"]
     train_labels = config["train_labels"]
 
-    split_idx = int(dat_len * config["train_size"])
+    split_idx = int(len(dat) * config["train_size"])   # was: dat_len
+    #split_idx = int(dat_len * config["train_size"])
 
     X = dat[train_labels]
     y = dat[target_labels].iloc[:, 0]
