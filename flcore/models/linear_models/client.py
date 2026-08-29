@@ -104,6 +104,9 @@ class MnistClient(fl.client.NumPyClient):
             if self.round % self.config["save_every_n_rounds"] == 0:
                 self.save_model()
 
+            elapsed_time = (time.time() - start_time)
+            metrics["running_time"] = elapsed_time
+
             print(f"num_client {self.node_name} has an elapsed time {elapsed_time}")
             print(f"Training finished for round {ins.config['server_round']}")
 

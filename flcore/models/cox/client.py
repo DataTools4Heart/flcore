@@ -49,7 +49,7 @@ class FLClient(fl.client.NumPyClient):
     def fit(self, parameters, config):
         try:
             # Get model type from server
-
+            start_time = time.time()
             model_kwargs = {k: v for k, v in config.items() if k != "model_type"}
             if self.model_wrapper is None:
                 self.model_wrapper = CoxPHModel(**model_kwargs)
@@ -66,6 +66,9 @@ class FLClient(fl.client.NumPyClient):
 
             if self.round % self.config["save_every_n_rounds"] == 0:
                 self.save_model()
+
+            elapsed_time = (time.time() - start_time)
+            metrics["running_time"] = elapsed_time
 
             print(f"num_client {self.node_name} has an elapsed time {elapsed_time}")
             print(f"Training finished for round {ins.config['server_round']}")
