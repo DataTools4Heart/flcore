@@ -155,7 +155,7 @@ class FlowerClient(fl.client.NumPyClient):
             metrics["running_time"] = elapsed_time
 
             print(f"num_client {self.node_name} has an elapsed time {elapsed_time}")
-            print(f"Training finished for round {ins.config['server_round']}")
+            print(f"Training finished for round {self.round}")
 
             self.round += 1
             return self.get_parameters(config={}), dataset_len, {}
