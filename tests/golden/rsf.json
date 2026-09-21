@@ -1,0 +1,28 @@
+{
+  "model": "rsf",
+  "rounds": [
+    {
+      "eval_metrics": {
+        "accuracy": 0.4025641025641026,
+        "brier_score": 0.23437227042915937,
+        "c_index": 0.4025641025641026,
+        "ibs": 0.257861123219736
+      },
+      "fit_metrics": {},
+      "loss": 0.5974358974358974,
+      "round": 1
+    },
+    {
+      "eval_metrics": {
+        "accuracy": 0.4230769230769231,
+        "brier_score": 0.23883406055261613,
+        "c_index": 0.4230769230769231,
+        "ibs": 0.24950537431531927
+      },
+      "fit_metrics": {},
+      "loss": 0.5769230769230769,
+      "round": 2
+    }
+  ],
+  "task": "survival"
+}

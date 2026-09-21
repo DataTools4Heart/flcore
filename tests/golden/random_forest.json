@@ -1,0 +1,92 @@
+{
+  "model": "random_forest",
+  "rounds": [
+    {
+      "eval_metrics": {
+        "accuracy": 0.7916666567325592,
+        "balanced_accuracy": 0.7945804297924042,
+        "f1": 0.7666666507720947,
+        "per client accuracy": [
+          0.8333333134651184,
+          0.75
+        ],
+        "per client balanced_accuracy": [
+          0.8391608595848083,
+          0.75
+        ],
+        "per client f1": [
+          0.8333333134651184,
+          0.699999988079071
+        ],
+        "per client n samples": [
+          24,
+          24
+        ],
+        "per client precision": [
+          0.9090909361839294,
+          0.875
+        ],
+        "per client recall": [
+          0.7692307829856873,
+          0.5833333134651184
+        ],
+        "per client specificity": [
+          0.9090909361839294,
+          0.9166666865348816
+        ],
+        "precision": 0.8920454680919647,
+        "recall": 0.6762820482254028,
+        "specificity": 0.9128788113594055
+      },
+      "fit_metrics": {
+        "training_time [s]": 0.0690462589263916
+      },
+      "loss": 1.926541533889143,
+      "round": 1
+    },
+    {
+      "eval_metrics": {
+        "accuracy": 0.75,
+        "balanced_accuracy": 0.7510198056697845,
+        "f1": 0.7333333492279053,
+        "per client accuracy": [
+          0.7083333134651184,
+          0.7916666865348816
+        ],
+        "per client balanced_accuracy": [
+          0.7083333134651184,
+          0.7937062978744507
+        ],
+        "per client f1": [
+          0.6666666865348816,
+          0.800000011920929
+        ],
+        "per client n samples": [
+          24,
+          24
+        ],
+        "per client precision": [
+          0.7777777910232544,
+          0.8333333134651184
+        ],
+        "per client recall": [
+          0.5833333134651184,
+          0.7692307829856873
+        ],
+        "per client specificity": [
+          0.8333333134651184,
+          0.8181818127632141
+        ],
+        "precision": 0.8055555522441864,
+        "recall": 0.6762820482254028,
+        "specificity": 0.8257575631141663
+      },
+      "fit_metrics": {
+        "training_time [s]": 0.11831164360046387
+      },
+      "loss": 0.5193472459241323,
+      "round": 2
+    }
+  ],
+  "task": "classification"
+}

@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "flcore"
+version = "0.1.0"
+description = "Federated learning model library (Flower wrapper) for DataTools4Heart / AI4HF"
+requires-python = ">=3.10"
+dependencies = [
+    "flwr==1.25.0",
+    "imblearn==0.0",
+    "joblib==1.2.0",
+    "matplotlib==3.7.1",
+    "numpy==1.26.4",
+    "mlxtend==0.23.0",
+    "openml==0.13.1",
+    "pandas==2.2.1",
+    "PyYAML==6.0.2",
+    "scikit_learn",
+    "torch==2.3.1",
+    "torchmetrics==0.11.4",
+    "tqdm==4.65.0",
+    "xgboost==1.7.5",
+    "pdfkit==1.0.0",
+    "scikit-survival==0.22.2",
+    "fpboost==0.1.0",
+    "setuptools",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4",
+    "pytest-cov",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["flcore*"]
+namespaces = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

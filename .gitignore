@@ -9,6 +9,10 @@ data/
 logs/
 external/
 other/
+# FedCustomAggregator.aggregate_fit writes this into the CWD instead of
+# experiment_dir (see CLAUDE.md Sec 4.2) -- appears whenever random_forest /
+# weighted_random_forest / linear_models is run or tested from the repo root.
+server_results.txt
 # C extensions
 *.so
 
