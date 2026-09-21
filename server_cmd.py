@@ -3,6 +3,7 @@ import sys
 import yaml
 import json
 import numpy
+import random
 import logging
 import warnings
 import argparse
@@ -39,6 +40,9 @@ if __name__ == "__main__":
     parser.add_argument("--checkpoint_selection_metric", type=str, default="precision", help="Metric used for checkpoints")
     parser.add_argument("--metrics_aggregation", type=str, default="weighted_average",  help="Metrics")
     parser.add_argument("--experiment_name", type=str, default="experiment_1", help="Experiment directory")
+
+    # Client connection wait settings
+    parser.add_argument("--client_wait_timeout_minutes", type=float, default=1.0)
 
     # Model specific RandomForest settings
     parser.add_argument("--balanced", type=str, default=None, help="Random forest balanced")
@@ -165,6 +169,13 @@ if __name__ == "__main__":
         sys.stdout.flush()
         os._exit(1)
 
+    logging.info(
+        "Server will wait up to %.0f min for %d client(s) to connect"
+        " before starting training with the available clients.",
+        config["client_wait_timeout_minutes"],
+        config["num_clients"],
+    )
+
     # Start Flower server for three rounds of federated learning
     try:
         history = fl.server.start_server(
@@ -250,4 +261,3 @@ for logs in history.keys():
 
 with open(experiment_dir / "history.yaml", "w") as f:
     yaml.dump(history, f)
-
