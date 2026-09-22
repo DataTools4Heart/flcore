@@ -27,6 +27,8 @@ from flwr.server import Grid
 from flwr.server.strategy import FedAvg
 from flwr.server.client_proxy import ClientProxy
 
+from flcore.timeout_manager import TimeoutClientManager
+from flwr.server import Server
 
 # ==========================================================
 # BAGGING AGGREGATION (Tree-Level JSON Merge)
@@ -402,4 +404,18 @@ def get_server_and_strategy(config: dict) -> FedXgbFullyFederated:
         fraction_evaluate=1.0
     )
 
-    return None, strategy
+    client_wait_timeout_seconds = (
+        config["client_wait_timeout_minutes"] * 60.0
+    )
+
+    timeout_client_manager = TimeoutClientManager(
+        expected_clients=config["num_clients"],
+        wait_timeout=client_wait_timeout_seconds,
+    )
+
+    server = Server(
+        client_manager=timeout_client_manager,
+        strategy=strategy,
+    )
+
+    return server, strategy

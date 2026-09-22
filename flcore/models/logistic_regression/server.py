@@ -6,6 +6,9 @@ from sklearn.metrics import log_loss
 
 import flcore.models.logistic_regression.utils as utils
 
+import logging
+from flcore.timeout_manager import TimeoutClientManager
+from flwr.server import Server
 
 def fit_round(server_round: int) -> Dict:
     """Send round number to client."""
@@ -39,7 +42,21 @@ def get_server_and_strategy(config, data):
         on_fit_config_fn=fit_round,
     )
 
-    return None, strategy
+    client_wait_timeout_seconds = (
+        config["client_wait_timeout_minutes"] * 60.0
+    )
+
+    timeout_client_manager = TimeoutClientManager(
+        expected_clients=config["num_clients"],
+        wait_timeout=client_wait_timeout_seconds,
+    )
+
+    server = Server(
+        client_manager=timeout_client_manager,
+        strategy=strategy,
+    )
+
+    return server, strategy
 
 
 # Start Flower server for five rounds of federated learning

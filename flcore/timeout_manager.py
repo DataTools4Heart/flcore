@@ -1,3 +1,4 @@
+import random
 import logging
 import flwr as fl
 
@@ -5,7 +6,7 @@ class TimeoutClientManager(fl.server.SimpleClientManager):
     """
     ClientManager que espera un tiempo máximo fijo (wait_timeout, en segundos)
     a que se conecten los clientes esperados antes de la primera ronda.
-
+ 
     - Si todos los clientes esperados se conectan dentro de ese plazo, sigue
       exactamente igual que el comportamiento por defecto de Flower.
     - Si se agota el plazo y hay algunos clientes conectados, continúa el
@@ -21,12 +22,15 @@ class TimeoutClientManager(fl.server.SimpleClientManager):
         self.expected_clients = expected_clients
         self.wait_timeout = wait_timeout
         self._initial_wait_done = False
+        logging.info("Expected clients: %d", self.expected_clients)
 
     def wait_for(self, num_clients: int, timeout: int = 86400) -> bool:
         if self._initial_wait_done:
             # La espera inicial ya se resolvió; no volver a bloquear en
             # rondas siguientes.
             return True
+
+        logging.info("Waiting for %d client(s) to connect...", num_clients)
 
         with self._cv:
             success = self._cv.wait_for(
@@ -74,18 +78,15 @@ class TimeoutClientManager(fl.server.SimpleClientManager):
     def sample(self, num_clients, min_num_clients=None, criterion=None):
         if min_num_clients is None:
             min_num_clients = num_clients
-
-        self.wait_for(min_num_clients)
+        self.wait_for(self.expected_clients)
 
         available_cids = list(self.clients)
-
         if criterion is not None:
             available_cids = [
                 cid
                 for cid in available_cids
                 if criterion.select(self.clients[cid])
             ]
-
         if not available_cids:
             logging.error(
                 "No clients are available to sample. Stopping training."

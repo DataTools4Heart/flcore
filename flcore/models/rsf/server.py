@@ -21,6 +21,8 @@ import pickle, json
 from flcore.models.rsf.model import RSFModel
 from flcore.models.rsf.aggregator import RSFAggregator
 
+from flcore.timeout_manager import TimeoutClientManager
+from flwr.server import Server
 
 logger = logging.getLogger(__name__)
 
@@ -156,4 +158,18 @@ def get_server_and_strategy(
         saving_path=config['experiment_dir'],
     )
 
-    return None, strategy
+    client_wait_timeout_seconds = (
+        config["client_wait_timeout_minutes"] * 60.0
+    )
+
+    timeout_client_manager = TimeoutClientManager(
+        expected_clients=config["num_clients"],
+        wait_timeout=client_wait_timeout_seconds,
+    )
+
+    server = Server(
+        client_manager=timeout_client_manager,
+        strategy=strategy,
+    )
+
+    return server, strategy

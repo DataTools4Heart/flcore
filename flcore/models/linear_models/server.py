@@ -26,7 +26,7 @@ import functools
 
 
 #from networks.arch_handler import Network
-
+import logging
 import warnings
 #install pip install pyyaml
 import yaml
@@ -43,7 +43,8 @@ from flcore.datasets import load_dataset
 from sklearn.ensemble import RandomForestClassifier
 from flcore.models.linear_models.utils import get_model
 from flcore.metrics import calculate_metrics
-
+from flcore.timeout_manager import TimeoutClientManager
+from flwr.server import Server
 
 
 warnings.filterwarnings( 'ignore' )
@@ -137,30 +138,37 @@ def evaluate_held_out(
 
 
 def get_server_and_strategy(config):
-#    model = get_model(config)
-#    utils.set_initial_params(model,config['n_feats'] )
 
-    # Pass parameters to the Strategy for server-side parameter initialization
-    #strategy = fl.server.strategy.FedAvg(
-    strategy = FedCustom(   
-        #Have running the same number of clients otherwise it does not run the federated
-        min_available_clients = config['min_available_clients'],
-        min_fit_clients = config['min_fit_clients'],
-        min_evaluate_clients = config['min_evaluate_clients'],
-        #enable evaluate_fn  if we have data to evaluate in the server
+    strategy = FedCustom(
+        min_available_clients=config['min_available_clients'],
+        min_fit_clients=config['min_fit_clients'],
+        min_evaluate_clients=config['min_evaluate_clients'],
         evaluate_fn=functools.partial(
             evaluate_held_out,
             config=config,
         ),
-        fit_metrics_aggregation_fn = metrics_aggregation_fn,
-        evaluate_metrics_aggregation_fn = metrics_aggregation_fn,
-        on_fit_config_fn = fit_round,
-        checkpoint_dir = config["experiment_dir"] / "checkpoints",
-        dropout_method = config['dropout_method'],
-        percentage_drop = config['dropout_percentage'],
-        smoothing_method = config['smooth_method'],
-        smoothing_strenght = config['smoothing_strenght']
-        # ·································································
+        fit_metrics_aggregation_fn=metrics_aggregation_fn,
+        evaluate_metrics_aggregation_fn=metrics_aggregation_fn,
+        on_fit_config_fn=fit_round,
+        checkpoint_dir=config["experiment_dir"] / "checkpoints",
+        dropout_method=config['dropout_method'],
+        percentage_drop=config['dropout_percentage'],
+        smoothing_method=config['smooth_method'],
+        smoothing_strenght=config['smoothing_strenght'],
     )
 
-    return None, strategy
+    client_wait_timeout_seconds = (
+        config["client_wait_timeout_minutes"] * 60.0
+    )
+
+    timeout_client_manager = TimeoutClientManager(
+        expected_clients=config["num_clients"],
+        wait_timeout=client_wait_timeout_seconds,
+    )
+
+    server = Server(
+        client_manager=timeout_client_manager,
+        strategy=strategy,
+    )
+
+    return server, strategy

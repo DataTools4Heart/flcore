@@ -24,6 +24,9 @@ from flcore.metrics import calculate_metrics
 from flcore.models.nn.basic_nn import BasicNN
 import torch
 
+from flcore.timeout_manager import TimeoutClientManager
+from flwr.server import Server
+
 def weighted_average(metrics: List[Tuple[int, Metrics]]) -> Metrics:
     if not metrics:
         return {}
@@ -88,5 +91,20 @@ def get_server_and_strategy(config):
         min_fit_clients = config["min_fit_clients"],
         min_evaluate_clients = config["min_evaluate_clients"],
         min_available_clients = config["min_available_clients"])
-    return None, strategy
+
+    client_wait_timeout_seconds = (
+        config["client_wait_timeout_minutes"] * 60.0
+    )
+
+    timeout_client_manager = TimeoutClientManager(
+        expected_clients=config["num_clients"],
+        wait_timeout=client_wait_timeout_seconds,
+    )
+
+    server = Server(
+        client_manager=timeout_client_manager,
+        strategy=strategy,
+    )
+
+    return server, strategy
 

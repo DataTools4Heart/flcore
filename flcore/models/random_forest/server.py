@@ -23,7 +23,8 @@ from sklearn.ensemble import RandomForestClassifier
 from flcore.models.random_forest.utils import get_model
 from flcore.metrics import metrics_aggregation_fn
 
-
+from flcore.timeout_manager import TimeoutClientManager
+from flwr.server import Server
 
 warnings.filterwarnings( 'ignore' )
 
@@ -68,7 +69,21 @@ def get_server_and_strategy(config):
         f.write(f"Smooth Method: {strategy.smoothing_method} \n")
         f.write(f"Smooth Strenght: {strategy.smoothing_strenght } \n")
 
-    return None, strategy
+    client_wait_timeout_seconds = (
+        config["client_wait_timeout_minutes"] * 60.0
+    )
+
+    timeout_client_manager = TimeoutClientManager(
+        expected_clients=config["num_clients"],
+        wait_timeout=client_wait_timeout_seconds,
+    )
+
+    server = Server(
+        client_manager=timeout_client_manager,
+        strategy=strategy,
+    )
+
+    return server, strategy
 
 
 
