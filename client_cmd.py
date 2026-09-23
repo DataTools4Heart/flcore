@@ -95,27 +95,27 @@ if __name__ == "__main__":
         os._exit(1)
 
     # Create sandbox log file path
-    sandbox_log_file = Path(os.path.join(config["sandbox_path"], "log_client.txt"))
+    #sandbox_log_file = Path(os.path.join(config["sandbox_path"], "log_client.txt"))
 
     # Set up the file handler (writes to file)
-    file_handler = logging.FileHandler(sandbox_log_file)
-    file_handler.setLevel(logging.DEBUG)
+    #file_handler = logging.FileHandler(sandbox_log_file)
+    #file_handler.setLevel(logging.DEBUG)
     # Set up the console handler (writes to Docker logs via stdout)
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setLevel(logging.DEBUG)
 
     # Create formatters
-    file_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    #file_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     console_formatter = logging.Formatter('[%(levelname)s] %(message)s')
 
-    file_handler.setFormatter(file_formatter)
+    #file_handler.setFormatter(file_formatter)
     console_handler.setFormatter(console_formatter)
 
     # Get the root logger and configure it
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)  # Change default level to INFO
     logger.handlers = []  # Clear any default handlers
-    logger.addHandler(file_handler)
+    #logger.addHandler(file_handler)
     logger.addHandler(console_handler)
 
     # Silence noisy dependencies
