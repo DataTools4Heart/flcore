@@ -26,6 +26,13 @@ from pathlib import Path
 from flcore.models.gbs.model import GBSModel
 from flcore.models.gbs.data_formatter import get_numpy
 
+import shutil
+import pickle
+import sklearn
+try:
+    import imblearn
+except ImportError:
+    imblearn = None
 
 # -------------------------------
 # Flower client definition
@@ -114,11 +121,11 @@ class FLClient(fl.client.NumPyClient):
             raise e
 
     def save_model(self):
-        save_path = Path(self.config["experiment_dir"])/"models"
+        save_path = Path(self.config["experiment_dir"]) / "models"
         save_path.mkdir(parents=True, exist_ok=True)
-        model_name = self.config["model"]+"_"+self.config["task"]+"_round_"+str(self.round)
-        model_path = save_path / f"{model_name}_model.pkl"        
-        self.model_wrapper.save_model(model_path)
+        is_final = self.round == self.config["num_rounds"] - 1
+
+        model_name = self.config["model"] + "_" + self.config["task"] + "_round_" + str(self.round)
 
         data_metadata = json.load(open(self.config["metadata_file"], "r"))
         entity = data_metadata.get("entries", {})[0]
@@ -132,12 +139,10 @@ class FLClient(fl.client.NumPyClient):
         all_outcomes_meta = {o['name']: o for o in outcomes_list}
 
         for f_name, f_meta in all_features_meta.items():
-            stats = feature_stats.get(f_name, {})
-            f_meta['stats'] = stats
+            f_meta['stats'] = feature_stats.get(f_name, {})
 
         for o_name, o_meta in all_outcomes_meta.items():
-            stats = outcome_stats.get(o_name, {})
-            o_meta['stats'] = stats
+            o_meta['stats'] = outcome_stats.get(o_name, {})
 
         features_meta = {}
         for label in self.config["train_labels"]:
@@ -153,26 +158,42 @@ class FLClient(fl.client.NumPyClient):
             elif label in all_features_meta:
                 outcomes_meta[label] = all_features_meta[label]
 
-#>>> features_meta["patient_demographics_age"]["stats"]["min"]
+        aggregate = self.model_wrapper.model
+        aggregate.n_outputs_ = self.config["n_out"]
+        aggregate.n_features_in_ = self.config["n_feats"]
+        n_classes = self.config.get("n_classes")
+        if n_classes is not None:
+            aggregate.n_classes_ = n_classes
+
         metadata = {
             "node_name": self.config["node_name"],
             "task": self.config["task"],
             "n_out": self.config["n_out"],
-            "n_out": self.config["n_feats"],
+            "n_feats": self.config["n_feats"],
             "model_type": self.config["model"],
             "feature_names": self.config["train_labels"],
-            "target_names":self.config["target_labels"],
+            "target_names": self.config["target_labels"],
             "metrics": getattr(self, "last_metrics", None),
             "features_meta": features_meta,
-            "outcomes_meta": outcomes_meta
+            "outcomes_meta": outcomes_meta,
+            "is_final": is_final,
+            "round": self.round,
+            "model_name": model_name,
+            "sklearn_version": sklearn.__version__,
+            "imblearn_version": getattr(imblearn, "__version__", None) if imblearn else None,
         }
 
-        metadata_path = save_path / f"{model_name}_model_metadata.json"
-        with open(metadata_path, "w") as f:
-            json.dump(metadata, f, indent=4)
+        model_path = save_path / f"{model_name}_model.pkl"
+        with open(model_path, "wb") as f:
+            pickle.dump({"model": self.model_wrapper, "metadata": metadata}, f)
 
-        #print(f"Model and metadata saved for inference at {save_path}")
+        print(f"Model and metadata saved for inference at {model_path}")
 
+        if is_final:
+            final_name = f"{self.config['model']}_{self.config['task']}"
+            final_path = save_path / f"{final_name}_model_final.pkl"
+            shutil.copyfile(model_path, final_path)
+            print(f"Final model marked at {final_path}")
 
 def get_client(config, data) -> fl.client.Client:
     (X_train, y_train), (X_test, y_test), time, event = data

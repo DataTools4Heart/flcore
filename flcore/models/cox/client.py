@@ -25,6 +25,13 @@ from pathlib import Path
 from flcore.models.cox.model import CoxPHModel
 from flcore.models.cox.data_formatter import get_numpy
 
+import shutil
+import pickle
+import sklearn
+try:
+    import imblearn
+except ImportError:
+    imblearn = None
 
 # -------------------------------
 # Flower client definition
@@ -172,6 +179,82 @@ class FLClient(fl.client.NumPyClient):
             json.dump(metadata, f, indent=4)
 
         #print(f"Model and metadata saved for inference at {save_path}")
+
+def save_model(self):
+    save_path = Path(self.config["experiment_dir"]) / "models"
+    save_path.mkdir(parents=True, exist_ok=True)
+    is_final = self.round == self.config["num_rounds"] - 1
+
+    model_name = self.config["model"] + "_" + self.config["task"] + "_round_" + str(self.round)
+
+    data_metadata = json.load(open(self.config["metadata_file"], "r"))
+    entity = data_metadata.get("entries", {})[0]
+    features_list = entity.get("features", [])
+    outcomes_list = entity.get("outcomes", [])
+    dataset_stats = entity.get("datasetStats", {})
+    feature_stats = dataset_stats.get("featureStats", {})
+    outcome_stats = dataset_stats.get("outcomeStats", {})
+
+    all_features_meta = {f['name']: f for f in features_list}
+    all_outcomes_meta = {o['name']: o for o in outcomes_list}
+
+    for f_name, f_meta in all_features_meta.items():
+        f_meta['stats'] = feature_stats.get(f_name, {})
+
+    for o_name, o_meta in all_outcomes_meta.items():
+        o_meta['stats'] = outcome_stats.get(o_name, {})
+
+    features_meta = {}
+    for label in self.config["train_labels"]:
+        if label in all_features_meta:
+            features_meta[label] = all_features_meta[label]
+        elif label in all_outcomes_meta:
+            features_meta[label] = all_outcomes_meta[label]
+
+    outcomes_meta = {}
+    for label in self.config["target_labels"]:
+        if label in all_outcomes_meta:
+            outcomes_meta[label] = all_outcomes_meta[label]
+        elif label in all_features_meta:
+            outcomes_meta[label] = all_features_meta[label]
+
+    aggregate = self.model_wrapper.model
+    aggregate.n_outputs_ = self.config["n_out"]
+    aggregate.n_features_in_ = self.config["n_feats"]
+    n_classes = self.config.get("n_classes")
+    if n_classes is not None:
+        aggregate.n_classes_ = n_classes
+
+    metadata = {
+        "node_name": self.config["node_name"],
+        "task": self.config["task"],
+        "n_out": self.config["n_out"],
+        "n_feats": self.config["n_feats"],
+        "model_type": self.config["model"],
+        "feature_names": self.config["train_labels"],
+        "target_names": self.config["target_labels"],
+        "metrics": getattr(self, "last_metrics", None),
+        "features_meta": features_meta,
+        "outcomes_meta": outcomes_meta,
+        "is_final": is_final,
+        "round": self.round,
+        "model_name": model_name,
+        "sklearn_version": sklearn.__version__,
+        "imblearn_version": getattr(imblearn, "__version__", None) if imblearn else None,
+    }
+
+    model_path = save_path / f"{model_name}_model.pkl"
+    with open(model_path, "wb") as f:
+        pickle.dump({"model": self.model_wrapper, "metadata": metadata}, f)
+
+    print(f"Model and metadata saved for inference at {model_path}")
+
+    if is_final:
+        final_name = f"{self.config['model']}_{self.config['task']}"
+        final_path = save_path / f"{final_name}_model_final.pkl"
+        shutil.copyfile(model_path, final_path)
+        print(f"Final model marked at {final_path}")
+
 
 def get_client(config, data) -> fl.client.Client:
     (X_train, y_train), (X_test, y_test), time, event = data

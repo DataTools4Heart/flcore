@@ -13,6 +13,9 @@ import xgboost as xgb
 from pathlib import Path
 from typing import Dict, Tuple, List
 from flwr.common import NDArrays, Scalar
+import shutil
+import tempfile
+import xgboost
 
 class XGBoostClient(fl.client.NumPyClient):
     """Flower client for federated XGBoost training.
@@ -353,12 +356,11 @@ class XGBoostClient(fl.client.NumPyClient):
             raise e
 
     def save_model(self):
-        save_path = Path(self.config["experiment_dir"])/"models"
+        save_path = Path(self.config["experiment_dir"]) / "models"
         save_path.mkdir(parents=True, exist_ok=True)
+        is_final = self.round == self.config["num_rounds"] - 1
 
-        model_name = self.config["model"]+"_"+self.config["task"]+"_round_"+str(self.round)
-        model_path = save_path / f"{model_name}_model.json"
-        self.bst.save_model(str(model_path))
+        model_name = self.config["model"] + "_" + self.config["task"] + "_round_" + str(self.round)
 
         data_metadata = json.load(open(self.config["metadata_file"], "r"))
         entity = data_metadata.get("entries", {})[0]
@@ -372,12 +374,10 @@ class XGBoostClient(fl.client.NumPyClient):
         all_outcomes_meta = {o['name']: o for o in outcomes_list}
 
         for f_name, f_meta in all_features_meta.items():
-            stats = feature_stats.get(f_name, {})
-            f_meta['stats'] = stats
+            f_meta['stats'] = feature_stats.get(f_name, {})
 
         for o_name, o_meta in all_outcomes_meta.items():
-            stats = outcome_stats.get(o_name, {})
-            o_meta['stats'] = stats
+            o_meta['stats'] = outcome_stats.get(o_name, {})
 
         features_meta = {}
         for label in self.config["train_labels"]:
@@ -393,25 +393,45 @@ class XGBoostClient(fl.client.NumPyClient):
             elif label in all_features_meta:
                 outcomes_meta[label] = all_features_meta[label]
 
-#>>> features_meta["patient_demographics_age"]["stats"]["min"]
         metadata = {
             "node_name": self.config["node_name"],
             "task": self.config["task"],
             "n_out": self.config["n_out"],
-            "n_out": self.config["n_feats"],
+            "n_feats": self.config["n_feats"],
             "model_type": self.config["model"],
             "feature_names": self.config["train_labels"],
-            "target_names":self.config["target_labels"],
+            "target_names": self.config["target_labels"],
             "metrics": getattr(self, "last_metrics", None),
             "features_meta": features_meta,
-            "outcomes_meta": outcomes_meta
+            "outcomes_meta": outcomes_meta,
+            "is_final": is_final,
+            "round": self.round,
+            "model_name": model_name,
+            "xgboost_version": xgboost.__version__,
         }
 
-        metadata_path = save_path / f"{model_name}_model_metadata.json"
-        with open(metadata_path, "w") as f:
-            json.dump(metadata, f, indent=4)
+        # bst.save_model solo sabe escribir a un path de disco, así que lo
+        # volcamos a un temporal, leemos el JSON nativo de XGBoost, y lo
+        # anidamos junto a la metadata en un único archivo final.
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_path = Path(tmp_dir) / "bst.json"
+            self.bst.save_model(str(tmp_path))
+            with open(tmp_path, "r") as f:
+                bst_model_json = json.load(f)
 
-        #print(f"[Client] XGBoost model saved at {model_path}")
+        bundle = {"model": bst_model_json, "metadata": metadata}
+
+        model_path = save_path / f"{model_name}_model.json"
+        with open(model_path, "w") as f:
+            json.dump(bundle, f, indent=4)
+
+        print(f"Model and metadata saved for inference at {model_path}")
+
+        if is_final:
+            final_name = f"{self.config['model']}_{self.config['task']}"
+            final_path = save_path / f"{final_name}_model_final.json"
+            shutil.copyfile(model_path, final_path)
+            print(f"Final model marked at {final_path}")
 
 def get_numpy(X_train, y_train, X_test, y_test, time_col=None, event_col=None) -> Dict:
     """Convert data to dictionary format expected by client.

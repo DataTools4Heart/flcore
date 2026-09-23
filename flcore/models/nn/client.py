@@ -41,6 +41,9 @@ import torch.nn.functional as F
 from flcore.models.nn.basic_nn import BasicNN
 from flcore.models.nn.utils import uncertainty_metrics
 
+import shutil
+import torch
+
 class FlowerClient(fl.client.NumPyClient):
     def __init__(self, config, data):
         self.config = config
@@ -219,10 +222,10 @@ class FlowerClient(fl.client.NumPyClient):
         save_path = Path(self.config["sandbox_path"]) / "model"
         save_path.mkdir(parents=True, exist_ok=True)
 
-        model_name = f"{self.config['model']}_{self.config['task']}_round_{getattr(self, 'round', 0)}"
+        current_round = getattr(self, "round", 0)
+        is_final = current_round == self.config["num_rounds"] - 1
 
-        model_path = save_path / f"{model_name}_model.pt"
-        torch.save(self.model.state_dict(), model_path)
+        model_name = f"{self.config['model']}_{self.config['task']}_round_{current_round}"
 
         with open(self.config["metadata_file"], "r") as f:
             data_metadata = json.load(f)
@@ -262,20 +265,32 @@ class FlowerClient(fl.client.NumPyClient):
             "node_name": self.config["node_name"],
             "task": self.config["task"],
             "n_out": self.config["n_out"],
-            "n_feats": self.config["n_feats"],  # FIX
+            "n_feats": self.config["n_feats"],
             "model_type": self.config["model"],
             "feature_names": self.config["train_labels"],
             "target_names": self.config["target_labels"],
             "metrics": getattr(self, "last_metrics", None),
             "features_meta": features_meta,
             "outcomes_meta": outcomes_meta,
+            "is_final": is_final,
+            "round": current_round,
+            "model_name": model_name,
+            "torch_version": torch.__version__,
         }
 
-        metadata_path = save_path / f"{model_name}_model_metadata.json"
-        with open(metadata_path, "w") as f:
-            json.dump(metadata, f, indent=4)
+        # Un solo archivo: state_dict + metadata juntos (torch.save pickla
+        # cualquier estructura Python, no solo tensores).
+        model_path = save_path / f"{model_name}_model.pt"
+        torch.save({"state_dict": self.model.state_dict(), "metadata": metadata}, model_path)
 
-        #print(f"[Client] NN model saved at {model_path}")
+        print(f"Model and metadata saved for inference at {model_path}")
+
+        if is_final:
+            final_name = f"{self.config['model']}_{self.config['task']}"
+            final_path = save_path / f"{final_name}_model_final.pt"
+            shutil.copyfile(model_path, final_path)
+            print(f"Final model marked at {final_path}")
+
 """
 model = BasicNN(...)
 model.load_state_dict(torch.load("model.pt"))
