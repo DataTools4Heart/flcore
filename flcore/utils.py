@@ -282,8 +282,11 @@ def CheckClientConfig(config):
             config['survival']['negative_duration_strategy'] = config["negative_duration_strategy"]
 
     # Create experiment directory
-    experiment_dir = Path(os.path.join(config["sandbox_path"],config["experiment_name"]))
-    experiment_dir.mkdir(parents=True, exist_ok=True)
+    #experiment_dir = Path(os.path.join(config["sandbox_path"],config["experiment_name"]))
+    #experiment_dir.mkdir(parents=True, exist_ok=True)
+    #config["experiment_dir"] = experiment_dir
+    # Create experiment directory
+    experiment_dir = Path(config["sandbox_path"])
     config["experiment_dir"] = experiment_dir
 
 # CUANDO SURVIVAL MODEL TASK NO ES NECESAIRO
