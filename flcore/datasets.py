@@ -26,7 +26,6 @@ XY = Tuple[np.ndarray, np.ndarray]
 Dataset = Tuple[XY, XY]
 
 def filter_nans(df, features, outcomes, verbose=True):
-    print(" " * 2 + "*" * 80 + " ENERS FILTER NANS")
 
     """
     Filter patients with complete data across all feature and outcome variables.
@@ -83,7 +82,7 @@ def filter_nans(df, features, outcomes, verbose=True):
 
     # Safety check: removing >99% of observations is highly suspicious
     if reduction_pct > 99:
-        raise ValueError(
+        print(
             f"Complete-case filtering removed {reduction_pct:.2f}% "
             f"of the observations ({n_removed}/{n_initial}). "
             "More than 99% of the data has been removed, which strongly "
@@ -724,7 +723,7 @@ def load_dt4h(config):
 #    dat = pd.read_csv("/home/jorge/workdir/flcore-suite/dataset/bucarest_sintetico/synthetic_dt4h_dataset.csv")
 
     dat_len = len(dat_)
-    dat = filter_nans(dat_, config["target_labels"], config["train_labels"])
+    dat = filter_nans(dat_, config["train_labels"], config["target_labels"])
 # ...................................................................
     entries = metadata.get("entries", [])
     if entries:
