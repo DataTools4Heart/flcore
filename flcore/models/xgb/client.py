@@ -401,6 +401,7 @@ class XGBoostClient(fl.client.NumPyClient):
             "model_type": self.config["model"],
             "feature_names": self.config["train_labels"],
             "target_names": self.config["target_labels"],
+            "data_file": self.config["data_file"],
             "metrics": getattr(self, "last_metrics", None),
             "features_meta": features_meta,
             "outcomes_meta": outcomes_meta,
