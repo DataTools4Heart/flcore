@@ -7,7 +7,6 @@
 
 from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import log_loss
-import time
 from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.model_selection import KFold, StratifiedShuffleSplit, train_test_split
 import warnings
@@ -23,8 +22,10 @@ from sklearn.preprocessing import StandardScaler
 # ______________________________________________________________
 
 import sys
+import math
 import json
 import torch
+import shutil
 import flwr as fl
 import numpy as np
 from typing import Dict, List, Tuple
@@ -40,9 +41,7 @@ import torch.nn.functional as F
 
 from flcore.models.nn.basic_nn import BasicNN
 from flcore.models.nn.utils import uncertainty_metrics
-
-import shutil
-import torch
+from flcore.metrics import calculate_metrics
 
 class FlowerClient(fl.client.NumPyClient):
     def __init__(self, config, data):
@@ -52,8 +51,8 @@ class FlowerClient(fl.client.NumPyClient):
         self.epochs = config["local_epochs"]
 
         print("MODELS::NN:CLIENT::INIT")
-        if torch.cuda.is_available() and self.config["device"] == 'cuda':
-            self.device = torch.device('cuda')
+        if torch.cuda.is_available() and self.config["device"] == "cuda":
+            self.device = torch.device("cuda")
         else:
             self.device = torch.device("cpu")
 
@@ -64,160 +63,211 @@ class FlowerClient(fl.client.NumPyClient):
         self.X_test = torch.tensor(self.X_test.values, dtype=torch.float32)
         self.y_test = torch.tensor(self.y_test.values, dtype=torch.float32)
 
+        # Criterio y conversión de tipos ANTES de crear datasets/loaders
+        if self.config["task"] == "classification":
+            if config["n_out"] == 1:  # Binario
+                self.criterion = nn.BCEWithLogitsLoss()
+            else:  # Multiclase
+                self.criterion = nn.CrossEntropyLoss()
+                self.y_train = self.y_train.long()
+                self.y_test = self.y_test.long()
+        elif self.config["task"] == "regression":
+            pen = str(self.config.get("penalty", "l2")).lower()
+            self.criterion = {
+                "l1": nn.L1Loss(),
+                "l2": nn.MSELoss(),
+                "smooth_l1": nn.SmoothL1Loss(),
+            }.get(pen, nn.MSELoss())
+        else:
+            raise ValueError(f"task desconocida: {self.config['task']}")
+
         train_ds = TensorDataset(self.X_train, self.y_train)
         test_ds = TensorDataset(self.X_test, self.y_test)
         self.train_loader = DataLoader(train_ds, batch_size=self.batch_size, shuffle=True)
         self.test_loader = DataLoader(test_ds, batch_size=self.batch_size, shuffle=False)
         self.val_loader = DataLoader(test_ds, batch_size=self.batch_size, shuffle=False)
 
-        self.model = BasicNN( config["n_feats"], config["n_out"], config["dropout_p"] ).to(self.device)
+        self.model = BasicNN(config["n_feats"], config["n_out"], config["dropout_p"]).to(self.device)
         self.optimizer = optim.Adam(self.model.parameters(), lr=self.lr)
 
         self.round = 0
+        self.last_metrics = None
 
+    # ------------------------------------------------------------------
+    # Helpers
+    # ------------------------------------------------------------------
+    def _forward_loss(self, X, y):
+        """Forward + loss + predicciones, usando self.criterion."""
+        out = self.model(X)
         if self.config["task"] == "classification":
-            if config["n_out"] == 1:  # Binario
-                self.criterion = nn.BCEWithLogitsLoss()
-                #loss = F.binary_cross_entropy_with_logits(logits.squeeze(1), y)
-                """
-                probs = torch.sigmoid(logits.squeeze(1))
-                preds = (probs > 0.5).long()"""
-            else:           # Multiclase
-                self.criterion = nn.CrossEntropyLoss()
-                self.y_train = self.y_train.long()
-                self.y_test = self.y_test.long()
-                #loss = F.cross_entropy(logits, y)
-                #preds = torch.argmax(logits, dim=1)
-            #return loss, preds
-        elif self.config["task"] == "regression":
-            if self.config["penalty"] == "l1":
-                self.criterion = nn.L1Loss()
-            elif self.config["penalty"] == "l2":
-                self.criterion = nn.MSELoss()
-            elif self.config["penalty"].lower() in ["smooth","smooth_l1","smoothl1"]:
-                self.criterion = nn.SmoothL1Loss()
+            if self.config["n_out"] == 1:
+                out = out.squeeze(1)
+                loss = self.criterion(out, y)
+                preds = (torch.sigmoid(out) > 0.5).long()
+            else:
+                loss = self.criterion(out, y)
+                preds = out.argmax(dim=1)
+        else:  # regression
+            out = out.squeeze(-1) if out.dim() > y.dim() else out
+            loss = self.criterion(out, y)
+            preds = out
+        return loss, preds
 
-    def get_parameters(self, config): # config not needed at all
+    def _predict(self, X):
+        """Predicciones sobre X como numpy (formato tipo sklearn.predict)."""
+        self.model.eval()
+        with torch.no_grad():
+            out = self.model(X.to(self.device))
+            if self.config["task"] == "classification":
+                if self.config["n_out"] == 1:
+                    preds = (torch.sigmoid(out.squeeze(1)) > 0.5).long()
+                else:
+                    preds = torch.argmax(out, dim=1)
+            else:
+                preds = out.squeeze(-1) if out.dim() > 1 and out.shape[-1] == 1 else out
+        return preds.cpu().numpy()
+
+    def _mean_entropy(self, X):
+        """Entropía predictiva media, normalizada a [0, 1]."""
+        self.model.eval()
+        with torch.no_grad():
+            out = self.model(X.to(self.device))
+            if self.config["n_out"] == 1:
+                p = torch.sigmoid(out.squeeze(1)).clamp(1e-7, 1 - 1e-7)
+                ent = -(p * torch.log(p) + (1 - p) * torch.log(1 - p))
+                max_ent = math.log(2)
+            else:
+                logp = F.log_softmax(out, dim=1)
+                ent = -(logp.exp() * logp).sum(dim=1)
+                max_ent = math.log(out.shape[1])
+        return float(ent.mean().item() / max_ent)
+
+    @staticmethod
+    def _clean_metrics(metrics):
+        """Flower solo admite float/int/str/bytes/bool: castea numpy y descarta el resto."""
+        clean = {}
+        for k, v in metrics.items():
+            if isinstance(v, (str, bytes)):
+                clean[k] = v
+            elif isinstance(v, (bool, int, float, np.number)):
+                clean[k] = float(v)
+            else:
+                print(f"[metrics] '{k}' descartada (tipo {type(v).__name__} no soportado)")
+        return clean
+
+    # ------------------------------------------------------------------
+    # Parámetros
+    # ------------------------------------------------------------------
+    def get_parameters(self, config):
         return [val.cpu().numpy() for _, val in self.model.state_dict().items()]
 
-    def set_parameters(self, parameters:List[np.ndarray]):
-        self.model.train()
-        # Si esto del self.model.train no funciona porque no reconoce la
-        # función entonces deberías sustituírla por nuestra train:
-        # train(self.model,params)
+    def set_parameters(self, parameters: List[np.ndarray]):
         params_dict = zip(self.model.state_dict().keys(), parameters)
         state_dict = OrderedDict({k: torch.tensor(v) for k, v in params_dict})
         self.model.load_state_dict(state_dict, strict=True)
 
-    def fit(self, parameters, params):
+    # ------------------------------------------------------------------
+    # Fit
+    # ------------------------------------------------------------------
+    def fit(self, parameters, config):
         try:
             start_time = time.time()
             self.set_parameters(parameters)
-    # ****** * * * * *  * *  *  *   *   *    *    *  * * * * * * * * ********
+
             for epoch in range(self.epochs):
                 self.model.train()
-                total_loss, correct, total = 0, 0, 0
+                total_loss, correct, total = 0.0, 0, 0
 
                 for X, y in self.train_loader:
                     X, y = X.to(self.device), y.to(self.device)
-                    if self.config["task"] == "classification":
-                        logits = self.model(X)
-                        if self.config["n_out"] == 1:  # Binario
-                            loss = F.binary_cross_entropy_with_logits(logits.squeeze(1), y)
-                            probs = torch.sigmoid(logits.squeeze(1))
-                            preds = (probs > 0.5).long()
-                        else:           # Multiclase
-                            loss = F.cross_entropy(logits, y)
-                            preds = torch.argmax(logits, dim=1)
-                    elif self.config["task"] == "regression":
-                        preds = self.model(X)
-                        loss = F.mse_loss(preds, y)
+                    loss, preds = self._forward_loss(X, y)
 
                     self.optimizer.zero_grad()
                     loss.backward()
                     self.optimizer.step()
 
                     total_loss += loss.item() * X.size(0)
-                    correct += (preds == y).sum().item()
                     total += y.size(0)
+                    if self.config["task"] == "classification":
+                        correct += (preds == y).sum().item()
 
-                train_loss = total_loss / total
-                train_acc = correct / total
-                #test_loss, test_acc = self.evaluate()
+                msg = f"Epoch {epoch + 1:02d} | Train Loss: {total_loss / total:.4f}"
+                if self.config["task"] == "classification":
+                    msg += f", Train Acc: {correct / total:.4f}"
+                print(msg)
 
-                print(f"Epoch {epoch+1:02d} | "
-                      f"Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.4f} ")
-                #      f"Test Loss: {test_loss:.4f}, Test Acc: {test_acc:.4f}")
+            # ---- Métricas sobre test ----
+            y_pred = self._predict(self.X_test)
+            y_true = self.y_test.cpu().numpy()
+            metrics = calculate_metrics(y_true, y_pred, self.config)
+            metrics = {f"personalized {key}": metrics[key] for key in metrics}
 
-            dataset_len = self.y_train.shape[0]
-    #       return get_weights(self.model), num_examples, metrics
-            if self.round % self.config["save_every_n_rounds"] == 0:
+            # Clave sin prefijo: es la que lee UncertaintyWeightedFedAvg
+            if self.config["task"] == "classification":
+                metrics["entropy"] = self._mean_entropy(self.X_test)
+
+            elapsed_time = time.time() - start_time
+            metrics["running_time"] = elapsed_time
+            metrics = self._clean_metrics(metrics)
+            self.last_metrics = metrics  # antes de save_model
+
+            is_last = self.round == self.config["num_rounds"] - 1
+            if self.round % self.config["save_every_n_rounds"] == 0 or is_last:
                 self.save_model()
 
-            elapsed_time = (time.time() - start_time)
-            metrics["running_time"] = elapsed_time
+            dataset_len = self.y_train.shape[0]
 
-            print(f"num_client {self.node_name} has an elapsed time {elapsed_time}")
+            print(f"num_client {self.config.get('node_name')} has an elapsed time {elapsed_time}")
             print(f"Training finished for round {self.round}")
 
             self.round += 1
-            return self.get_parameters(config={}), dataset_len, {}
+            return self.get_parameters(config={}), dataset_len, metrics
         except Exception as e:
             from flcore.utils import log_detailed_error
-            X_diag = self.X_train.cpu().numpy() if hasattr(self, 'X_train') and hasattr(self.X_train, 'cpu') else None
-            y_diag = self.y_train.cpu().numpy() if hasattr(self, 'y_train') and hasattr(self.y_train, 'cpu') else None
+            X_diag = self.X_train.cpu().numpy() if hasattr(self, "X_train") and hasattr(self.X_train, "cpu") else None
+            y_diag = self.y_train.cpu().numpy() if hasattr(self, "y_train") and hasattr(self.y_train, "cpu") else None
             log_detailed_error("Model Fitting (Local Training)", e, config=getattr(self, "config", None), X=X_diag, y=y_diag)
             raise e
 
-#    @torch.no_grad()
-    def evaluate(self, parameters, params):
+    # ------------------------------------------------------------------
+    # Evaluate
+    # ------------------------------------------------------------------
+    def evaluate(self, parameters, config):
         try:
             self.set_parameters(parameters)
-    # ****** * * * * *  * *  *  *   *   *    *    *  * * * * * * * * ********
             self.model.eval()
+            y_true = self.y_test.cpu().numpy()
+
             if self.config["dropout_p"] > 0.0:
-                metrics = uncertainty_metrics(self.model, self.val_loader, device=self.device, T=int(self.config["T"]))
+                metrics = uncertainty_metrics(
+                    self.model, self.val_loader, device=self.device, T=int(self.config["T"])
+                )
+                self.model.eval()  # por si uncertainty_metrics deja dropout activo
             else:
-                pred = self.model(self.X_test)
-                y_pred = pred[:,0]
-                metrics = calculate_metrics(self.y_test, y_pred, self.config)
+                y_pred = self._predict(self.X_test)
+                metrics = calculate_metrics(y_true, y_pred, self.config)
 
-            total_loss, correct, total = 0, 0, 0
-            for X, y in self.test_loader:
-                X, y = X.to(self.device), y.to(self.device)
-
-                if self.config["task"] == "classification":
-                    logits = self.model(X)
-                    if self.config["n_out"] == 1:  # Binario
-                        loss = F.binary_cross_entropy_with_logits(logits.squeeze(1), y)
-                        probs = torch.sigmoid(logits.squeeze(1))
-                        preds = (probs > 0.5).long()
-                    else:           # Multiclase
-                            #y = y.squeeze()
-                        y = y.long()
-                        loss = F.cross_entropy(logits, y)
-                        preds = torch.argmax(logits, dim=1)
-                    correct += (preds == y).sum().item()
-                elif self.config["task"] == "regression":
-                    preds = self.model(X)
-                    loss = F.mse_loss(preds, y)
-                    #loss = F.l1_loss(preds, y)
-
-                total_loss += loss.item() * X.size(0)
-                total += y.size(0)
+            total_loss, total = 0.0, 0
+            with torch.no_grad():
+                for X, y in self.test_loader:
+                    X, y = X.to(self.device), y.to(self.device)
+                    loss, _ = self._forward_loss(X, y)
+                    total_loss += loss.item() * X.size(0)
+                    total += y.size(0)
 
             test_loss = total_loss / total
             dataset_len = self.y_test.shape[0]
-
-    #        return total_loss / total, correct / total
-            return float(test_loss), dataset_len, metrics
+            return float(test_loss), dataset_len, self._clean_metrics(metrics)
         except Exception as e:
             from flcore.utils import log_detailed_error
-            X_diag = self.X_test.cpu().numpy() if hasattr(self, 'X_test') and hasattr(self.X_test, 'cpu') else None
-            y_diag = self.y_test.cpu().numpy() if hasattr(self, 'y_test') and hasattr(self.y_test, 'cpu') else None
+            X_diag = self.X_test.cpu().numpy() if hasattr(self, "X_test") and hasattr(self.X_test, "cpu") else None
+            y_diag = self.y_test.cpu().numpy() if hasattr(self, "y_test") and hasattr(self.y_test, "cpu") else None
             log_detailed_error("Model Evaluation (Local Validation)", e, config=getattr(self, "config", None), X=X_diag, y=y_diag)
             raise e
 
+    # ------------------------------------------------------------------
+    # Guardado
+    # ------------------------------------------------------------------
     def save_model(self):
         save_path = Path(self.config["sandbox_path"]) / "model"
         save_path.mkdir(parents=True, exist_ok=True)
@@ -230,7 +280,10 @@ class FlowerClient(fl.client.NumPyClient):
         with open(self.config["metadata_file"], "r") as f:
             data_metadata = json.load(f)
 
-        entity = data_metadata.get("entries", [])[0]
+        entries = data_metadata.get("entries", [])
+        if not entries:
+            raise ValueError(f"'entries' vacío en {self.config['metadata_file']}")
+        entity = entries[0]
 
         features_list = entity.get("features", [])
         outcomes_list = entity.get("outcomes", [])
@@ -238,14 +291,14 @@ class FlowerClient(fl.client.NumPyClient):
         feature_stats = dataset_stats.get("featureStats", {})
         outcome_stats = dataset_stats.get("outcomeStats", {})
 
-        all_features_meta = {f['name']: f for f in features_list}
-        all_outcomes_meta = {o['name']: o for o in outcomes_list}
+        all_features_meta = {f["name"]: f for f in features_list}
+        all_outcomes_meta = {o["name"]: o for o in outcomes_list}
 
         for f_name, f_meta in all_features_meta.items():
-            f_meta['stats'] = feature_stats.get(f_name, {})
+            f_meta["stats"] = feature_stats.get(f_name, {})
 
         for o_name, o_meta in all_outcomes_meta.items():
-            o_meta['stats'] = outcome_stats.get(o_name, {})
+            o_meta["stats"] = outcome_stats.get(o_name, {})
 
         features_meta = {}
         for label in self.config["train_labels"]:
@@ -279,11 +332,9 @@ class FlowerClient(fl.client.NumPyClient):
             "torch_version": torch.__version__,
         }
 
-        # Un solo archivo: state_dict + metadata juntos (torch.save pickla
-        # cualquier estructura Python, no solo tensores).
+        # Un solo archivo: state_dict + metadata
         model_path = save_path / f"{model_name}_model.pt"
         torch.save({"state_dict": self.model.state_dict(), "metadata": metadata}, model_path)
-
         print(f"Model and metadata saved for inference at {model_path}")
 
         if is_final:
@@ -292,13 +343,6 @@ class FlowerClient(fl.client.NumPyClient):
             shutil.copyfile(model_path, final_path)
             print(f"Final model marked at {final_path}")
 
-"""
-model = BasicNN(...)
-model.load_state_dict(torch.load("model.pt"))
-model.eval()
-"""
 
-def get_client(config,data) -> fl.client.Client:
-#    client = FlowerClient(params).to_client()
-    return FlowerClient(config,data)
-#_______________________________________________________________________________________
+def get_client(config, data) -> fl.client.Client:
+    return FlowerClient(config, data)

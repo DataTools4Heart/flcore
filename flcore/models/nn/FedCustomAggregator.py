@@ -26,53 +26,37 @@ from flcore.smoothWeights import smooth_aggregate
 import joblib
 
 class UncertaintyWeightedFedAvg(fl.server.strategy.FedAvg):
-    def __init__(self, epsilon: float = 1e-3, **kwargs):
+    def __init__(self, epsilon: float = 0.1, gamma: float = 1.0, **kwargs):
         super().__init__(**kwargs)
-        self.epsilon = epsilon
+        self.epsilon = epsilon  # suaviza el peso de clientes con entropía ~0
+        self.gamma = gamma      # 0 => FedAvg puro; mayor => más peso a baja entropía
 
-    def aggregate_fit(self, server_round: int, results: List[Tuple[fl.server.client_proxy.ClientProxy, fl.common.FitRes]], failures):
+    def aggregate_fit(self, server_round, results, failures):
         if not results:
             return None, {}
-        # results es una lista con un único elemento que es una tupla que es fl.server.client_proxy
-        # y fl.common.FitRes, failures es a parte
-#        print(":::::::::::::::::::::::::::::::::::::",results[0][1])
 
-        weights_results = [
-            (parameters_to_ndarrays(fit_res.parameters), fit_res.num_examples)
-            for _, fit_res in results
-        ]
+        ndarrays_list, raw_weights = [], []
+        for _, fit_res in results:
+            ndarrays_list.append(parameters_to_ndarrays(fit_res.parameters))
 
+            entropy = fit_res.metrics.get("entropy")
+            if entropy is None or not np.isfinite(entropy):
+                entropy = 1.0  # peor caso (entropía normalizada) si falta o es inválida
+                print(f"[round {server_round}] cliente sin 'entropy' válida, usando 1.0")
 
-        weights_results = []
-        agg_weights = []
-        for _, fitres in results:
-            ndarrays = fl.common.parameters_to_ndarrays(fitres.parameters)
-            num_examples = fitres.num_examples
-            entropy = fitres.metrics.get("entropy", 1.0)
-            # peso = más datos y menor entropía => mayor confianza
-            w = num_examples / (self.epsilon + entropy)
-            weights_results.append((ndarrays, w))
-            agg_weights.append(w)
+            raw_weights.append(fit_res.num_examples / (self.epsilon + entropy) ** self.gamma)
 
-        wsum = np.sum(agg_weights) + 1e-12
-        scaled = [(params, w / wsum) for params, w in weights_results]
+        alphas = np.asarray(raw_weights, dtype=np.float64)
+        alphas /= alphas.sum() + 1e-12
 
-        new_params = None
-        for params, alpha in scaled:
-            if new_params is None:
-                new_params = [alpha * p for p in params]
-            else:
-                new_params = [np.add(acc, alpha * p) for acc, p in zip(new_params, params)]
+        new_params = []
+        for layer_idx in range(len(ndarrays_list[0])):
+            layer = sum(a * nd[layer_idx].astype(np.float64) for a, nd in zip(alphas, ndarrays_list))
+            new_params.append(layer.astype(ndarrays_list[0][layer_idx].dtype))
 
-        parameters_aggregated = ndarrays_to_parameters(new_params)
-        # Aggregate custom metrics if aggregation fn was provided
         metrics_aggregated = {}
-        """
         if self.fit_metrics_aggregation_fn:
             fit_metrics = [(res.num_examples, res.metrics) for _, res in results]
             metrics_aggregated = self.fit_metrics_aggregation_fn(fit_metrics)
-        elif server_round == 1:  # Only log this warning once
-            log(WARNING, "No fit_metrics_aggregation_fn provided")
-        """
-        return parameters_aggregated, metrics_aggregated
 
+        return ndarrays_to_parameters(new_params), metrics_aggregated
