@@ -43,7 +43,7 @@ jobs:
           python client_cmd.py --help > /dev/null
 
       - name: Run tests
-        run: pytest tests --verbose --durations=10
+        run: pytest tests -n 4 --verbose --durations=10
 
       - name: Upload federation logs on failure
         if: failure()
