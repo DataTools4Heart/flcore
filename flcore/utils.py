@@ -27,7 +27,7 @@ import flcore.models.rsf as rsf
 import flcore.models.gbs as gbs
 
 linear_models_list = ["logistic_regression", "linear_regression", "lsvc", "svr", "svm",
-                      "lasso_regression", "ridge_regression","logistic_regression_elasticnet"]
+                      "lasso_regression", "ridge_regression","logistic_regression_elasticnet", "linear_regression_elasticnet"]
 linear_regression_models_list = ["linear_regression","lasso_regression", "svr", "svm",
                         "ridge_regression","linear_regression_elasticnet"]
 survival_models_list = ["cox","rsf","gbs"]
@@ -91,7 +91,19 @@ class StreamToLogger:
     def flush(self):
         pass
 
+def ResolveElasticNetAlias(config):
+    # "elastic_net" is the name used by the frontend; pick the model from the task
+    if config["model"] == "elastic_net":
+        if config["task"] == "classification":
+            config["model"] = "logistic_regression_elasticnet"
+        elif config["task"] == "regression":
+            config["model"] = "linear_regression_elasticnet"
+        else:
+            raise ValueError("elastic_net requires task to be classification or regression")
+    return config
+
 def CheckClientConfig(config):
+    config = ResolveElasticNetAlias(config)
     # Compaibilidad de logistic regression y elastic net con sus parámetros
     assert config["task"] in ["classification","regression","none","survival"], "Task not valid"
 
@@ -309,6 +321,7 @@ def CheckClientConfig(config):
 
 
 def CheckServerConfig(config):
+    config = ResolveElasticNetAlias(config)
     assert isinstance(config['num_clients'], int), 'num_clients should be an int'
     assert isinstance(config['num_rounds'], int), 'num_rounds should be an int'
     if(config['smooth_method'] != 'None'):

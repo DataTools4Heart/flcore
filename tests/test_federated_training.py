@@ -65,13 +65,13 @@ for model in ["logistic_regression", "logistic_regression_elasticnet", "lsvc", "
 # Linear regressors
 for model in ["linear_regression", "lasso_regression", "ridge_regression"]:
     CASES.append(case(model, "regression"))
-CASES.append(
-    case(
-        "linear_regression_elasticnet",
-        "regression",
-        bug="server GetModelServerStrategy rejects it as 'Unknown model'",
-    )
-)
+CASES.append(case("linear_regression_elasticnet", "regression"))
+
+# Frontend alias: the model is chosen from the task
+CASES += [
+    case("elastic_net", "binary"),
+    case("elastic_net", "regression"),
+]
 for kernel in ["linear", "rbf", "poly", "sigmoid"]:
     CASES.append(
         case(
