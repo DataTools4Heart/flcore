@@ -86,11 +86,7 @@ for kernel in ["linear", "rbf", "poly", "sigmoid"]:
 # Tree ensembles and neural network
 CASES += [
     case("random_forest", "binary"),
-    case(
-        "random_forest",
-        "multiclass",
-        bug="random_forest client.evaluate crashes on multiclass probabilities",
-    ),
+    case("random_forest", "multiclass"),
     case("random_forest", "regression"),
 ]
 wrf_bug = "weighted_random_forest server reads config['weighted_random_forest'], never set by the CLI"
