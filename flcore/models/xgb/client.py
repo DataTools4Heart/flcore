@@ -144,8 +144,11 @@ class XGBoostClient(fl.client.NumPyClient):
             }
 
             # If multiclass objective, ensure num_class is correctly set from local data
+            n_classes = len(np.unique(self.local_data['y_train']))
+            if self.xgb_params.get("objective") == "binary:logistic" and n_classes > 2:
+                self.xgb_params["objective"] = "multi:softmax"
+                self.xgb_params["eval_metric"] = "mlogloss"
             if self.xgb_params.get("objective", "").startswith("multi"):
-                n_classes = len(np.unique(self.local_data['y_train']))
                 if n_classes >= 2:
                     self.xgb_params["num_class"] = n_classes
                 print(f"[Client] Multiclass detected: num_class={n_classes}")
