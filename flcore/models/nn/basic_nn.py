@@ -33,7 +33,12 @@ class BasicNN(nn.Module):
         probs = []
         for _ in range(T):
             logits = self(x)
-            probs.append(F.softmax(logits, dim=-1))
+            if logits.shape[-1] == 1:
+                # Binary (BCEWithLogitsLoss): softmax of a single logit is always 1
+                p1 = torch.sigmoid(logits)
+                probs.append(torch.cat([1 - p1, p1], dim=-1))
+            else:
+                probs.append(F.softmax(logits, dim=-1))
 
         probs = torch.stack(probs, dim=0)  # [T, B, C]
         mean = probs.mean(dim=0)

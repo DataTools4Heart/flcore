@@ -238,14 +238,15 @@ class FlowerClient(fl.client.NumPyClient):
             self.model.eval()
             y_true = self.y_test.cpu().numpy()
 
-            if self.config["dropout_p"] > 0.0:
-                metrics = uncertainty_metrics(
+            y_pred = self._predict(self.X_test)
+            metrics = calculate_metrics(y_true, y_pred, self.config)
+
+            # MC Dropout only makes sense with class probabilities
+            if self.config["dropout_p"] > 0.0 and self.config["task"] == "classification":
+                metrics.update(uncertainty_metrics(
                     self.model, self.val_loader, device=self.device, T=int(self.config["T"])
-                )
-                self.model.eval()  # por si uncertainty_metrics deja dropout activo
-            else:
-                y_pred = self._predict(self.X_test)
-                metrics = calculate_metrics(y_true, y_pred, self.config)
+                ))
+                self.model.eval()  # uncertainty_metrics leaves dropout active
 
             total_loss, total = 0.0, 0
             with torch.no_grad():
