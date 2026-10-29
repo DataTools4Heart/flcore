@@ -11,6 +11,7 @@ import numpy as np
 import xgboost as xgb
 
 from flwr.common import (
+    FitIns,
     ArrayRecord, 
     ConfigRecord, 
     Message, 
@@ -173,6 +174,34 @@ class FedXgbFullyFederated(FedAvg):
         """Start with empty model."""
         empty = np.frombuffer(b"", dtype=np.uint8)
         return ndarrays_to_parameters([empty])
+
+    # ------------------------------------------------------
+    # CONFIGURE FIT
+    # ------------------------------------------------------
+
+    def configure_fit(self, server_round, parameters, client_manager):
+        """Send each client its final learning rate: eta / number of clients."""
+        # Without scaling, the training becomes unstable with more clients
+        instructions = super().configure_fit(server_round, parameters, client_manager)
+        num_clients = len(instructions)
+        if num_clients == 0:
+            return instructions
+
+        base_eta = float(self.xgb_params.get("eta", 0.1))
+        final_eta = base_eta / num_clients
+        print(
+            f"[Round {server_round}] eta: {base_eta} / {num_clients} clients "
+            f"= {final_eta}"
+        )
+
+        # One FitIns per client, each carrying its own final eta
+        return [
+            (
+                client,
+                FitIns(fit_ins.parameters, {**fit_ins.config, "eta": final_eta}),
+            )
+            for client, fit_ins in instructions
+        ]
 
     # ------------------------------------------------------
     # AGGREGATE FIT (CRITICAL FIX)
