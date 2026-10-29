@@ -320,6 +320,8 @@ class FlowerClient(fl.client.NumPyClient):
             "task": self.config["task"],
             "n_out": self.config["n_out"],
             "n_feats": self.config["n_feats"],
+            "dropout_p": self.config["dropout_p"],
+            "mc_samples": int(self.config["T"]),
             "model_type": self.config["model"],
             "feature_names": self.config["train_labels"],
             "target_names": self.config["target_labels"],
