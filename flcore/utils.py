@@ -348,7 +348,11 @@ def CheckServerConfig(config):
     """
     if config["strategy"] == "UncertaintyWeighted":
         if config["model"] == "nn":
-            pass
+            if config["task"] != "classification":
+                # Clients only report entropy for classification
+                print("UncertaintyWeighted needs class probabilities (classification task)")
+                print("Changing strategy to FedAvg")
+                config["strategy"] = "FedAvg"
         else:
            print("UncertaintyWeighted is only available for NN")
            print("Changing strategy to FedAvg")
