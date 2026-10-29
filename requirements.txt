@@ -16,3 +16,4 @@ pdfkit==1.0.0
 scikit-survival==0.22.2
 fpboost==0.1.0
 setuptools==80.9.0
+pyarrow==25.0.1
