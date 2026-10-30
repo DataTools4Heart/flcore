@@ -11,6 +11,7 @@ import numpy as np
 import xgboost as xgb
 
 from flwr.common import (
+    FitIns,
     ArrayRecord, 
     ConfigRecord, 
     Message, 
@@ -175,6 +176,34 @@ class FedXgbFullyFederated(FedAvg):
         return ndarrays_to_parameters([empty])
 
     # ------------------------------------------------------
+    # CONFIGURE FIT
+    # ------------------------------------------------------
+
+    def configure_fit(self, server_round, parameters, client_manager):
+        """Send each client its final learning rate: eta / number of clients."""
+        # Without scaling, the training becomes unstable with more clients
+        instructions = super().configure_fit(server_round, parameters, client_manager)
+        num_clients = len(instructions)
+        if num_clients == 0:
+            return instructions
+
+        base_eta = float(self.xgb_params.get("eta", 0.1))
+        final_eta = base_eta / num_clients
+        print(
+            f"[Round {server_round}] eta: {base_eta} / {num_clients} clients "
+            f"= {final_eta}"
+        )
+
+        # One FitIns per client, each carrying its own final eta
+        return [
+            (
+                client,
+                FitIns(fit_ins.parameters, {**fit_ins.config, "eta": final_eta}),
+            )
+            for client, fit_ins in instructions
+        ]
+
+    # ------------------------------------------------------
     # AGGREGATE FIT (CRITICAL FIX)
     # ------------------------------------------------------
 
@@ -233,8 +262,12 @@ class FedXgbFullyFederated(FedAvg):
         total_examples = sum(fit_res.num_examples for _, fit_res in results)
 
         for _, fit_res in results:
-            if "n_out" in fit_res.metrics:
-                self.xgb_params["num_class"] = int(fit_res.metrics["n_out"])
+            n_out = int(fit_res.metrics.get("n_out", 0))
+            if self.xgb_params["objective"] == "binary:logistic" and n_out > 2:
+                self.xgb_params["objective"] = "multi:softmax"
+                self.xgb_params["eval_metric"] = "mlogloss"
+            if self.xgb_params["objective"].startswith("multi"):
+                self.xgb_params["num_class"] = n_out
 
             for key, value in fit_res.metrics.items():
                 if not isinstance(value, (int, float)):
@@ -361,7 +394,7 @@ def get_server_and_strategy(config: dict) -> FedXgbFullyFederated:
         "colsample_bytree": 0.8,
     }
 
-    if task == "binary":
+    if task in ("binary", "classification"):
         xgb_params["objective"] = "binary:logistic"
         xgb_params["eval_metric"] = "auc"
 
@@ -377,7 +410,7 @@ def get_server_and_strategy(config: dict) -> FedXgbFullyFederated:
         xgb_params["eval_metric"] = "rmse"
 
     train_method = xgb_config.get("train_method", "bagging")  # 'bagging' or 'cyclic'
-    num_local_rounds = xgb_config.get("tree_num", 100) // config.get("num_rounds", 10)  # Trees per round
+    num_local_rounds = 1  # Always train one tree per round
     
 
     print("\n" + "=" * 60)

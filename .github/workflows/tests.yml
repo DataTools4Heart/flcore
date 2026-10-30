@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main, cmd_line]
+    branches: [main, cmd_line, tests_and_CI]
   workflow_dispatch:
 
 concurrency:

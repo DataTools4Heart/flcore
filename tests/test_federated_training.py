@@ -51,7 +51,6 @@ SGD_MULTICLASS_BUG = (
     "lsvc/svm, but SGDClassifier needs one intercept per class (multiclass)"
 )
 SVR_KERNEL_BUG = "SVR with a non-linear kernel has no fit_intercept / coef_"
-XGB_BUG = "xgb server needs iteration_indptr (XGBoost >= 2.0, 1.7.5 is pinned)"
 SURVIVAL_TIME_BUG = "survival client fit() uses `time` without importing it"
 
 CASES = []
@@ -98,7 +97,7 @@ CASES += [
     case("weighted_random_forest", "binary", bug=wrf_bug),
     case("weighted_random_forest", "multiclass", bug=wrf_bug),
 ]
-CASES += [case("xgb", s, bug=XGB_BUG) for s in ("binary", "multiclass", "regression")]
+CASES += [case("xgb", s) for s in ("binary", "multiclass", "regression")]
 CASES += [case("nn", s) for s in ("binary", "multiclass", "regression")]
 
 # Survival
