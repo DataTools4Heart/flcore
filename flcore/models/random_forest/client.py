@@ -113,9 +113,6 @@ class MnistClient(fl.client.Client):
             params = utils.get_model_parameters(self.model)
             parameters_updated = serialize_RF(params)
 
-            if self.round % self.config["save_every_n_rounds"] == 0:
-                self.save_model()
-
             self.round += 1
 
             # Build and return response
@@ -140,6 +137,11 @@ class MnistClient(fl.client.Client):
             #Deserialize to get the real parameters
             parameters = deserialize_RF(parameters)
             utils.set_model_params(self.model, parameters)
+
+            # Save the aggregated model received from the server
+            rnd = self.round - 1
+            if rnd % self.config["save_every_n_rounds"] == 0 or rnd == self.config["num_rounds"] - 1:
+                self.save_model(rnd)
                     
             ## AQUI TAMBIEN TENDRIAMOS QUE ADAPTAR PARA REGRESOR/CLASIFICADOR
             if self.config["task"] == "classification":
@@ -210,12 +212,12 @@ class MnistClient(fl.client.Client):
             log_detailed_error("Model Evaluation (Local Validation)", e, config=getattr(self, "config", None), X=getattr(self, "X_test", None), y=getattr(self, "y_test", None))
             raise e
 
-    def save_model(self):
+    def save_model(self, rnd):
         save_path = Path(self.config["experiment_dir"]) / "models"
         save_path.mkdir(parents=True, exist_ok=True)
-        is_final = self.round == self.config["num_rounds"] - 1
+        is_final = rnd == self.config["num_rounds"] - 1
 
-        model_name = f"{self.config['model']}_{self.config['task']}_round_{self.round}"
+        model_name = f"{self.config['model']}_{self.config['task']}_round_{rnd}"
 
         with open(self.config["metadata_file"], "r") as f:
             data_metadata = json.load(f)
@@ -251,7 +253,6 @@ class MnistClient(fl.client.Client):
             elif label in all_features_meta:
                 outcomes_meta[label] = all_features_meta[label]
 
-        self.model.n_outputs_ = self.config["n_out"]
         self.model.n_features_in_ = self.config["n_feats"]
         n_classes = self.config.get("n_classes")
         if n_classes is not None:
@@ -269,7 +270,7 @@ class MnistClient(fl.client.Client):
             "features_meta": features_meta,
             "outcomes_meta": outcomes_meta,
             "is_final": is_final,
-            "round": self.round,
+            "round": rnd,
             "model_name": model_name,
             "sklearn_version": sklearn.__version__,
             "imblearn_version": getattr(imblearn, "__version__", None) if imblearn else None,
