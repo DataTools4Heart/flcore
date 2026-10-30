@@ -21,7 +21,7 @@ from sklearn.metrics import log_loss
 import flcore.datasets as datasets
 from flcore.serialization_funs import serialize_RF, deserialize_RF
 import flcore.models.weighted_random_forest.utils as utils
-from flcore.performance import measurements_metrics
+from flcore.metrics import calculate_metrics
 from flwr.common import (
     Code,
     EvaluateIns,
@@ -37,14 +37,14 @@ import time
 from mlxtend.classifier import EnsembleVoteClassifier
 
 #Ensamble in the level of RF trees
-def ensambleRFTrees(parameters):
+def ensambleRFTrees(parameters, n_classes):
     list_classifiers = [None] * len(parameters)
     weights_classifiers = [None] * len(parameters)
     
     for i in range(len(parameters)):
         model = utils.get_model(True)
         model.estimators_= parameters[i][0][0]
-        model.n_classes_ =2 
+        model.n_classes_ = n_classes
         model.n_outputs_ = 1 
         model.classes_ = np.array([j for j in range(model.n_classes_)])
         list_classifiers[i] = model
@@ -88,19 +88,20 @@ def ensambleDecisionTrees(parameters):
 # Define Flower client
 class MnistClient(fl.client.Client):
     def __init__(self, data,config):
+        self.config = config
         self.node_name = config["node_name"]
         n_folds_out=config['num_rounds']
         seed=42
         # Load data
         (self.X_train, self.y_train), (self.X_test, self.y_test) = data
-        self.splits_nested  = datasets.split_partitions(n_folds_out,0.2, seed, self.X_train, self.y_train)
-        self.bal_RF = config['weighted_random_forest']['balanced_rf']
+        self.splits_nested  = datasets.split_partitions(n_folds_out, config['test_size'], config['seed'], self.X_train, self.y_train, config['task'])
+        self.bal_RF = str(config['balanced']).lower() == 'true'
         self.model = utils.get_model(self.bal_RF) 
         # Setting initial parameters, akin to model.compile for keras models
         utils.set_initial_params_client(self.model,self.X_train, self.y_train)
         self.ensamble_tree = []
         self.weight_ensamble_tree = []
-        self.levelOfDetail = config['weighted_random_forest']['levelOfDetail']
+        self.levelOfDetail = config['levelOfDetail']
     def get_parameters(self, ins: GetParametersIns):  # , config type: ignore
         params = utils.get_model_parameters(self.model)
 
@@ -137,20 +138,9 @@ class MnistClient(fl.client.Client):
                 # accuracy,specificity,sensitivity,balanced_accuracy, precision, F1_score = \
                 # measurements_metrics(self.model,X_val, y_val)
                 # measurements_metrics outputs accuracy, specificity, sensitivity, balanced_accuracy, precision, F1_score
-                metrics_res = measurements_metrics(self.model, X_val, y_val)
-                accuracy = metrics_res[0]
-                specificity = metrics_res[1]
-                sensitivity = metrics_res[2]
-                balanced_accuracy = metrics_res[3]
-                precision = metrics_res[4]
-                F1_score = metrics_res[5]
-                print(f"Accuracy client in fit:  {accuracy}")
-                print(f"Sensitivity client in fit:  {sensitivity}")
-                print(f"Specificity client in fit:  {specificity}")
-                print(f"Balanced_accuracy in fit:  {balanced_accuracy}")
-                print(f"precision in fit:  {precision}")
-                print(f"F1_score in fit:  {F1_score}")
-        
+                metrics = calculate_metrics(y_val, self.model.predict(X_val), self.config)
+                print(f"Metrics client in fit:  {metrics}")
+
                 ellapsed_time = (time.time() - start_time)
                 print(f"num_client {self.node_name} has an ellapsed time {ellapsed_time}")
                 
@@ -188,7 +178,7 @@ class MnistClient(fl.client.Client):
                 #self.ensamble_tree = np.concatenate(((self.ensamble_tree),(list_classifiers)))
                 #self.weight_ensamble_tree = np.concatenate(((self.weight_ensamble_tree),(weights_classifiers)))
             else:
-                list_classifiers,weights_classifiers = ensambleRFTrees(parameters)
+                list_classifiers,weights_classifiers = ensambleRFTrees(parameters, len(self.model.classes_))
                 
             #Merge the trees of all clients in each round
             self.ensamble_tree = (self.ensamble_tree)+(list_classifiers)
@@ -205,15 +195,9 @@ class MnistClient(fl.client.Client):
 
             #utils.set_model_params(self.model, parameters)
             y_pred_prob = eclf.predict_proba(self.X_test)
-            loss = log_loss(self.y_test, y_pred_prob)
-            accuracy,specificity,sensitivity,balanced_accuracy, precision, F1_score = \
-            measurements_metrics(eclf,self.X_test, self.y_test)
-            print(f"Accuracy client in evaluate:  {accuracy}")
-            print(f"Sensitivity client in evaluate:  {sensitivity}")
-            print(f"Specificity client in evaluate:  {specificity}")
-            print(f"Balanced_accuracy in evaluate:  {balanced_accuracy}")
-            print(f"precision in evaluate:  {precision}")
-            print(f"F1_score in evaluate:  {F1_score}")
+            loss = log_loss(self.y_test, y_pred_prob, labels=self.model.classes_)
+            metrics = calculate_metrics(self.y_test, eclf.predict(self.X_test), self.config)
+            print(f"Metrics client in evaluate:  {metrics}")
 
             # Serialize to send it to the server
             #params = get_model_parameters(model)
@@ -224,7 +208,7 @@ class MnistClient(fl.client.Client):
                 status=status,
                 loss=float(loss),
                 num_examples=len(self.X_test),
-                metrics={"accuracy": float(accuracy),"sensitivity":float(sensitivity),"specificity":float(specificity)},
+                metrics=metrics,
             )
         except Exception as e:
             from flcore.utils import log_detailed_error

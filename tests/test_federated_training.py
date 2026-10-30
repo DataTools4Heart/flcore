@@ -93,10 +93,9 @@ CASES += [
     ),
     case("random_forest", "regression"),
 ]
-wrf_bug = "weighted_random_forest server reads config['weighted_random_forest'], never set by the CLI"
 CASES += [
-    case("weighted_random_forest", "binary", bug=wrf_bug),
-    case("weighted_random_forest", "multiclass", bug=wrf_bug),
+    case("weighted_random_forest", "binary"),
+    case("weighted_random_forest", "multiclass"),
 ]
 CASES += [case("xgb", s, bug=XGB_BUG) for s in ("binary", "multiclass", "regression")]
 CASES += [case("nn", s) for s in ("binary", "multiclass", "regression")]

@@ -136,7 +136,14 @@ class FedCustom(fl.server.strategy.FedAvg):
         
 
         #ndarrays_to_parameters necessary to send the message
-        parameters_aggregated = serialize_RF(aggregation_result)
+        #each result is a ragged tuple, so wrap it in an object array
+        packed_result = []
+        for res in aggregation_result:
+            packed = np.empty(len(res), dtype=object)
+            for k, item in enumerate(res):
+                packed[k] = item
+            packed_result.append(packed)
+        parameters_aggregated = serialize_RF(packed_result)
         
 
         #DropOut Center: initially aggregate all execution times of all clients
