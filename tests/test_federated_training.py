@@ -134,3 +134,33 @@ def test_federated_training(
         + result.describe()
     )
     assert all(math.isfinite(x) for x in losses), f"non-finite losses: {losses}"
+
+
+@pytest.mark.parametrize("scenario", ["binary", "multiclass", "regression"])
+def test_nn_uncertainty_weighted(scenario, synthetic_data_dir, tmp_path):
+    """NN with MC dropout and the uncertainty-weighted aggregation strategy."""
+    task, target_labels = TARGETS[scenario]
+    result = run_federation(
+        model="nn",
+        task=task,
+        data_path=synthetic_data_dir,
+        sandbox=tmp_path / "sandbox",
+        target_labels=target_labels,
+        num_clients=NUM_CLIENTS,
+        num_rounds=NUM_ROUNDS,
+        client_extra_args=["--dropout_p", "0.2", "--T", "5"],
+        server_extra_args=["--strategy", "UncertaintyWeighted"],
+    )
+    assert result.ok, result.describe()
+
+    losses = result.history.get("losses_distributed", [])
+    assert len(losses) == NUM_ROUNDS, result.describe()
+    assert all(math.isfinite(x) for x in losses), f"non-finite losses: {losses}"
+    # Regression falls back to FedAvg; either way clients must not be
+    # aggregated with a missing entropy.
+    assert "sin 'entropy'" not in result.server_log, result.describe()
+
+    metrics = result.history.get("metrics_distributed", {})
+    assert metrics, "server did not aggregate evaluation metrics"
+    if task == "classification":
+        assert "entropy" in metrics and "val_accuracy" in metrics, metrics

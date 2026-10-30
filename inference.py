@@ -126,13 +126,12 @@ def load_model(model_dir, model=None, task=None, prefer_final=True, mlp_cls=None
 
         class NnWrapperTorch:
             """
-            task/n_out se guardan aquí, no en el modelo: BasicNN no los expone
-            como atributos. La activación de salida se decide igual que en
-            FlowerClient.evaluate() (sigmoid para binario, softmax para
-            multiclase, nada para regresión) — no se reutiliza
-            BasicNN.predict_proba_mc porque ese método aplica softmax
-            incondicionalmente, lo cual es incorrecto para el caso binario
-            (entrenado con BCEWithLogitsLoss/sigmoid, no con softmax).
+            task/n_out are stored here, not on the model: BasicNN does not
+            expose them as attributes. The output activation matches
+            FlowerClient.evaluate() (sigmoid for binary, softmax for
+            multiclass, none for regression). BasicNN.predict_proba_mc is not
+            reused because it returns class probabilities, which do not apply
+            to regression.
             """
 
             def __init__(self, m, task, n_out, n_samples=20):

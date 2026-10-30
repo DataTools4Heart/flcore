@@ -99,13 +99,14 @@ def _attempt(
     num_rounds=2,
     extra_args=(),
     client_extra_args=(),
+    server_extra_args=(),
     timeout=300,
     seed=42,
 ):
     """Train ``model`` for ``num_rounds`` with ``num_clients`` clients.
 
     ``extra_args`` go to both server and clients, ``client_extra_args`` only to
-    the clients. Never raises on a failed training: returns a
+    the clients and ``server_extra_args`` only to the server. Never raises on a failed training: returns a
     :class:`FederationResult` so the caller decides what to assert.
     """
     sandbox = Path(sandbox)
@@ -130,7 +131,7 @@ def _attempt(
         *_opt("levelOfDetail", "DecisionTree"),
         *extra_args,
     ]
-    server_cmd = [sys.executable, "server_cmd.py", *common]
+    server_cmd = [sys.executable, "server_cmd.py", *common, *server_extra_args]
     client_cmd = [
         sys.executable,
         "client_cmd.py",

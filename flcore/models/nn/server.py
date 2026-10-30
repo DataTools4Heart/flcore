@@ -88,6 +88,9 @@ def get_server_and_strategy(config):
         min_available_clients = config["min_available_clients"])
     elif config["strategy"] == "UncertaintyWeighted":
         strategy = UncertaintyWeightedFedAvg(
+        epsilon = config.get("uw_epsilon", 0.1),
+        gamma = config.get("uw_gamma", 1.0),
+        evaluate_metrics_aggregation_fn=metrics,
         min_fit_clients = config["min_fit_clients"],
         min_evaluate_clients = config["min_evaluate_clients"],
         min_available_clients = config["min_available_clients"])

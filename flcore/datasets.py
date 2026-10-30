@@ -861,10 +861,10 @@ def load_dt4h(config):
     X = dat[train_labels]
     y = dat[target_labels].iloc[:, 0]
 
-    # Calculate n_out dynamically
-    if config.get("task") == "multiclass":
-        config["n_out"] = len(np.unique(y))
-    elif config.get("task") == "classification" and len(np.unique(y)) > 2:
+    # n_out comes from the shared metadata (CheckClientConfig) so every site
+    # agrees on it; the local data may lack some classes. Only fall back to
+    # the local count when the metadata could not provide it.
+    if not config.get("n_out") and config.get("task") in ("classification", "multiclass"):
         config["n_out"] = len(np.unique(y))
 
     X_train = X[:split_idx]

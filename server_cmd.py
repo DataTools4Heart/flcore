@@ -39,6 +39,8 @@ if __name__ == "__main__":
     parser.add_argument("--dropout_percentage", type=float, default=0.0, help="Ratio of dropout nodes")
     parser.add_argument("--checkpoint_selection_metric", type=str, default="precision", help="Metric used for checkpoints")
     parser.add_argument("--metrics_aggregation", type=str, default="weighted_average",  help="Metrics")
+    parser.add_argument("--uw_epsilon", type=float, default=0.1, help="UncertaintyWeighted: smooths weights of clients with entropy ~0")
+    parser.add_argument("--uw_gamma", type=float, default=1.0, help="UncertaintyWeighted: 0 => FedAvg, larger => more weight to low entropy")
     parser.add_argument("--experiment_name", type=str, default="experiment_1", help="Experiment directory")
 
     # Client connection wait settings

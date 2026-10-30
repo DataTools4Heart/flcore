@@ -34,6 +34,9 @@ class UncertaintyWeightedFedAvg(fl.server.strategy.FedAvg):
     def aggregate_fit(self, server_round, results, failures):
         if not results:
             return None, {}
+        # As in FedAvg: do not aggregate if there were failures and they are not accepted
+        if not self.accept_failures and failures:
+            return None, {}
 
         ndarrays_list, raw_weights = [], []
         for _, fit_res in results:
