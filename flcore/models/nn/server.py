@@ -16,7 +16,7 @@ import functools
 
 import flwr as fl
 import flcore.models.linear_models.utils as utils
-from flcore.metrics import metrics_aggregation_fn
+from flcore.metrics import metrics_aggregation_fn, add_per_client_metrics
 from sklearn.metrics import log_loss
 import joblib
 from flcore.models.nn.FedCustomAggregator import UncertaintyWeightedFedAvg
@@ -33,7 +33,7 @@ def weighted_average(metrics: List[Tuple[int, Metrics]]) -> Metrics:
 
     total_examples = sum(num_examples for num_examples, _ in metrics)
 
-    metric_keys = metrics[0][1].keys()
+    metric_keys = [k for k, v in metrics[0][1].items() if not isinstance(v, (str, bytes))]
 
     weighted_metrics = {}
     for key in metric_keys:
@@ -42,7 +42,7 @@ def weighted_average(metrics: List[Tuple[int, Metrics]]) -> Metrics:
         )
         weighted_metrics[key] = weighted_sum / total_examples
 
-    return weighted_metrics
+    return add_per_client_metrics(weighted_metrics, metrics)
 
 def equal_average(metrics: List[Tuple[int, Metrics]]) -> Metrics:
     if not metrics:
@@ -52,7 +52,7 @@ def equal_average(metrics: List[Tuple[int, Metrics]]) -> Metrics:
     num_clients = len(metrics)
 
     # Asumimos que todas las métricas tienen las mismas keys
-    metric_keys = metrics[0][1].keys()
+    metric_keys = [k for k, v in metrics[0][1].items() if not isinstance(v, (str, bytes))]
 
     equal_metrics = {}
     for key in metric_keys:
@@ -61,7 +61,7 @@ def equal_average(metrics: List[Tuple[int, Metrics]]) -> Metrics:
         )
         equal_metrics[key] = equal_sum / num_clients
 
-    return equal_metrics
+    return add_per_client_metrics(equal_metrics, metrics)
 
 
 def get_server_and_strategy(config):

@@ -112,19 +112,28 @@ def calculate_metrics(y_true, y_pred, config):
 
     return metrics
 
+def add_per_client_metrics(metrics, distributed_metrics):
+    """Add to ``metrics`` one ``per client <key>`` list for every key reported
+    by the clients (string values, such as ``node_name``, are never averaged).
+
+    Position i of every list belongs to the same client, so
+    ``per client node_name[i]`` identifies who got ``per client <metric>[i]``.
+    The order may change from round to round, so always read the names of the
+    same round.
+    """
+    for kn in distributed_metrics[0][1].keys():
+        metrics['per client ' + kn] = [res.get(kn) for _, res in distributed_metrics]
+    metrics['per client n samples'] = [n for n, _ in distributed_metrics]
+    return metrics
+
+
 def metrics_aggregation_fn(distributed_metrics):
     print(distributed_metrics[0][1].keys())
-    keys_names = distributed_metrics[0][1].keys()
-    keys_names = list(keys_names)
+    metrics = {}
 
-    metrics ={}
-
-    for kn in keys_names:
+    for kn in distributed_metrics[0][1].keys():
         results = [ evaluate_res[kn] for _, evaluate_res in distributed_metrics]
-        metrics[kn] = np.mean(results)
-        metrics['per client ' + kn] = results
-        #print(f"Metric {kn} in aggregation evaluate: {metrics[kn]}\n")
+        if not any(isinstance(r, (str, bytes)) for r in results):
+            metrics[kn] = np.mean(results)
 
-    metrics['per client n samples'] = [res[0] for res in distributed_metrics]
-
-    return metrics
+    return add_per_client_metrics(metrics, distributed_metrics)

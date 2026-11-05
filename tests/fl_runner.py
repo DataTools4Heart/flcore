@@ -183,10 +183,13 @@ def _attempt(
         client_files = [open(p, "w") for p in client_logs]
         try:
             clients = []
-            for f in client_files:
+            for i, f in enumerate(client_files):
                 clients.append(
                     subprocess.Popen(
-                        client_cmd, cwd=ROOT, stdout=f, stderr=subprocess.STDOUT
+                        [*client_cmd, "--node_name", f"client_{i}"],
+                        cwd=ROOT,
+                        stdout=f,
+                        stderr=subprocess.STDOUT,
                     )
                 )
             processes.extend(clients)

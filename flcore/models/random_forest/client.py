@@ -162,6 +162,7 @@ class MnistClient(fl.client.Client):
                     #parameters_updated = serialize_RF(params)
                     # Build and return response
                     status = Status(code=Code.OK, message="Success")
+                    metrics["node_name"] = self.node_name
                     return EvaluateRes(
                         status=status,
                         loss=float(loss),
@@ -182,6 +183,7 @@ class MnistClient(fl.client.Client):
                     #parameters_updated = serialize_RF(params)
                     # Build and return response
                     status = Status(code=Code.OK, message="Success")
+                    metrics["node_name"] = self.node_name
                     return EvaluateRes(
                         status=status,
                         loss=float(loss),
@@ -199,6 +201,7 @@ class MnistClient(fl.client.Client):
                     #parameters_updated = serialize_RF(params)
                     # Build and return response
                     status = Status(code=Code.OK, message="Success")
+                    metrics["node_name"] = self.node_name
                     return EvaluateRes(
                         status=status,
                         loss=float(loss),

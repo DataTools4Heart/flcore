@@ -224,7 +224,7 @@ class MnistClient(fl.client.Client):
                 status=status,
                 loss=float(loss),
                 num_examples=len(self.X_test),
-                metrics={"accuracy": float(accuracy),"sensitivity":float(sensitivity),"specificity":float(specificity)},
+                metrics={"accuracy": float(accuracy),"sensitivity":float(sensitivity),"specificity":float(specificity),"node_name":self.node_name},
             )
         except Exception as e:
             from flcore.utils import log_detailed_error
