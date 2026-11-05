@@ -257,6 +257,7 @@ class FlowerClient(fl.client.NumPyClient):
 
             test_loss = total_loss / total
             dataset_len = self.y_test.shape[0]
+            metrics["node_name"] = str(self.config.get("node_name"))
             return float(test_loss), dataset_len, self._clean_metrics(metrics)
         except Exception as e:
             from flcore.utils import log_detailed_error

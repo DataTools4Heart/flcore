@@ -253,11 +253,12 @@ for logs in history.keys():
     if isinstance(history[logs], dict):
         for metric in history[logs]:
             extracted_values = [value for (round, value) in history[logs][metric]]
+            # Strings (e.g. node_name) are kept as they are, the rest is cast to float
+            to_plain = lambda value: str(value) if isinstance(value, (str, bytes)) else float(value)
             if isinstance(extracted_values[0], list):
-                # Convert list elements to float
-                extracted_values = [[float(value) for value in sublist] for sublist in extracted_values]
+                extracted_values = [[to_plain(value) for value in sublist] for sublist in extracted_values]
             else:
-                extracted_values = [float(value) for value in extracted_values]
+                extracted_values = [to_plain(value) for value in extracted_values]
             history[logs][metric] = extracted_values
 
 

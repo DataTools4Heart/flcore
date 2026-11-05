@@ -94,16 +94,7 @@ def set_initial_params_client(model,X_train, y_train):
 #the client using client data and combine
 #all the metrics of the clients
 def evaluate_metrics_aggregation_fn(eval_metrics):
-    print(eval_metrics[0][1].keys())
-    keys_names = eval_metrics[0][1].keys()
-    keys_names = list(keys_names)
-
-    metrics ={}
-    
-    for kn in keys_names:
-        results = [ evaluate_res[kn] for _, evaluate_res in eval_metrics]
-        metrics[kn] = np.mean(results)
-
-    return metrics
+    from flcore.metrics import metrics_aggregation_fn
+    return metrics_aggregation_fn(eval_metrics)
 
 

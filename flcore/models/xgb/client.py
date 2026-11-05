@@ -343,6 +343,7 @@ class XGBoostClient(fl.client.NumPyClient):
             print(f"[Client] Metrics: {metrics}")
             print(f"[Client] Loss: {loss:.4f}")
             
+            metrics["node_name"] = str(self.config.get("node_name"))
             return loss, num_examples, metrics
         except Exception as e:
             from flcore.utils import log_detailed_error

@@ -119,6 +119,7 @@ class MnistClient(fl.client.NumPyClient):
             print(f"Training finished for round {self.round}")
 
             self.round += 1
+            metrics["node_name"] = self.node_name
             return utils.get_model_parameters(self.model), len(self.X_train), metrics
         except Exception as e:
             from flcore.utils import log_detailed_error
@@ -162,8 +163,7 @@ class MnistClient(fl.client.NumPyClient):
                 loss = mean_squared_error(self.y_test, y_pred)
 
             metrics["round_time [s]"] = self.round_time
-            # No tiene sentido agregar el client ID
-            # metrics["client_id"] = self.node_name
+            metrics["node_name"] = self.node_name
 
     #        print(f"Client {self.node_name} Evaluation after aggregated model: {metrics['balanced_accuracy']}")
 

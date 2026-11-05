@@ -285,6 +285,13 @@ class FedXgbFullyFederated(FedAvg):
                     value * eval_res.num_examples / total_examples
                 )
 
+        # Per client values, identified by node_name
+        from flcore.metrics import add_per_client_metrics
+        add_per_client_metrics(
+            metrics_aggregated,
+            [(r.num_examples, r.metrics) for _, r in results],
+        )
+
         print(f"[Round {server_round}] Eval loss: {avg_loss:.4f}")
 
         return avg_loss, metrics_aggregated
